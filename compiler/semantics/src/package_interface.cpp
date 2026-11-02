@@ -11,6 +11,7 @@ namespace orison::semantics {
 namespace {
 
 constexpr auto package_interface_format_version = std::size_t {2};
+constexpr auto generic_specialization_request_format_version = std::size_t {1};
 
 auto declaration_kind_text(PackageTypeDeclarationKind kind) -> std::string_view {
     switch (kind) {
@@ -44,6 +45,11 @@ auto declaration_kind_from_text(std::string_view text) -> std::optional<PackageT
 
 auto parse_error(std::string message) -> PackageInterfaceParseResult {
     return PackageInterfaceParseResult {.error_message = std::move(message)};
+}
+
+auto specialization_request_parse_error(std::string message)
+    -> GenericFunctionSpecializationRequestParseResult {
+    return GenericFunctionSpecializationRequestParseResult {.error_message = std::move(message)};
 }
 
 void remove_carriage_return(std::string& line) {
@@ -119,6 +125,14 @@ auto parse_count(std::string_view text) -> std::optional<std::size_t> {
         return std::nullopt;
     }
     return value;
+}
+
+auto specialization_request_sort_key(GenericFunctionSpecializationRequest const& request) -> std::string {
+    auto key = request.package_name + "\n" + request.declaration_name;
+    for (auto const& type_argument : request.type_arguments) {
+        key += "\n" + render_type(type_argument);
+    }
+    return key;
 }
 
 auto find_type_declaration(
@@ -557,6 +571,113 @@ auto parse_package_interface(std::string_view text) -> PackageInterfaceParseResu
     }
 
     return PackageInterfaceParseResult {.package_interface = std::move(result)};
+}
+
+auto serialize_generic_function_specialization_requests(
+    std::vector<GenericFunctionSpecializationRequest> const& requests
+) -> std::string {
+    auto sorted_requests = requests;
+    std::ranges::sort(
+        sorted_requests,
+        [](GenericFunctionSpecializationRequest const& left, GenericFunctionSpecializationRequest const& right) {
+            return specialization_request_sort_key(left) < specialization_request_sort_key(right);
+        }
+    );
+
+    auto output = std::ostringstream {};
+    output << "orison-specialization-requests " << generic_specialization_request_format_version << '\n';
+    auto previous_key = std::optional<std::string> {};
+    for (auto const& request : sorted_requests) {
+        auto key = specialization_request_sort_key(request);
+        if (previous_key == key) {
+            continue;
+        }
+        previous_key = std::move(key);
+        output << "request " << request.package_name << ' ' << request.declaration_name << ' '
+               << request.type_arguments.size();
+        for (auto const& type_argument : request.type_arguments) {
+            output << ' ' << render_type(type_argument);
+        }
+        output << '\n';
+    }
+    return output.str();
+}
+
+auto parse_generic_function_specialization_requests(std::string_view text)
+    -> GenericFunctionSpecializationRequestParseResult {
+    auto input = std::istringstream {std::string(text)};
+    auto line = std::string {};
+    if (!std::getline(input, line)) {
+        return specialization_request_parse_error("specialization request artifact is empty");
+    }
+    remove_carriage_return(line);
+
+    auto header = std::istringstream {line};
+    auto marker = std::string {};
+    auto version = std::size_t {};
+    auto extra = std::string {};
+    if (!(header >> marker >> version) || marker != "orison-specialization-requests" || header >> extra) {
+        return specialization_request_parse_error("invalid specialization request header");
+    }
+    if (version != generic_specialization_request_format_version) {
+        return specialization_request_parse_error(
+            "unsupported specialization request version '" + std::to_string(version) + "'"
+        );
+    }
+
+    auto result = GenericFunctionSpecializationRequestParseResult {};
+    auto request_keys = std::unordered_set<std::string> {};
+    auto line_number = std::size_t {1};
+    while (std::getline(input, line)) {
+        ++line_number;
+        remove_carriage_return(line);
+        auto request_line = std::istringstream {line};
+        auto record_kind = std::string {};
+        auto type_argument_count_text = std::string {};
+        auto request = GenericFunctionSpecializationRequest {};
+        if (!(request_line >> record_kind >> request.package_name >> request.declaration_name >>
+              type_argument_count_text) ||
+            record_kind != "request") {
+            return specialization_request_parse_error(
+                "invalid specialization request at line " + std::to_string(line_number)
+            );
+        }
+        auto type_argument_count = parse_count(type_argument_count_text);
+        if (!type_argument_count.has_value() || *type_argument_count == 0) {
+            return specialization_request_parse_error(
+                "invalid specialization request type argument count at line " +
+                std::to_string(line_number)
+            );
+        }
+        for (auto index = std::size_t {0}; index < *type_argument_count; ++index) {
+            auto type_text = std::string {};
+            if (!(request_line >> type_text)) {
+                return specialization_request_parse_error(
+                    "invalid specialization request at line " + std::to_string(line_number)
+                );
+            }
+            auto type = parse_type(type_text);
+            if (!type.has_value()) {
+                return specialization_request_parse_error(
+                    "invalid specialization request type at line " + std::to_string(line_number)
+                );
+            }
+            request.type_arguments.push_back(std::move(*type));
+        }
+        if (request_line >> extra) {
+            return specialization_request_parse_error(
+                "invalid specialization request at line " + std::to_string(line_number)
+            );
+        }
+        auto key = specialization_request_sort_key(request);
+        if (!request_keys.insert(std::move(key)).second) {
+            return specialization_request_parse_error(
+                "duplicate specialization request at line " + std::to_string(line_number)
+            );
+        }
+        result.requests.push_back(std::move(request));
+    }
+    return result;
 }
 
 auto resolve_imported_type_declarations(

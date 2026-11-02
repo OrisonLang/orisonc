@@ -1,4 +1,5 @@
 #include "orison/driver/compiler_app.hpp"
+#include "orison/link/host_linker.hpp"
 
 #include <array>
 #include <cassert>
@@ -54,6 +55,27 @@ auto run_emit_package_interface(
     std::array<char const*, 5> argv {
         "orisonc",
         "--emit-package-interface",
+        source_path_text.c_str(),
+        "-o",
+        output_path_text.c_str()
+    };
+    return app.run(std::span<char const* const>(argv.data(), argv.size()));
+}
+
+auto run_emit_specialization_requests(
+    orison::driver::CompilerApp const& app,
+    std::filesystem::path const& package_interface_path,
+    std::filesystem::path const& source_path,
+    std::filesystem::path const& output_path
+) -> orison::driver::CompileResult {
+    auto package_interface_path_text = package_interface_path.string();
+    auto source_path_text = source_path.string();
+    auto output_path_text = output_path.string();
+    std::array<char const*, 7> argv {
+        "orisonc",
+        "--package-interface",
+        package_interface_path_text.c_str(),
+        "--emit-specialization-requests",
         source_path_text.c_str(),
         "-o",
         output_path_text.c_str()
@@ -199,6 +221,151 @@ auto main() -> int {
         ) != std::string::npos
     );
 
+    auto generic_producer_path = smoke_temp_root / "generic_producer.or";
+    write_fixture(
+        generic_producer_path,
+        "external.generics",
+        {
+            "public function choose<Value>(left: Value, right: Value) -> Value",
+            "    left",
+        }
+    );
+    auto generic_interface_path = smoke_temp_root / "generic_producer.opi";
+    auto generic_interface_result =
+        run_emit_package_interface(app, generic_producer_path, generic_interface_path);
+    assert_success_with_empty_stdout(generic_interface_result);
+
+    auto generic_consumer_path = smoke_temp_root / "generic_consumer.or";
+    write_fixture(
+        generic_consumer_path,
+        "demo.genericconsumer",
+        {
+            "import",
+            "    choose as select from external.generics",
+            "function main() -> UInt32",
+            "    select(40 as UInt32, 41 as UInt32) - 40 as UInt32",
+        }
+    );
+    auto specialization_requests_path = smoke_temp_root / "generic_consumer.osr";
+    auto specialization_requests_result = run_emit_specialization_requests(
+        app,
+        generic_interface_path,
+        generic_consumer_path,
+        specialization_requests_path
+    );
+    assert_success_with_empty_stdout(specialization_requests_result);
+    {
+        auto input = std::ifstream(specialization_requests_path);
+        auto contents = std::string(
+            std::istreambuf_iterator<char>(input),
+            std::istreambuf_iterator<char>()
+        );
+        assert(
+            contents ==
+            "orison-specialization-requests 1\n"
+            "request external.generics choose 1 UInt32\n"
+        );
+    }
+
+    auto specialization_requests_path_text = specialization_requests_path.string();
+    auto generic_producer_path_text = generic_producer_path.string();
+    auto generic_producer_object_path = smoke_temp_root / "generic_producer.o";
+    auto generic_producer_object_path_text = generic_producer_object_path.string();
+    std::array<char const*, 9> generic_producer_object_argv {
+        "orisonc",
+        "--specialization-requests",
+        specialization_requests_path_text.c_str(),
+        "--specialization-requests",
+        specialization_requests_path_text.c_str(),
+        "--emit-object",
+        generic_producer_path_text.c_str(),
+        "-o",
+        generic_producer_object_path_text.c_str(),
+    };
+    auto generic_producer_object_result = app.run(
+        std::span<char const* const>(
+            generic_producer_object_argv.data(),
+            generic_producer_object_argv.size()
+        )
+    );
+    assert_success_with_empty_stdout(generic_producer_object_result);
+
+    auto generic_interface_path_text = generic_interface_path.string();
+    auto generic_consumer_path_text = generic_consumer_path.string();
+    auto generic_consumer_object_path = smoke_temp_root / "generic_consumer.o";
+    auto generic_consumer_object_path_text = generic_consumer_object_path.string();
+    std::array<char const*, 7> generic_consumer_object_argv {
+        "orisonc",
+        "--package-interface",
+        generic_interface_path_text.c_str(),
+        "--emit-object",
+        generic_consumer_path_text.c_str(),
+        "-o",
+        generic_consumer_object_path_text.c_str(),
+    };
+    auto generic_consumer_object_result = app.run(
+        std::span<char const* const>(
+            generic_consumer_object_argv.data(),
+            generic_consumer_object_argv.size()
+        )
+    );
+    assert_success_with_empty_stdout(generic_consumer_object_result);
+
+    auto generic_producer_object_input = std::ifstream(
+        generic_producer_object_path,
+        std::ios::in | std::ios::binary
+    );
+    auto generic_producer_object = std::string(
+        std::istreambuf_iterator<char>(generic_producer_object_input),
+        std::istreambuf_iterator<char>()
+    );
+    auto generic_consumer_object_input = std::ifstream(
+        generic_consumer_object_path,
+        std::ios::in | std::ios::binary
+    );
+    auto generic_consumer_object = std::string(
+        std::istreambuf_iterator<char>(generic_consumer_object_input),
+        std::istreambuf_iterator<char>()
+    );
+    auto generic_object_images = std::array<std::string_view, 2> {
+        generic_producer_object,
+        generic_consumer_object,
+    };
+    auto generic_executable_path = smoke_temp_root / "generic_consumer";
+    auto generic_link = orison::link::HostLinker {}.link(
+        generic_object_images,
+        generic_executable_path
+    );
+    assert(!generic_link.has_errors());
+    assert(std::system(generic_executable_path.string().c_str()) == 0);
+
+    auto invalid_specialization_requests_path = smoke_temp_root / "invalid.osr";
+    {
+        auto output = std::ofstream(invalid_specialization_requests_path);
+        output << "orison-specialization-requests 2\n";
+    }
+    auto invalid_specialization_requests_path_text = invalid_specialization_requests_path.string();
+    std::array<char const*, 5> invalid_specialization_requests_argv {
+        "orisonc",
+        "--specialization-requests",
+        invalid_specialization_requests_path_text.c_str(),
+        "--emit-llvm",
+        generic_producer_path_text.c_str(),
+    };
+    auto invalid_specialization_requests_result = app.run(
+        std::span<char const* const>(
+            invalid_specialization_requests_argv.data(),
+            invalid_specialization_requests_argv.size()
+        )
+    );
+    assert(invalid_specialization_requests_result.exit_code == 1);
+    assert(invalid_specialization_requests_result.stdout_text.empty());
+    assert(
+        invalid_specialization_requests_result.stderr_text.find(
+            "unsupported specialization request version '2'"
+        ) != std::string::npos
+    );
+
     auto invalid_package_source_path = smoke_temp_root / "invalid_external_types.or";
     write_fixture(
         invalid_package_source_path,
@@ -234,6 +401,21 @@ auto main() -> int {
     assert(
         package_interface_write_failure.stderr_text ==
         "error: unable to write package interface '" + package_interface_write_path.string() + "'\n"
+    );
+
+    auto specialization_requests_write_path = missing_directory / "output.osr";
+    auto specialization_requests_write_failure = run_emit_specialization_requests(
+        app,
+        generic_interface_path,
+        generic_consumer_path,
+        specialization_requests_write_path
+    );
+    assert(specialization_requests_write_failure.exit_code == 1);
+    assert(specialization_requests_write_failure.stdout_text.empty());
+    assert(
+        specialization_requests_write_failure.stderr_text ==
+        "error: unable to write specialization requests '" +
+            specialization_requests_write_path.string() + "'\n"
     );
 
     auto view_descriptor_path = smoke_temp_root / "view_descriptor_reads.or";

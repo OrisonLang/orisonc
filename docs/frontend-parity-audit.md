@@ -3832,3 +3832,7 @@ This file tracks which source-language frontend slices are reflected in the curr
   exported declaration, and ordered concrete type arguments. Producer compilation consumes and deduplicates those
   requests, emits the matching public specialization without a local seed call, and links and runs with the consumer.
   Request artifact serialization and dependency build orchestration remain open. No source syntax changed.
+- 2026-11-02: Generic specialization requests now serialize through the deterministic version-1
+  `orison-specialization-requests` artifact. The driver emits consumer requests, loads repeatable request artifacts,
+  aggregates them into producer options, and compiles separately linked producer and consumer objects successfully.
+  Automatic dependency graph scheduling and object selection remain open. No source syntax changed.

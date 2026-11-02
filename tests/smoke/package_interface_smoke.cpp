@@ -192,6 +192,97 @@ int main() {
     assert(invalid_function.has_error());
     assert(invalid_function.error_message == "invalid package interface function declaration at line 3");
 
+    auto specialization_requests = std::vector<orison::semantics::GenericFunctionSpecializationRequest> {
+        {
+            .package_name = "external.generics",
+            .declaration_name = "choose",
+            .type_arguments = {{.name = "UInt32"}},
+        },
+        {
+            .package_name = "external.generics",
+            .declaration_name = "combine",
+            .type_arguments = {
+                {
+                    .name = "DynamicArray",
+                    .generic_arguments = {{.name = "UInt32"}},
+                },
+                {.name = "UInt64"},
+            },
+        },
+        {
+            .package_name = "external.generics",
+            .declaration_name = "choose",
+            .type_arguments = {{.name = "UInt32"}},
+        },
+    };
+    auto serialized_specialization_requests =
+        orison::semantics::serialize_generic_function_specialization_requests(specialization_requests);
+    assert(
+        serialized_specialization_requests ==
+        "orison-specialization-requests 1\n"
+        "request external.generics choose 1 UInt32\n"
+        "request external.generics combine 2 DynamicArray<UInt32> UInt64\n"
+    );
+    auto parsed_specialization_requests =
+        orison::semantics::parse_generic_function_specialization_requests(
+            serialized_specialization_requests
+        );
+    assert(!parsed_specialization_requests.has_error());
+    assert(parsed_specialization_requests.requests.size() == 2);
+    assert(
+        orison::semantics::serialize_generic_function_specialization_requests(
+            parsed_specialization_requests.requests
+        ) == serialized_specialization_requests
+    );
+
+    auto empty_specialization_requests =
+        orison::semantics::parse_generic_function_specialization_requests("");
+    assert(empty_specialization_requests.has_error());
+    assert(
+        empty_specialization_requests.error_message ==
+        "specialization request artifact is empty"
+    );
+    auto unsupported_specialization_request_version =
+        orison::semantics::parse_generic_function_specialization_requests(
+            "orison-specialization-requests 2\n"
+        );
+    assert(unsupported_specialization_request_version.has_error());
+    assert(
+        unsupported_specialization_request_version.error_message ==
+        "unsupported specialization request version '2'"
+    );
+    auto invalid_specialization_request_count =
+        orison::semantics::parse_generic_function_specialization_requests(
+            "orison-specialization-requests 1\n"
+            "request external.generics choose 0\n"
+        );
+    assert(invalid_specialization_request_count.has_error());
+    assert(
+        invalid_specialization_request_count.error_message ==
+        "invalid specialization request type argument count at line 2"
+    );
+    auto invalid_specialization_request_type =
+        orison::semantics::parse_generic_function_specialization_requests(
+            "orison-specialization-requests 1\n"
+            "request external.generics choose 1 View<\n"
+        );
+    assert(invalid_specialization_request_type.has_error());
+    assert(
+        invalid_specialization_request_type.error_message ==
+        "invalid specialization request type at line 2"
+    );
+    auto duplicate_specialization_request =
+        orison::semantics::parse_generic_function_specialization_requests(
+            "orison-specialization-requests 1\n"
+            "request external.generics choose 1 UInt32\n"
+            "request external.generics choose 1 UInt32\n"
+        );
+    assert(duplicate_specialization_request.has_error());
+    assert(
+        duplicate_specialization_request.error_message ==
+        "duplicate specialization request at line 3"
+    );
+
     auto consumer = orison::syntax::ModuleSyntax {};
     consumer.package_name = "demo.consumer";
     consumer.imports.push_back(orison::syntax::ImportSyntax {

@@ -52,9 +52,12 @@ Public concrete generic specializations use the same package qualification. A co
 call when the concrete signature uses supported lowered ABI types. Consumer lowering publishes typed specialization
 requests containing source package, exported declaration, and ordered concrete type arguments. Producer compilation
 accepts those requests and emits each matching public generic specialization once, without requiring a local source
-call to seed monomorphization. Build orchestration must still transfer and aggregate requests between compilation jobs;
-the requests are not source syntax and are not serialized into package-interface artifacts. Imported aggregate ABI
-lowering remains outside this decision's implemented scope.
+call to seed monomorphization. Specialization requests use a separate deterministic, versioned text artifact headed by
+`orison-specialization-requests 1`; they are not source syntax and are not serialized into package-interface artifacts.
+The driver emits request artifacts with `--emit-specialization-requests` and accepts repeatable
+`--specialization-requests` inputs, allowing build orchestration to aggregate consumer requests for producer
+compilation. Automatic dependency graph scheduling and object selection remain outside the driver. Imported aggregate
+ABI lowering remains outside this decision's implemented scope.
 Distinct packages can define the same non-generic receiver method and link into one executable without a symbol
 collision. The compiler-reserved `__orison_` prefix prevents source and foreign declarations from claiming generated
 method symbols. Generated owned-cleanup symbols use
@@ -67,5 +70,5 @@ Module-free synthetic lowering fixtures retain package-neutral generic method sy
 
 - Migrate the remaining report command/helper names away from descriptor-origin terminology only when the pinned CLI
   text can change intentionally.
-- Serialize or aggregate specialization requests through dependency build orchestration.
+- Add automatic dependency graph scheduling and object selection around specialization request artifacts.
 - Extend imported generic specialization after imported aggregate ABI lowering is available.

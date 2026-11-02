@@ -155,6 +155,21 @@ int main() {
         "--package-interface requires a file path"
     );
 
+    std::array<char const*, 2> missing_specialization_requests_value_argv {
+        "orisonc",
+        "--specialization-requests",
+    };
+    auto missing_specialization_requests_value = app.run(
+        std::span<char const* const>(
+            missing_specialization_requests_value_argv.data(),
+            missing_specialization_requests_value_argv.size()
+        )
+    );
+    assert_failure_with_no_stdout_contains(
+        missing_specialization_requests_value,
+        "--specialization-requests requires a file path"
+    );
+
     auto missing_interface_path = smoke_temp_root / "missing.opi";
     auto missing_interface_path_text = missing_interface_path.string();
     auto emit_path_text = emit_path.string();
@@ -217,7 +232,7 @@ int main() {
         ));
     assert_failure_with_no_stdout_contains(
         unknown_flag,
-        "usage: orisonc [--package-interface <file>]..."
+        "usage: orisonc [--package-interface <file> | --specialization-requests <file>]..."
     );
 
     auto emit_failure_path =

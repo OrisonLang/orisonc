@@ -15,6 +15,7 @@
 #include <cstddef>
 #include <filesystem>
 #include <fstream>
+#include <iterator>
 #include <optional>
 #include <sstream>
 #include <string_view>
@@ -152,7 +153,7 @@ auto semantic_owned_cleanup_resolution_summary_state_report(
 }
 
 auto usage_text() -> std::string {
-    return "usage: orisonc [--package-interface <file>]... "
+    return "usage: orisonc [--package-interface <file> | --specialization-requests <file>]... "
            "(--version | run <file> | --parse <file> | --emit-llvm <file> | "
            "--semantic-planned-drops <file> | --semantic-drop-resolution <file> | "
            "--semantic-drop-diagnostics <file> | --semantic-drop-lowering-authorization <file> | "
@@ -179,6 +180,7 @@ auto usage_text() -> std::string {
            "--runtime-indexed-cleanup-emit-llvm <file> | "
            "--runtime-indexed-constructor-move-production-readiness <file> | "
            "--emit-package-interface <file> -o <output> | "
+           "--emit-specialization-requests <file> -o <output> | "
            "--emit-object <file> -o <output> | --build <file> -o <executable>)";
 }
 
@@ -212,6 +214,43 @@ auto load_package_interface(
         };
     }
     options.available_package_interfaces.push_back(std::move(*parsed.package_interface));
+    return std::nullopt;
+}
+
+auto load_generic_function_specialization_requests(
+    std::filesystem::path const& path,
+    pipeline::CompilePipelineOptions& options
+) -> std::optional<CompileResult> {
+    auto input = std::ifstream(path, std::ios::in | std::ios::binary);
+    if (!input) {
+        return CompileResult {
+            .exit_code = 1,
+            .stderr_text = "error: unable to read specialization requests '" + path.string() + "'\n",
+        };
+    }
+
+    auto text = std::ostringstream {};
+    text << input.rdbuf();
+    if (input.bad()) {
+        return CompileResult {
+            .exit_code = 1,
+            .stderr_text = "error: unable to read specialization requests '" + path.string() + "'\n",
+        };
+    }
+
+    auto parsed = semantics::parse_generic_function_specialization_requests(text.str());
+    if (parsed.has_error()) {
+        return CompileResult {
+            .exit_code = 1,
+            .stderr_text = "error: invalid specialization requests '" + path.string() + "': " +
+                           parsed.error_message + "\n",
+        };
+    }
+    options.generic_function_specialization_requests.insert(
+        options.generic_function_specialization_requests.end(),
+        std::make_move_iterator(parsed.requests.begin()),
+        std::make_move_iterator(parsed.requests.end())
+    );
     return std::nullopt;
 }
 
@@ -1103,14 +1142,24 @@ auto CompilerApp::run(std::span<char const* const> args) const -> CompileResult 
     auto command_index = std::size_t {1};
     auto options = default_driver_options();
 
-    while (args.size() > command_index && std::string_view(args[command_index]) == "--package-interface") {
+    while (args.size() > command_index) {
+        auto const option = std::string_view(args[command_index]);
+        if (option != "--package-interface" && option != "--specialization-requests") {
+            break;
+        }
         if (args.size() <= command_index + 1) {
             return CompileResult {
                 .exit_code = 1,
-                .stderr_text = "error: --package-interface requires a file path\n",
+                .stderr_text = "error: " + std::string(option) + " requires a file path\n",
             };
         }
-        if (auto error = load_package_interface(std::filesystem::path(args[command_index + 1]), options)) {
+        auto error = option == "--package-interface"
+            ? load_package_interface(std::filesystem::path(args[command_index + 1]), options)
+            : load_generic_function_specialization_requests(
+                  std::filesystem::path(args[command_index + 1]),
+                  options
+              );
+        if (error.has_value()) {
             return std::move(*error);
         }
         command_index += 2;
@@ -1467,6 +1516,39 @@ auto CompilerApp::run(std::span<char const* const> args) const -> CompileResult 
             return CompileResult {
                 .exit_code = 1,
                 .stderr_text = "error: unable to write package interface '" + output_path.string() + "'\n",
+            };
+        }
+        return CompileResult {.exit_code = 0};
+    }
+
+    if (args.size() == command_index + 4 &&
+        std::string_view(args[command_index]) == "--emit-specialization-requests" &&
+        std::string_view(args[command_index + 2]) == "-o") {
+        pipeline::CompilePipeline pipeline;
+        auto result = pipeline.emit_llvm(std::filesystem::path(args[command_index + 1]), options);
+        if (result.has_errors()) {
+            return CompileResult {
+                .exit_code = 1,
+                .stderr_text = std::move(result.error_text),
+            };
+        }
+
+        auto output_path = std::filesystem::path(args[command_index + 3]);
+        auto output = std::ofstream(output_path, std::ios::out | std::ios::binary | std::ios::trunc);
+        if (!output) {
+            return CompileResult {
+                .exit_code = 1,
+                .stderr_text = "error: unable to write specialization requests '" + output_path.string() + "'\n",
+            };
+        }
+        output << semantics::serialize_generic_function_specialization_requests(
+            result.generic_function_specialization_requests
+        );
+        output.close();
+        if (!output) {
+            return CompileResult {
+                .exit_code = 1,
+                .stderr_text = "error: unable to write specialization requests '" + output_path.string() + "'\n",
             };
         }
         return CompileResult {.exit_code = 0};

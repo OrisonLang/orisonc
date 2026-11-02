@@ -76,11 +76,27 @@ struct GenericFunctionSpecializationRequest {
     std::vector<syntax::TypeSyntax> type_arguments;
 };
 
+struct GenericFunctionSpecializationRequestParseResult {
+    std::vector<GenericFunctionSpecializationRequest> requests;
+    std::string error_message;
+
+    auto has_error() const -> bool {
+        return !error_message.empty();
+    }
+};
+
 auto build_package_interface(syntax::ModuleSyntax const& module) -> PackageInterface;
 
 auto serialize_package_interface(PackageInterface const& package_interface) -> std::string;
 
 auto parse_package_interface(std::string_view text) -> PackageInterfaceParseResult;
+
+auto serialize_generic_function_specialization_requests(
+    std::vector<GenericFunctionSpecializationRequest> const& requests
+) -> std::string;
+
+auto parse_generic_function_specialization_requests(std::string_view text)
+    -> GenericFunctionSpecializationRequestParseResult;
 
 auto resolve_imported_type_declarations(
     syntax::ModuleSyntax const& module,
