@@ -3840,3 +3840,7 @@ This file tracks which source-language frontend slices are reflected in the curr
   to the plan, selects the entry package's reachable imports, builds typed interfaces, iterates specialization requests
   to a stable set, and links only reachable objects. Generic producer-consumer execution and exclusion of an unrelated
   second entry point are pinned through the driver. No source syntax changed.
+- 2026-11-02: Version-1 build plans now accept explicit prebuilt package-interface/object pairs with declared package
+  dependencies and host libraries. Reachable prebuilt interfaces participate in semantic analysis, while their object
+  images link without source recompilation. A precompiled generic producer and source consumer now link and execute
+  through one build plan. No source syntax changed.

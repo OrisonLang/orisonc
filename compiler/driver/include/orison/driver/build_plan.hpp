@@ -11,14 +11,18 @@
 
 namespace orison::driver {
 
-struct BuildPlanModule {
+struct BuildPlanPackage {
     std::string package_name;
-    std::filesystem::path source_path;
+    std::optional<std::filesystem::path> source_path;
+    std::optional<std::filesystem::path> interface_path;
+    std::optional<std::filesystem::path> object_path;
+    std::vector<std::string> dependencies;
+    std::vector<std::string> link_libraries;
 };
 
 struct BuildPlan {
     std::string entry_package;
-    std::vector<BuildPlanModule> modules;
+    std::vector<BuildPlanPackage> packages;
 };
 
 struct BuildPlanParseResult {

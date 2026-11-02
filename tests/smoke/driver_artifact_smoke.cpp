@@ -383,6 +383,36 @@ auto main() -> int {
     assert_success_with_empty_stdout(build_plan_result);
     assert(std::system(build_plan_executable_path.string().c_str()) == 0);
 
+    auto prebuilt_support_path = smoke_temp_root / "prebuilt support.or";
+    write_fixture(
+        prebuilt_support_path,
+        "external.support",
+        {
+            "public function identity(value: UInt32) -> UInt32",
+            "    value",
+        }
+    );
+    auto prebuilt_plan_path = smoke_temp_root / "generic_prebuilt.obp";
+    {
+        auto output = std::ofstream(prebuilt_plan_path);
+        output << "orison-build-plan 1\n";
+        output << "entry demo.genericconsumer\n";
+        output << "interface external.generics generic_producer.opi\n";
+        output << "object external.generics generic_producer.o\n";
+        output << "depends external.generics external.support\n";
+        output << "library external.generics m\n";
+        output << "module external.support prebuilt support.or\n";
+        output << "module demo.genericconsumer generic consumer.or\n";
+    }
+    auto prebuilt_plan_executable_path = smoke_temp_root / "generic_prebuilt_build_plan";
+    auto prebuilt_plan_result = run_build_plan(
+        app,
+        prebuilt_plan_path,
+        prebuilt_plan_executable_path
+    );
+    assert_success_with_empty_stdout(prebuilt_plan_result);
+    assert(std::system(prebuilt_plan_executable_path.string().c_str()) == 0);
+
     auto invalid_build_plan_path = smoke_temp_root / "invalid.obp";
     {
         auto output = std::ofstream(invalid_build_plan_path);
@@ -417,8 +447,29 @@ auto main() -> int {
     assert(incomplete_build_plan_result.stdout_text.empty());
     assert(
         incomplete_build_plan_result.stderr_text.find(
-            "build plan has no module for imported package 'external.generics' required by "
+            "build plan has no package mapping for imported package 'external.generics' required by "
             "'demo.genericconsumer'"
+        ) != std::string::npos
+    );
+
+    auto incomplete_prebuilt_plan_path = smoke_temp_root / "incomplete_prebuilt.obp";
+    {
+        auto output = std::ofstream(incomplete_prebuilt_plan_path);
+        output << "orison-build-plan 1\n";
+        output << "entry external.generics\n";
+        output << "interface external.generics generic_producer.opi\n";
+    }
+    auto incomplete_prebuilt_plan_result = run_build_plan(
+        app,
+        incomplete_prebuilt_plan_path,
+        smoke_temp_root / "incomplete_prebuilt_build_plan"
+    );
+    assert(incomplete_prebuilt_plan_result.exit_code == 1);
+    assert(incomplete_prebuilt_plan_result.stdout_text.empty());
+    assert(
+        incomplete_prebuilt_plan_result.stderr_text.find(
+            "build plan package 'external.generics' requires either a source module or a prebuilt "
+            "interface/object pair"
         ) != std::string::npos
     );
 
