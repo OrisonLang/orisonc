@@ -62,7 +62,10 @@ auto is_naked_return(syntax::StatementSyntax const& statement) -> bool {
 
 }  // namespace
 
-auto owned_cleanup_abi_symbol_name(std::string_view source_type_name) -> std::string {
+auto owned_cleanup_abi_symbol_name(
+    std::string_view package_name,
+    std::string_view source_type_name
+) -> std::string {
     auto symbol = std::string {"__orison_owned_cleanup."};
     for (auto character : source_type_name) {
         auto const allowed =
@@ -71,7 +74,15 @@ auto owned_cleanup_abi_symbol_name(std::string_view source_type_name) -> std::st
             (character >= '0' && character <= '9');
         symbol.push_back(allowed ? character : '_');
     }
+    if (!package_name.empty()) {
+        symbol += ".";
+        symbol += package_name;
+    }
     return symbol;
+}
+
+auto owned_cleanup_abi_symbol_name(std::string_view source_type_name) -> std::string {
+    return owned_cleanup_abi_symbol_name({}, source_type_name);
 }
 
 auto owned_cleanup_implementation_origin_name(OwnedCleanupImplementationOrigin origin) -> std::string_view {
@@ -91,7 +102,16 @@ auto semantic_owned_cleanup_implementation(
     std::size_t declaration_line,
     OwnedCleanupImplementationBodySummary body
 ) -> OwnedCleanupImplementation {
-    auto symbol_name = owned_cleanup_abi_symbol_name(source_type_name);
+    return semantic_owned_cleanup_implementation({}, std::move(source_type_name), declaration_line, std::move(body));
+}
+
+auto semantic_owned_cleanup_implementation(
+    std::string_view package_name,
+    std::string source_type_name,
+    std::size_t declaration_line,
+    OwnedCleanupImplementationBodySummary body
+) -> OwnedCleanupImplementation {
+    auto symbol_name = owned_cleanup_abi_symbol_name(package_name, source_type_name);
     auto proven = body.finite;
     return OwnedCleanupImplementation {
         .source_type_name = std::move(source_type_name),
@@ -107,7 +127,15 @@ auto compiler_intrinsic_owned_cleanup_implementation(
     std::string source_type_name,
     std::size_t declaration_line
 ) -> OwnedCleanupImplementation {
-    auto symbol_name = owned_cleanup_abi_symbol_name(source_type_name);
+    return compiler_intrinsic_owned_cleanup_implementation({}, std::move(source_type_name), declaration_line);
+}
+
+auto compiler_intrinsic_owned_cleanup_implementation(
+    std::string_view package_name,
+    std::string source_type_name,
+    std::size_t declaration_line
+) -> OwnedCleanupImplementation {
+    auto symbol_name = owned_cleanup_abi_symbol_name(package_name, source_type_name);
     return OwnedCleanupImplementation {
         .source_type_name = std::move(source_type_name),
         .abi_symbol_name = std::move(symbol_name),
@@ -128,7 +156,7 @@ auto collect_semantic_owned_cleanup_implementations(
         if (candidate.source_type_name.empty()) {
             continue;
         }
-        auto symbol_name = owned_cleanup_abi_symbol_name(candidate.source_type_name);
+        auto symbol_name = owned_cleanup_abi_symbol_name(candidate.package_name, candidate.source_type_name);
         auto existing = std::find_if(
             implementations.begin(),
             implementations.end(),
@@ -141,6 +169,7 @@ auto collect_semantic_owned_cleanup_implementations(
             continue;
         }
         implementations.push_back(semantic_owned_cleanup_implementation(
+            candidate.package_name,
             candidate.source_type_name,
             candidate.declaration_line,
             candidate.body
@@ -184,6 +213,7 @@ auto collect_semantic_owned_cleanup_implementation_candidates(
             continue;
         }
         candidates.push_back(OwnedCleanupImplementationCandidate {
+            .package_name = module.package_name,
             .source_type_name = render_source_type_name(implementation.receiver_type),
             .declaration_line = drop_method_line(implementation),
             .body = prove_semantic_owned_cleanup_implementation_body(implementation),
@@ -215,7 +245,7 @@ auto collect_compiler_intrinsic_owned_cleanup_implementations(
         if (record == module.records.end()) {
             continue;
         }
-        auto const symbol_name = owned_cleanup_abi_symbol_name(site.source_type_name);
+        auto const symbol_name = owned_cleanup_abi_symbol_name(module.package_name, site.source_type_name);
         auto existing = std::find_if(
             implementations.begin(),
             implementations.end(),
@@ -228,6 +258,7 @@ auto collect_compiler_intrinsic_owned_cleanup_implementations(
             continue;
         }
         implementations.push_back(compiler_intrinsic_owned_cleanup_implementation(
+            module.package_name,
             site.source_type_name,
             record->line
         ));

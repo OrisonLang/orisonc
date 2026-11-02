@@ -89,7 +89,10 @@ auto direct_dynamic_array_receiver_element_owned_cleanup_authorized(
     std::string_view element_source_type_name,
     LoweringEmissionContext const& context
 ) -> bool {
-    auto symbol_name = semantics::owned_cleanup_abi_symbol_name(element_source_type_name);
+    auto symbol_name = semantics::owned_cleanup_abi_symbol_name(
+        context.lowering.package_name,
+        element_source_type_name
+    );
     return std::ranges::any_of(context.options.semantic_owned_cleanup_lowering_authorizations, [&](auto const& authorization) {
         return authorization.authorized &&
             authorization.site.source_type_name == element_source_type_name &&

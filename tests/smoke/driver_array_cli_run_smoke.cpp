@@ -11,6 +11,22 @@
 
 namespace {
 
+auto normalize_owned_cleanup_symbols_for_shape_assertions(std::string output) -> std::string {
+    constexpr auto marker = std::string_view {"__orison_owned_cleanup."};
+    auto offset = std::size_t {0};
+    while ((offset = output.find(marker, offset)) != std::string::npos) {
+        auto const type_end = output.find('.', offset + marker.size());
+        auto const symbol_end = output.find_first_of(" (\n\r\t", offset + marker.size());
+        if (type_end != std::string::npos && symbol_end != std::string::npos && type_end < symbol_end) {
+            output.erase(type_end, symbol_end - type_end);
+            offset = type_end;
+        } else {
+            offset += marker.size();
+        }
+    }
+    return output;
+}
+
 auto read_successful_command_output(std::string const& command) -> std::string {
     std::array<char, 256> buffer {};
     std::string output;
@@ -27,7 +43,7 @@ auto read_successful_command_output(std::string const& command) -> std::string {
         std::fprintf(stderr, "command failed:\n%s\n\noutput:\n%s\n", command.c_str(), output.c_str());
     }
     assert(status == 0);
-    return output;
+    return normalize_owned_cleanup_symbols_for_shape_assertions(std::move(output));
 }
 
 auto read_failing_command_output(std::string const& command) -> std::string {
@@ -2311,7 +2327,9 @@ void assert_returned_owned_computed_dynamic_array_emit_llvm_success(
         ) != std::string::npos
     );
     auto const drop_walk = output.find("returned.computed_dynamic_array_cleanup");
-    auto const drop_call = output.find("call void @__orison_owned_cleanup.Payload(ptr %returned.computed_dynamic_array_cleanup");
+    auto const drop_call = output.find(
+        "call void @__orison_owned_cleanup.Payload(ptr %returned.computed_dynamic_array_cleanup"
+    );
     auto const deallocation =
         output.find("call void @__orison_dynamic_array_deallocate(ptr %returned.computed_for.0.data", drop_call);
     auto const finalization =

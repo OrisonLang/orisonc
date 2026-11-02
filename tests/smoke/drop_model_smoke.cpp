@@ -22,6 +22,10 @@ int main() {
     assert(site_report.front() == "drop site __orison_owned_cleanup.Payload for Payload owner payload at line 12");
     assert(orison::semantics::format_planned_drop_site_report({}).empty());
     assert(orison::semantics::owned_cleanup_abi_symbol_name("Pair<Payload>") == "__orison_owned_cleanup.Pair_Payload_");
+    assert(
+        orison::semantics::owned_cleanup_abi_symbol_name("first.math", "Counter") ==
+        "__orison_owned_cleanup.Counter.first.math"
+    );
 
     auto unproven = orison::semantics::OwnedCleanupImplementation {
         .source_type_name = "Payload",

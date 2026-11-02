@@ -7711,10 +7711,10 @@ void test_semantic_module_summary_success() {
     for (auto const& obligation : summary.owned_cleanup_obligations) {
         if (obligation.owner_name == "box" && obligation.source_type_name == "Box<UInt32>") {
             found_box_owned_cleanup_obligation = true;
-            assert(obligation.abi_symbol_name == "__orison_owned_cleanup.Box_UInt32_");
+            assert(obligation.abi_symbol_name == "__orison_owned_cleanup.Box_UInt32_.demo.summary");
             assert(
                 orison::semantics::format_semantic_owned_cleanup_obligation(obligation) ==
-                "drop obligation __orison_owned_cleanup.Box_UInt32_ for Box<UInt32> owner box at line 23"
+                "drop obligation __orison_owned_cleanup.Box_UInt32_.demo.summary for Box<UInt32> owner box at line 23"
             );
         }
     }
@@ -7722,7 +7722,10 @@ void test_semantic_module_summary_success() {
     auto projected_owned_cleanup_sites = orison::semantics::project_semantic_owned_cleanup_obligations(summary);
     assert(projected_owned_cleanup_sites.size() == summary.owned_cleanup_obligations.size());
     assert(projected_owned_cleanup_sites.front().source_type_name == "Box<UInt32>");
-    assert(projected_owned_cleanup_sites.front().abi_symbol_name == "__orison_owned_cleanup.Box_UInt32_");
+    assert(
+        projected_owned_cleanup_sites.front().abi_symbol_name ==
+        "__orison_owned_cleanup.Box_UInt32_.demo.summary"
+    );
     assert(projected_owned_cleanup_sites.front().owner_name == "box");
     assert(projected_owned_cleanup_sites.front().site_line == 23);
     auto owned_cleanup_obligation_report =
@@ -7730,7 +7733,7 @@ void test_semantic_module_summary_success() {
     assert(owned_cleanup_obligation_report.size() == summary.owned_cleanup_obligations.size());
     assert(
         owned_cleanup_obligation_report.front() ==
-        "drop obligation __orison_owned_cleanup.Box_UInt32_ for Box<UInt32> owner box at line 23"
+        "drop obligation __orison_owned_cleanup.Box_UInt32_.demo.summary for Box<UInt32> owner box at line 23"
     );
 
     bool found_box_value_path = false;
@@ -14836,11 +14839,11 @@ void test_owned_binding_owned_cleanup_obligations_success() {
     assert(owned_cleanup_obligation_report.size() == 2);
     assert(
         owned_cleanup_obligation_report[0] ==
-        "drop obligation __orison_owned_cleanup.Buffer for Buffer owner input at line 4"
+        "drop obligation __orison_owned_cleanup.Buffer.demo.drop for Buffer owner input at line 4"
     );
     assert(
         owned_cleanup_obligation_report[1] ==
-        "drop obligation __orison_owned_cleanup.Buffer for Buffer owner local at line 5"
+        "drop obligation __orison_owned_cleanup.Buffer.demo.drop for Buffer owner local at line 5"
     );
 }
 
@@ -14883,11 +14886,11 @@ void test_dynamic_array_binding_owned_cleanup_obligations_success() {
     assert(owned_cleanup_obligation_report.size() == 2);
     assert(
         owned_cleanup_obligation_report[0] ==
-        "drop obligation __orison_owned_cleanup.DynamicArray_Payload_ for DynamicArray<Payload> owner items at line 4"
+        "drop obligation __orison_owned_cleanup.DynamicArray_Payload_.demo.drop for DynamicArray<Payload> owner items at line 4"
     );
     assert(
         owned_cleanup_obligation_report[1] ==
-        "drop obligation __orison_owned_cleanup.Payload for Payload owner items.element at line 4"
+        "drop obligation __orison_owned_cleanup.Payload.demo.drop for Payload owner items.element at line 4"
     );
 }
 
@@ -14919,7 +14922,7 @@ void test_scalar_dynamic_array_binding_owned_cleanup_obligations_skip_element_su
     assert(owned_cleanup_obligation_report.size() == 1);
     assert(
         owned_cleanup_obligation_report.front() ==
-        "drop obligation __orison_owned_cleanup.DynamicArray_UInt32_ for DynamicArray<UInt32> owner words at line 2"
+        "drop obligation __orison_owned_cleanup.DynamicArray_UInt32_.demo.drop for DynamicArray<UInt32> owner words at line 2"
     );
 }
 

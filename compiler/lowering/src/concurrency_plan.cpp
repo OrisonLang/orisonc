@@ -5,6 +5,7 @@
 #include "orison/lowering/source_type_queries.hpp"
 #include "orison/lowering/syntax_traversal.hpp"
 #include "orison/lowering/target_layout.hpp"
+#include "orison/semantics/drop_model.hpp"
 
 #include <algorithm>
 #include <array>
@@ -206,14 +207,9 @@ auto capture_llvm_types(
     return types;
 }
 
-auto owned_cleanup_symbol_name_for(std::string_view source_type_name) -> std::string {
-    auto symbol = std::string {"__orison_owned_cleanup."};
-    append_sanitized_symbol_part(symbol, source_type_name);
-    return symbol;
-}
-
 auto cleanup_plan_for(
-    std::vector<ConcurrencyCapturePlan> const& captures
+    std::vector<ConcurrencyCapturePlan> const& captures,
+    std::string_view package_name
 ) -> ConcurrencyCleanupPlan {
     auto cleanup = ConcurrencyCleanupPlan {};
     for (auto const& capture : captures) {
@@ -224,7 +220,10 @@ auto cleanup_plan_for(
             .name = capture.name,
             .source_type_name = capture.source_type_name,
             .llvm_type = capture.llvm_type,
-            .owned_cleanup_symbol_name = owned_cleanup_symbol_name_for(capture.source_type_name),
+            .owned_cleanup_symbol_name = semantics::owned_cleanup_abi_symbol_name(
+                package_name,
+                capture.source_type_name
+            ),
             .field_index = capture.field_index,
             .capture_kind = capture.capture_kind,
         });
@@ -290,7 +289,7 @@ void collect_owned_cleanup_actions_from_expression(
             });
         }
 
-        auto cleanup = cleanup_plan_for(captures);
+        auto cleanup = cleanup_plan_for(captures, context.lowering.package_name);
         auto drop_cleanup = drop_cleanup_plan_for(
             concurrency_cleanup_symbol_name(
                 expression_plan_kind(expression),
@@ -871,7 +870,7 @@ auto plan_concurrency_expression(
         .size_bytes = lowered_struct_size_bytes(capture_llvm_types(plan.captures), context.lowering).value_or(0),
         .fields = plan.captures,
     };
-    plan.cleanup = cleanup_plan_for(plan.captures);
+    plan.cleanup = cleanup_plan_for(plan.captures, context.lowering.package_name);
     plan.cleanup.owned_cleanup = drop_cleanup_plan_for(
         plan.cleanup_symbol_name,
         expression.line,

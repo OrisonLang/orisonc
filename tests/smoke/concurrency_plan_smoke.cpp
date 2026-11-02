@@ -181,7 +181,7 @@ int main() {
     assert(record_plan->cleanup.owned_cleanup_candidates.front().llvm_type == "%record.Payload");
     assert(
         record_plan->cleanup.owned_cleanup_candidates.front().owned_cleanup_symbol_name ==
-        "__orison_owned_cleanup.Payload"
+        "__orison_owned_cleanup.Payload.demo.concurrency"
     );
     assert(record_plan->cleanup.owned_cleanup_candidates.front().field_index == 0);
     assert(
@@ -192,7 +192,10 @@ int main() {
     assert(record_plan->cleanup.owned_cleanup.actions.size() == 1);
     assert(record_plan->cleanup.owned_cleanup.actions.front().capture_name == "payload");
     assert(record_plan->cleanup.owned_cleanup.actions.front().source_type_name == "Payload");
-    assert(record_plan->cleanup.owned_cleanup.actions.front().symbol_name == "__orison_owned_cleanup.Payload");
+    assert(
+        record_plan->cleanup.owned_cleanup.actions.front().symbol_name ==
+        "__orison_owned_cleanup.Payload.demo.concurrency"
+    );
     assert(record_plan->cleanup.owned_cleanup.actions.front().field_index == 0);
     assert(record_plan->cleanup.owned_cleanup.actions.front().discovery_line == 20);
     assert(!orison::lowering::drop_calls_enabled(record_plan->cleanup.owned_cleanup));
@@ -202,7 +205,10 @@ int main() {
     auto missing_authorization = orison::lowering::plan_owned_cleanup_authorization(authorized_plan, {});
     assert(!missing_authorization.authorized);
     assert(missing_authorization.missing_declarations.size() == 1);
-    assert(missing_authorization.missing_declarations.front().symbol_name == "__orison_owned_cleanup.Payload");
+    assert(
+        missing_authorization.missing_declarations.front().symbol_name ==
+        "__orison_owned_cleanup.Payload.demo.concurrency"
+    );
     auto missing_authorization_report = orison::lowering::format_owned_cleanup_authorization_report(
         authorized_plan,
         missing_authorization
@@ -215,13 +221,14 @@ int main() {
     );
     assert(
         missing_authorization_report[1] ==
-        "missing drop declaration __orison_owned_cleanup.Payload for Payload capture payload field 0 discovered at line 20"
+        "missing drop declaration __orison_owned_cleanup.Payload.demo.concurrency for Payload capture payload field 0 "
+        "discovered at line 20"
     );
     auto semantic_blocked_authorization = orison::lowering::plan_owned_cleanup_authorization(
         authorized_plan,
         {
             orison::lowering::OwnedCleanupDeclaration {
-                .symbol_name = "__orison_owned_cleanup.Payload",
+                .symbol_name = "__orison_owned_cleanup.Payload.demo.concurrency",
                 .source_type_name = "Payload",
                 .discovery_line = 20,
                 .emit_declaration = true,
@@ -231,7 +238,7 @@ int main() {
             orison::semantics::OwnedCleanupLoweringAuthorization {
                 .site = orison::semantics::OwnedCleanupSite {
                     .source_type_name = "Payload",
-                    .abi_symbol_name = "__orison_owned_cleanup.Payload",
+                    .abi_symbol_name = "__orison_owned_cleanup.Payload.demo.concurrency",
                     .owner_name = "payload",
                     .site_line = 20,
                 },
@@ -258,12 +265,12 @@ int main() {
     );
     assert(
         semantic_blocked_authorization_report[1] ==
-        "semantic drop lowering blocked __orison_owned_cleanup.Payload for Payload capture payload field 0 "
+        "semantic drop lowering blocked __orison_owned_cleanup.Payload.demo.concurrency for Payload capture payload field 0 "
         "discovered at line 20"
     );
     assert(
         semantic_blocked_authorization_report[2] ==
-        "semantic owned cleanup lowering not accepted __orison_owned_cleanup.Payload for Payload capture payload field 0 "
+        "semantic owned cleanup lowering not accepted __orison_owned_cleanup.Payload.demo.concurrency for Payload capture payload field 0 "
         "discovered at line 20"
     );
     auto semantic_blocked_readiness_snapshot = orison::lowering::plan_owned_cleanup_readiness_snapshot(
@@ -271,7 +278,7 @@ int main() {
             orison::semantics::OwnedCleanupLoweringAuthorization {
                 .site = orison::semantics::OwnedCleanupSite {
                     .source_type_name = "Payload",
-                    .abi_symbol_name = "__orison_owned_cleanup.Payload",
+                    .abi_symbol_name = "__orison_owned_cleanup.Payload.demo.concurrency",
                     .owner_name = "payload",
                     .site_line = 20,
                 },
@@ -282,7 +289,7 @@ int main() {
         },
         {
             orison::lowering::OwnedCleanupDeclaration {
-                .symbol_name = "__orison_owned_cleanup.Payload",
+                .symbol_name = "__orison_owned_cleanup.Payload.demo.concurrency",
                 .source_type_name = "Payload",
                 .discovery_line = 20,
                 .emit_declaration = true,
@@ -300,7 +307,8 @@ int main() {
     );
     assert(
         semantic_blocked_relation_report[1] ==
-        "drop readiness relation semantic blocker __orison_owned_cleanup.Payload for Payload capture payload field 0 "
+        "drop readiness relation semantic blocker __orison_owned_cleanup.Payload.demo.concurrency for Payload capture "
+        "payload field 0 "
         "discovered at line 20"
     );
     auto readiness_snapshot = orison::lowering::plan_owned_cleanup_readiness_snapshot(
@@ -308,7 +316,7 @@ int main() {
             orison::semantics::OwnedCleanupLoweringAuthorization {
                 .site = orison::semantics::OwnedCleanupSite {
                     .source_type_name = "Payload",
-                    .abi_symbol_name = "__orison_owned_cleanup.Payload",
+                    .abi_symbol_name = "__orison_owned_cleanup.Payload.demo.concurrency",
                     .owner_name = "payload",
                     .site_line = 20,
                 },
@@ -319,7 +327,7 @@ int main() {
         },
         {
             orison::lowering::OwnedCleanupDeclaration {
-                .symbol_name = "__orison_owned_cleanup.Payload",
+                .symbol_name = "__orison_owned_cleanup.Payload.demo.concurrency",
                 .source_type_name = "Payload",
                 .discovery_line = 20,
                 .emit_declaration = true,
@@ -337,8 +345,14 @@ int main() {
         readiness_snapshot_report[0] ==
         "drop readiness snapshot semantic authorizations 1 emitted declarations 1 cleanup authorizations 1"
     );
-    assert(readiness_snapshot_report[1] == "semantic readiness __orison_owned_cleanup.Payload for Payload authorized");
-    assert(readiness_snapshot_report[2] == "emitted declaration readiness __orison_owned_cleanup.Payload for Payload");
+    assert(
+        readiness_snapshot_report[1] ==
+        "semantic readiness __orison_owned_cleanup.Payload.demo.concurrency for Payload authorized"
+    );
+    assert(
+        readiness_snapshot_report[2] ==
+        "emitted declaration readiness __orison_owned_cleanup.Payload.demo.concurrency for Payload"
+    );
     assert(
         readiness_snapshot_report[3] ==
         "cleanup readiness __orison_thread_cleanup.record_worker.20.2 authorized"
@@ -364,7 +378,7 @@ int main() {
         authorized_plan,
         {
             orison::lowering::OwnedCleanupDeclaration {
-                .symbol_name = "__orison_owned_cleanup.Payload",
+                .symbol_name = "__orison_owned_cleanup.Payload.demo.concurrency",
                 .source_type_name = "Payload",
                 .discovery_line = 20,
             },
@@ -375,7 +389,7 @@ int main() {
         authorized_plan,
         {
             orison::lowering::OwnedCleanupDeclaration {
-                .symbol_name = "__orison_owned_cleanup.Payload",
+                .symbol_name = "__orison_owned_cleanup.Payload.demo.concurrency",
                 .source_type_name = "Payload",
                 .discovery_line = 20,
                 .emit_declaration = true,
@@ -387,7 +401,7 @@ int main() {
         authorized_plan,
         {
             orison::lowering::OwnedCleanupDeclaration {
-                .symbol_name = "__orison_owned_cleanup.Payload",
+                .symbol_name = "__orison_owned_cleanup.Payload.demo.concurrency",
                 .source_type_name = "Payload",
                 .discovery_line = 20,
                 .emit_declaration = true,
@@ -423,7 +437,7 @@ int main() {
     );
     assert(
         record_drop_cleanup_report[1] ==
-        "planned drop action __orison_owned_cleanup.Payload for capture payload: Payload field 0 "
+        "planned drop action __orison_owned_cleanup.Payload.demo.concurrency for capture payload: Payload field 0 "
         "discovered at line 20 (metadata only)"
     );
 

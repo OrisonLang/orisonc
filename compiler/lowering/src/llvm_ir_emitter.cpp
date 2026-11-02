@@ -225,20 +225,18 @@ auto owned_cleanup_element_symbol(
     if (is_scalar_or_nonowning_source_type(source_type_name)) {
         return std::nullopt;
     }
-    auto const symbol_name = semantics::owned_cleanup_abi_symbol_name(source_type_name);
     auto match = std::ranges::find_if(
         implementations,
         [&](semantics::OwnedCleanupImplementation const& implementation) {
             return implementation.proven &&
                 implementation.body.finite &&
-                implementation.source_type_name == source_type_name &&
-                implementation.abi_symbol_name == symbol_name;
+                implementation.source_type_name == source_type_name;
         }
     );
     if (match == implementations.end()) {
         return std::nullopt;
     }
-    return symbol_name;
+    return match->abi_symbol_name;
 }
 
 auto fixed_array_length_value(std::string_view source_type_name) -> std::optional<std::string> {
@@ -675,7 +673,7 @@ void add_compiler_intrinsic_cleanup_dependency(
         return;
     }
 
-    auto const symbol_name = semantics::owned_cleanup_abi_symbol_name(source_type);
+    auto const symbol_name = semantics::owned_cleanup_abi_symbol_name(module.package_name, source_type);
     auto implementation = std::ranges::find_if(
         implementations,
         [&](semantics::OwnedCleanupImplementation const& candidate) {
@@ -685,6 +683,7 @@ void add_compiler_intrinsic_cleanup_dependency(
     );
     if (implementation == implementations.end()) {
         implementations.push_back(semantics::compiler_intrinsic_owned_cleanup_implementation(
+            module.package_name,
             source_type,
             record_declaration_line(source_type, module)
         ));
@@ -728,14 +727,12 @@ auto owned_cleanup_implementation_for_type(
     std::string_view source_type_name,
     std::vector<semantics::OwnedCleanupImplementation> const& implementations
 ) -> std::optional<semantics::OwnedCleanupImplementation> {
-    auto const symbol_name = semantics::owned_cleanup_abi_symbol_name(source_type_name);
     auto implementation = std::ranges::find_if(
         implementations,
         [&](semantics::OwnedCleanupImplementation const& candidate) {
             return candidate.proven &&
                 candidate.body.finite &&
-                candidate.source_type_name == source_type_name &&
-                candidate.abi_symbol_name == symbol_name;
+                candidate.source_type_name == source_type_name;
         }
     );
     if (implementation == implementations.end()) {
@@ -927,7 +924,10 @@ auto collect_runtime_indexed_member_cleanup_sibling_fields(
                 if (field.name == selected_field_name || field.source_type_name.empty() || field.llvm_type.empty()) {
                     continue;
                 }
-                auto owned_cleanup_symbol_name = semantics::owned_cleanup_abi_symbol_name(field.source_type_name);
+                auto owned_cleanup_symbol_name = semantics::owned_cleanup_abi_symbol_name(
+                    context.package_name,
+                    field.source_type_name
+                );
                 auto const owned_cleanup_definition_available =
                     std::ranges::find(owned_cleanup_symbols, owned_cleanup_symbol_name) !=
                     owned_cleanup_symbols.end();
@@ -2017,17 +2017,22 @@ auto validate_generated_type_symbols(
 auto has_authorized_dynamic_array_owned_element_cleanup(
     std::string const& owner_name,
     std::string const& element_source_type_name,
+    std::string_view package_name,
     std::vector<semantics::OwnedCleanupLoweringAuthorization> const& authorizations
 ) -> bool {
     auto const expected_owner_name = owner_name + ".element";
-    auto const expected_symbol_name = "__orison_owned_cleanup." + element_source_type_name;
+    auto const expected_symbol_name =
+        semantics::owned_cleanup_abi_symbol_name(package_name, element_source_type_name);
+    auto const fixture_symbol_name =
+        semantics::owned_cleanup_abi_symbol_name(element_source_type_name);
     return std::ranges::any_of(
         authorizations,
         [&](semantics::OwnedCleanupLoweringAuthorization const& authorization) {
             return authorization.authorized &&
                 authorization.site.owner_name == expected_owner_name &&
                 authorization.site.source_type_name == element_source_type_name &&
-                authorization.site.abi_symbol_name == expected_symbol_name;
+                (authorization.site.abi_symbol_name == expected_symbol_name ||
+                 authorization.site.abi_symbol_name == fixture_symbol_name);
         }
     );
 }
@@ -2035,6 +2040,7 @@ auto has_authorized_dynamic_array_owned_element_cleanup(
 auto can_lower_dynamic_array_parameter_descriptor(
     syntax::ParameterSyntax const& parameter,
     DynamicSequenceSourceType const& sequence,
+    std::string_view package_name,
     LlvmIrEmissionOptions const& options
 ) -> bool {
     return options.fixture_enable_dynamic_array_parameter_descriptors ||
@@ -2042,6 +2048,7 @@ auto can_lower_dynamic_array_parameter_descriptor(
         has_authorized_dynamic_array_owned_element_cleanup(
             parameter.name,
             sequence.element_source_type_name,
+            package_name,
             options.semantic_owned_cleanup_lowering_authorizations
         );
 }
@@ -2065,7 +2072,12 @@ void enable_dynamic_array_parameter_descriptors(
             if (!sequence.has_value() || sequence->kind != DynamicSequenceKind::dynamic_array) {
                 continue;
             }
-            if (!can_lower_dynamic_array_parameter_descriptor(function.parameters[index], *sequence, options)) {
+            if (!can_lower_dynamic_array_parameter_descriptor(
+                    function.parameters[index],
+                    *sequence,
+                    module.package_name,
+                    options
+                )) {
                 continue;
             }
             signature->second.parameter_types[index] = std::string {dynamic_array_descriptor_llvm_type()};
@@ -2641,6 +2653,7 @@ auto has_dynamic_array_append_call(
 
 auto has_lowerable_dynamic_array_parameter(
     syntax::FunctionSyntax const& function,
+    std::string_view package_name,
     LlvmIrEmissionOptions const& options
 ) -> bool {
     for (auto const& parameter : function.parameters) {
@@ -2649,7 +2662,12 @@ auto has_lowerable_dynamic_array_parameter(
         if (!sequence.has_value() || sequence->kind != DynamicSequenceKind::dynamic_array) {
             continue;
         }
-        if (can_lower_dynamic_array_parameter_descriptor(parameter, *sequence, options)) {
+        if (can_lower_dynamic_array_parameter_descriptor(
+                parameter,
+                *sequence,
+                package_name,
+                options
+            )) {
             return true;
         }
     }
@@ -2661,20 +2679,20 @@ auto has_lowerable_dynamic_array_parameter(
     LlvmIrEmissionOptions const& options
 ) -> bool {
     for (auto const& function : module.functions) {
-        if (has_lowerable_dynamic_array_parameter(function, options)) {
+        if (has_lowerable_dynamic_array_parameter(function, module.package_name, options)) {
             return true;
         }
     }
     for (auto const& implementation : module.implementations) {
         for (auto const& method : implementation.methods) {
-            if (has_lowerable_dynamic_array_parameter(method, options)) {
+            if (has_lowerable_dynamic_array_parameter(method, module.package_name, options)) {
                 return true;
             }
         }
     }
     for (auto const& extension : module.extensions) {
         for (auto const& method : extension.methods) {
-            if (has_lowerable_dynamic_array_parameter(method, options)) {
+            if (has_lowerable_dynamic_array_parameter(method, module.package_name, options)) {
                 return true;
             }
         }
@@ -3794,7 +3812,8 @@ auto dynamic_array_cleanup_symbol_name(std::size_t ordinal) -> std::string {
 auto dynamic_array_element_owned_cleanup_action(
     DynamicArrayConstructionPlan const& plan,
     std::size_t ordinal,
-    std::string_view owner_name
+    std::string_view owner_name,
+    std::string_view package_name
 ) -> OwnedCleanupAction {
     auto capture_name = !owner_name.empty()
         ? std::string {owner_name} + ".element"
@@ -3802,7 +3821,7 @@ auto dynamic_array_element_owned_cleanup_action(
     return OwnedCleanupAction {
         .capture_name = std::move(capture_name),
         .source_type_name = plan.element_source_type_name,
-        .symbol_name = semantics::owned_cleanup_abi_symbol_name(plan.element_source_type_name),
+        .symbol_name = semantics::owned_cleanup_abi_symbol_name(package_name, plan.element_source_type_name),
         .field_index = ordinal,
     };
 }
@@ -3810,7 +3829,8 @@ auto dynamic_array_element_owned_cleanup_action(
 auto dynamic_array_element_owned_cleanup(
     DynamicArrayConstructionPlan const& plan,
     std::size_t ordinal,
-    std::string_view owner_name
+    std::string_view owner_name,
+    std::string_view package_name
 ) -> std::optional<ConcurrencyDropCleanupPlan> {
     if (is_scalar_or_nonowning_source_type(plan.element_source_type_name)) {
         return std::nullopt;
@@ -3820,18 +3840,26 @@ auto dynamic_array_element_owned_cleanup(
         .cleanup_symbol_name = dynamic_array_cleanup_symbol_name(ordinal),
         .requires_semantic_authorization = true,
     };
-    cleanup.actions.push_back(dynamic_array_element_owned_cleanup_action(plan, ordinal, owner_name));
+    cleanup.actions.push_back(dynamic_array_element_owned_cleanup_action(
+        plan,
+        ordinal,
+        owner_name,
+        package_name
+    ));
     return cleanup;
 }
 
 auto collect_dynamic_array_element_owned_cleanups(
     std::vector<DynamicArrayConstructionPlan> const& plans,
-    std::vector<FixtureDynamicArrayConstructionRequest> const& requests
+    std::vector<FixtureDynamicArrayConstructionRequest> const& requests,
+    std::string_view package_name
 ) -> std::vector<ConcurrencyDropCleanupPlan> {
     auto cleanups = std::vector<ConcurrencyDropCleanupPlan> {};
     for (auto index = std::size_t {0}; index < plans.size(); ++index) {
-        auto owner_name = index < requests.size() ? requests[index].owner_name : std::string_view {};
-        auto cleanup = dynamic_array_element_owned_cleanup(plans[index], index, owner_name);
+        auto owner_name = index < requests.size() && !requests[index].owner_name.empty()
+            ? std::string_view {requests[index].owner_name}
+            : std::string_view {plans[index].owner_name};
+        auto cleanup = dynamic_array_element_owned_cleanup(plans[index], index, owner_name, package_name);
         if (cleanup.has_value()) {
             cleanups.push_back(std::move(*cleanup));
         }
@@ -3841,7 +3869,8 @@ auto collect_dynamic_array_element_owned_cleanups(
 
 void append_function_emission_reports(
     LlvmIrEmissionResult& result,
-    FunctionEmissionResult const& function_emission
+    FunctionEmissionResult const& function_emission,
+    std::string_view package_name
 ) {
     result.generated_module_symbols.insert(
         result.generated_module_symbols.end(),
@@ -3989,6 +4018,11 @@ void append_function_emission_reports(
         function_emission.runtime_indexed_member_cleanup_mutation_rewrite_promotion_statuses.end()
     );
     for (auto plan : function_emission.runtime_indexed_cleanup_emission_plans) {
+        plan.ir_plan.owned_cleanup_callee_name = semantics::owned_cleanup_abi_symbol_name(
+            package_name,
+            plan.element_source_type_name
+        );
+        plan.gated_ir_slice_lines = render_runtime_indexed_cleanup_ir_plan(plan.ir_plan);
         plan.function_symbol_name = function_emission.function_symbol_name;
         plan.function_insertion_block_name = plan.ir_plan.entry_block_name;
         if (plan.ir_plan.descriptor_owner_ready) {
@@ -4830,7 +4864,8 @@ auto emit_module(
             );
         result.dynamic_array_cleanup_obligations = plan_dynamic_array_descriptor_cleanup_obligations(
             result.dynamic_array_descriptor_cleanup_plans,
-            result.dynamic_array_construction_plans.size()
+            result.dynamic_array_construction_plans.size(),
+            module.package_name
         );
         result.dynamic_array_cleanup_sequence_plans = plan_dynamic_array_cleanup_sequences(
             result.dynamic_array_cleanup_obligations
@@ -4951,7 +4986,8 @@ auto emit_module(
         auto dynamic_array_owned_cleanups =
             collect_dynamic_array_element_owned_cleanups(
                 result.dynamic_array_construction_plans,
-                options.fixture_dynamic_array_construction_requests
+                options.fixture_dynamic_array_construction_requests,
+                module.package_name
             );
         auto dynamic_array_descriptor_owned_cleanups = std::vector<ConcurrencyDropCleanupPlan> {};
         dynamic_array_descriptor_owned_cleanups.reserve(result.dynamic_array_cleanup_obligations.size());
@@ -4966,6 +5002,19 @@ auto emit_module(
             std::make_move_iterator(dynamic_array_descriptor_owned_cleanups.end())
         );
         for (auto& cleanup : dynamic_array_owned_cleanups) {
+            for (auto& action : cleanup.actions) {
+                auto const authorization = std::ranges::find_if(
+                    result.semantic_owned_cleanup_lowering_authorizations,
+                    [&](auto const& candidate) {
+                        return candidate.authorized &&
+                            candidate.site.source_type_name == action.source_type_name &&
+                            !candidate.site.abi_symbol_name.empty();
+                    }
+                );
+                if (authorization != result.semantic_owned_cleanup_lowering_authorizations.end()) {
+                    action.symbol_name = authorization->site.abi_symbol_name;
+                }
+            }
             result.owned_cleanup_actions.insert(
                 result.owned_cleanup_actions.end(),
                 cleanup.actions.begin(),
@@ -5364,7 +5413,7 @@ auto emit_module(
             function_options
         );
         output << function_emission.ir_text;
-        append_function_emission_reports(result, function_emission);
+        append_function_emission_reports(result, function_emission, module.package_name);
         output << "\n";
     }
     for (auto const& function_ptr : context.generic_function_specializations) {
@@ -5384,7 +5433,7 @@ auto emit_module(
             function_options
         );
         output << function_emission.ir_text;
-        append_function_emission_reports(result, function_emission);
+        append_function_emission_reports(result, function_emission, module.package_name);
         output << "\n";
     }
     refresh_runtime_indexed_member_cleanup_binding_metadata();
@@ -5409,7 +5458,7 @@ auto emit_module(
             function_options
         );
         output << function_emission.ir_text;
-        append_function_emission_reports(result, function_emission);
+        append_function_emission_reports(result, function_emission, module.package_name);
         output << "\n";
         if (result.has_errors()) {
             refresh_runtime_indexed_member_cleanup_binding_metadata();
@@ -5459,7 +5508,7 @@ auto emit_module(
             function_options
         );
         output << function_emission.ir_text;
-        append_function_emission_reports(result, function_emission);
+        append_function_emission_reports(result, function_emission, module.package_name);
         output << "\n";
         if (result.has_errors()) {
             refresh_runtime_indexed_member_cleanup_binding_metadata();

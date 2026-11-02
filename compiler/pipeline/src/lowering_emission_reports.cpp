@@ -3144,7 +3144,8 @@ auto member_cleanup_executable_cfg_append(
     std::string const& continuation_terminator_text,
     std::string const& selected_element_address,
     std::string const& selected_index_operand,
-    std::optional<lowering::DynamicArrayDescriptorCleanupPlan> const& descriptor_cleanup_plan
+    std::optional<lowering::DynamicArrayDescriptorCleanupPlan> const& descriptor_cleanup_plan,
+    std::string_view element_owned_cleanup_symbol_name
 ) -> std::string {
     auto const skip_block_name =
         label_from_member_cleanup_preview(plan.appended_cfg_preview_lines, ".skip_moved");
@@ -3160,7 +3161,8 @@ auto member_cleanup_executable_cfg_append(
         continuation_terminator_text.empty()) {
         return {};
     }
-    if (descriptor_cleanup_plan.has_value() && selected_index_operand.empty()) {
+    if (descriptor_cleanup_plan.has_value() &&
+        (selected_index_operand.empty() || element_owned_cleanup_symbol_name.empty())) {
         return {};
     }
 
@@ -3225,7 +3227,7 @@ auto member_cleanup_executable_cfg_append(
                << "  " << prefix << ".element.addr = getelementptr "
                << cleanup_plan.element_llvm_type << ", ptr "
                << prefix << ".cleanup.data, i64 " << prefix << ".index\n"
-               << "  call void @" << semantics::owned_cleanup_abi_symbol_name(plan.element_source_type_name)
+               << "  call void @" << element_owned_cleanup_symbol_name
                << "(ptr " << prefix << ".element.addr)\n"
                << "  store " << cleanup_plan.element_llvm_type
                << " zeroinitializer, ptr " << prefix << ".element.addr\n"
@@ -3247,6 +3249,38 @@ auto member_cleanup_executable_cfg_append(
            << plan.exit_block_name << ":\n"
            << continuation_terminator_text;
     return output.str();
+}
+
+auto member_cleanup_element_owned_cleanup_symbol_name(
+    lowering::LlvmIrEmissionResult const& emission,
+    lowering::RuntimeIndexedMemberCleanupFunctionRewriteEditScriptPlan const& plan
+) -> std::string {
+    auto const expected_owner_name = plan.owner_name + ".element";
+    auto const authorization = std::ranges::find_if(
+        emission.semantic_owned_cleanup_lowering_authorizations,
+        [&](auto const& candidate) {
+            return candidate.authorized &&
+                candidate.site.owner_name == expected_owner_name &&
+                candidate.site.source_type_name == plan.element_source_type_name &&
+                !candidate.site.abi_symbol_name.empty();
+        }
+    );
+    if (authorization != emission.semantic_owned_cleanup_lowering_authorizations.end()) {
+        return authorization->site.abi_symbol_name;
+    }
+    auto const type_authorization = std::ranges::find_if(
+        emission.semantic_owned_cleanup_lowering_authorizations,
+        [&](auto const& candidate) {
+            return candidate.authorized &&
+                candidate.site.owner_name.ends_with(".element") &&
+                candidate.site.source_type_name == plan.element_source_type_name &&
+                !candidate.site.abi_symbol_name.empty();
+        }
+    );
+    if (type_authorization != emission.semantic_owned_cleanup_lowering_authorizations.end()) {
+        return type_authorization->site.abi_symbol_name;
+    }
+    return {};
 }
 
 auto member_cleanup_helper_body(
@@ -3449,12 +3483,15 @@ auto apply_runtime_indexed_member_cleanup_function_ir_module_rewrite_mutation(
             selected_runtime_indexed_member_cleanup_descriptor_storage(selected_element_address, original_function_ir);
         auto const descriptor_cleanup_plan =
             member_cleanup_descriptor_cleanup_plan(emission, edit_plan, selected_descriptor_storage);
+        auto const element_owned_cleanup_symbol_name =
+            member_cleanup_element_owned_cleanup_symbol_name(emission, edit_plan);
         auto const append_text = member_cleanup_executable_cfg_append(
             edit_plan,
             expected_branch_text,
             selected_element_address,
             selected_index_operand,
-            descriptor_cleanup_plan
+            descriptor_cleanup_plan,
+            element_owned_cleanup_symbol_name
         );
         if (append_text.empty()) {
             state.candidate_verified = false;

@@ -237,21 +237,20 @@ inline auto computed_dynamic_array_element_owned_cleanup_symbol_name(
     LlvmIrEmissionOptions const& options
 ) -> std::optional<std::string> {
     auto expected_owner_name = std::string {cleanup_owner_name} + ".element";
-    auto expected_symbol_name = semantics::owned_cleanup_abi_symbol_name(element_source_type_name);
     for (auto const& authorization : options.semantic_owned_cleanup_lowering_authorizations) {
         if (authorization.authorized &&
             authorization.site.owner_name == expected_owner_name &&
             authorization.site.source_type_name == element_source_type_name &&
-            authorization.site.abi_symbol_name == expected_symbol_name) {
-            return expected_symbol_name;
+            !authorization.site.abi_symbol_name.empty()) {
+            return authorization.site.abi_symbol_name;
         }
     }
     for (auto const& authorization : options.semantic_owned_cleanup_lowering_authorizations) {
         if (authorization.authorized &&
             authorization.site.owner_name.ends_with(".element") &&
             authorization.site.source_type_name == element_source_type_name &&
-            authorization.site.abi_symbol_name == expected_symbol_name) {
-            return expected_symbol_name;
+            !authorization.site.abi_symbol_name.empty()) {
+            return authorization.site.abi_symbol_name;
         }
     }
     return std::nullopt;
@@ -1230,7 +1229,8 @@ auto lower_sequence_for_statement(
                             emitted_cleanup->source_line = statement.line;
                             auto obligation = plan_dynamic_array_descriptor_cleanup_obligation(
                                 *emitted_cleanup,
-                                session.state.emitted_dynamic_array_cleanup_obligations.size()
+                                session.state.emitted_dynamic_array_cleanup_obligations.size(),
+                                context.lowering.package_name
                             );
                             auto sequence_plan = plan_dynamic_array_cleanup_sequence(obligation);
                             auto sequence_verification =

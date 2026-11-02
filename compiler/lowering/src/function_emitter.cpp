@@ -448,9 +448,10 @@ auto source_type_has_dynamic_array_cleanup_descendant(
 
 auto owned_cleanup_symbol_available(
     std::string_view source_type_name,
+    std::string_view package_name,
     LlvmIrEmissionOptions const& options
 ) -> std::optional<std::string> {
-    auto symbol_name = semantics::owned_cleanup_abi_symbol_name(source_type_name);
+    auto symbol_name = semantics::owned_cleanup_abi_symbol_name(package_name, source_type_name);
     if (std::ranges::find(options.owned_cleanup_definition_symbols, symbol_name) ==
         options.owned_cleanup_definition_symbols.end()) {
         return std::nullopt;
@@ -539,7 +540,11 @@ auto emit_owned_cleanup_record_local_cleanups(
         if (!owner_has_local_dynamic_array_cleanup_plan(name, session)) {
             continue;
         }
-        if (!owned_cleanup_symbol_available(source_type_name, context.options).has_value()) {
+        if (!owned_cleanup_symbol_available(
+                source_type_name,
+                context.lowering.package_name,
+                context.options
+            ).has_value()) {
             continue;
         }
         if (!aggregate_storage_for_name(name, session.state).has_value()) {
@@ -556,7 +561,11 @@ auto emit_owned_cleanup_record_local_cleanups(
         }
         auto const record = context.lowering.records.find(source_type->second);
         auto const storage = aggregate_storage_for_name(name, session.state);
-        auto const symbol = owned_cleanup_symbol_available(source_type->second, context.options);
+        auto const symbol = owned_cleanup_symbol_available(
+            source_type->second,
+            context.lowering.package_name,
+            context.options
+        );
         if (record == context.lowering.records.end() || !storage.has_value() || !symbol.has_value()) {
             continue;
         }
@@ -599,7 +608,11 @@ auto emit_owned_cleanup_fixed_array_local_cleanups(
         if (!owner_has_local_dynamic_array_cleanup_plan(name, session)) {
             continue;
         }
-        if (!owned_cleanup_symbol_available(*element_source_type, context.options).has_value()) {
+        if (!owned_cleanup_symbol_available(
+                *element_source_type,
+                context.lowering.package_name,
+                context.options
+            ).has_value()) {
             continue;
         }
         if (!aggregate_storage_for_name(name, session.state).has_value()) {
@@ -621,7 +634,11 @@ auto emit_owned_cleanup_fixed_array_local_cleanups(
             continue;
         }
         auto const parsed_array_type = parse_llvm_array_type(array_type->type);
-        auto const symbol = owned_cleanup_symbol_available(*element_source_type, context.options);
+        auto const symbol = owned_cleanup_symbol_available(
+            *element_source_type,
+            context.lowering.package_name,
+            context.options
+        );
         if (!parsed_array_type.has_value() || !symbol.has_value()) {
             continue;
         }
@@ -886,6 +903,7 @@ auto owned_aggregate_projection_value_read_diagnostic(
 auto dynamic_array_parameter_element_cleanup_proven(
     std::string_view parameter_name,
     std::string_view source_type_name,
+    std::string_view package_name,
     LlvmIrEmissionOptions const& options
 ) -> bool {
     if (parameter_name == "this") {
@@ -903,7 +921,12 @@ auto dynamic_array_parameter_element_cleanup_proven(
     }
 
     auto const expected_owner_name = std::string {parameter_name} + ".element";
-    auto const expected_symbol_name = semantics::owned_cleanup_abi_symbol_name(sequence->element_source_type_name);
+    auto const expected_symbol_name = semantics::owned_cleanup_abi_symbol_name(
+        package_name,
+        sequence->element_source_type_name
+    );
+    auto const fixture_symbol_name =
+        semantics::owned_cleanup_abi_symbol_name(sequence->element_source_type_name);
     if (std::ranges::find(options.owned_cleanup_definition_symbols, expected_symbol_name) !=
         options.owned_cleanup_definition_symbols.end()) {
         return true;
@@ -912,7 +935,8 @@ auto dynamic_array_parameter_element_cleanup_proven(
         return authorization.authorized &&
             authorization.site.owner_name == expected_owner_name &&
             authorization.site.source_type_name == sequence->element_source_type_name &&
-            authorization.site.abi_symbol_name == expected_symbol_name;
+            (authorization.site.abi_symbol_name == expected_symbol_name ||
+             authorization.site.abi_symbol_name == fixture_symbol_name);
     });
 }
 
@@ -1046,7 +1070,12 @@ void seed_bound_dynamic_array_parameter_cleanup_owner(
             parameter_name,
             source_type_name,
             *storage,
-            dynamic_array_parameter_element_cleanup_proven(parameter_name, source_type_name, context.options),
+            dynamic_array_parameter_element_cleanup_proven(
+                parameter_name,
+                source_type_name,
+                context.lowering.package_name,
+                context.options
+            ),
             context.lowering
         );
     } else if (auto const descriptor = matching_dynamic_array_descriptor_summary_binding(
@@ -1060,10 +1089,20 @@ void seed_bound_dynamic_array_parameter_cleanup_owner(
             parameter_name,
             source_type_name,
             *storage,
-            dynamic_array_parameter_element_cleanup_proven(parameter_name, source_type_name, context.options),
+            dynamic_array_parameter_element_cleanup_proven(
+                parameter_name,
+                source_type_name,
+                context.lowering.package_name,
+                context.options
+            ),
             context.lowering
         );
-    } else if (dynamic_array_parameter_element_cleanup_proven(parameter_name, source_type_name, context.options)) {
+    } else if (dynamic_array_parameter_element_cleanup_proven(
+                   parameter_name,
+                   source_type_name,
+                   context.lowering.package_name,
+                   context.options
+               )) {
         lifetime_plan = plan_dynamic_array_bound_parameter_lifetime(
             parameter_name,
             source_type_name,
@@ -1098,11 +1137,13 @@ auto unsupported_dynamic_array_parameter_diagnostic(
 
 auto dynamic_array_owned_parameter_has_owned_cleanup_proof(
     syntax::ParameterSyntax const& parameter,
+    std::string_view package_name,
     LlvmIrEmissionOptions const& options
 ) -> bool {
     return dynamic_array_parameter_element_cleanup_proven(
         parameter.name,
         render_source_type_name(parameter.type),
+        package_name,
         options
     );
 }
@@ -1976,7 +2017,11 @@ void emit_function_body(
             return;
         }
         if (index < function.parameters.size() &&
-            !dynamic_array_owned_parameter_has_owned_cleanup_proof(function.parameters[index], context.options)) {
+            !dynamic_array_owned_parameter_has_owned_cleanup_proof(
+                function.parameters[index],
+                context.lowering.package_name,
+                context.options
+            )) {
             if (auto diagnostic = unsupported_dynamic_array_parameter_diagnostic(function.parameters[index])) {
                 diagnostics.error(function.line, *diagnostic);
                 return;

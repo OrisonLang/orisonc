@@ -34,6 +34,7 @@ struct OwnedCleanupImplementation {
 };
 
 struct OwnedCleanupImplementationCandidate {
+    std::string package_name;
     std::string source_type_name;
     std::size_t declaration_line = 0;
     OwnedCleanupImplementationBodySummary body;
@@ -85,6 +86,11 @@ struct OwnedCleanupLoweringAuthorization {
 
 auto owned_cleanup_abi_symbol_name(std::string_view source_type_name) -> std::string;
 
+auto owned_cleanup_abi_symbol_name(
+    std::string_view package_name,
+    std::string_view source_type_name
+) -> std::string;
+
 auto owned_cleanup_implementation_origin_name(OwnedCleanupImplementationOrigin origin) -> std::string_view;
 
 auto semantic_owned_cleanup_implementation(
@@ -93,7 +99,20 @@ auto semantic_owned_cleanup_implementation(
     OwnedCleanupImplementationBodySummary body
 ) -> OwnedCleanupImplementation;
 
+auto semantic_owned_cleanup_implementation(
+    std::string_view package_name,
+    std::string source_type_name,
+    std::size_t declaration_line,
+    OwnedCleanupImplementationBodySummary body
+) -> OwnedCleanupImplementation;
+
 auto compiler_intrinsic_owned_cleanup_implementation(
+    std::string source_type_name,
+    std::size_t declaration_line
+) -> OwnedCleanupImplementation;
+
+auto compiler_intrinsic_owned_cleanup_implementation(
+    std::string_view package_name,
     std::string source_type_name,
     std::size_t declaration_line
 ) -> OwnedCleanupImplementation;

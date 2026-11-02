@@ -10,18 +10,21 @@
 
 #include <ostream>
 #include <string>
+#include <string_view>
 #include <vector>
 
 namespace orison::lowering {
 
 auto plan_dynamic_array_descriptor_cleanup_obligation(
     DynamicArrayDescriptorCleanupPlan const& plan,
-    std::size_t ordinal
+    std::size_t ordinal,
+    std::string_view package_name = {}
 ) -> DynamicArrayCleanupObligation;
 
 auto plan_dynamic_array_descriptor_cleanup_obligations(
     std::vector<DynamicArrayDescriptorCleanupPlan> const& plans,
-    std::size_t ordinal_offset = 0
+    std::size_t ordinal_offset = 0,
+    std::string_view package_name = {}
 ) -> std::vector<DynamicArrayCleanupObligation>;
 
 auto owned_cleanup_for_dynamic_array_cleanup_obligation(

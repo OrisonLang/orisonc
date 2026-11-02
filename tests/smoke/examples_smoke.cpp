@@ -14,6 +14,31 @@
 
 namespace smoke = orison::tests::smoke;
 
+namespace {
+
+auto find_owned_cleanup_ir(
+    std::string const& ir,
+    std::string_view operation,
+    std::string_view source_type_name,
+    std::string_view arguments,
+    std::size_t after = 0
+) -> std::size_t {
+    auto const symbol = std::string {operation} + " @__orison_owned_cleanup." +
+        std::string {source_type_name} + ".";
+    auto candidate = ir.find(symbol, after);
+    while (candidate != std::string::npos) {
+        auto const actual_arguments = ir.find("(ptr ", candidate + symbol.size());
+        if (actual_arguments != std::string::npos &&
+            ir.compare(actual_arguments, arguments.size(), arguments) == 0) {
+            return candidate;
+        }
+        candidate = ir.find(symbol, candidate + 1);
+    }
+    return std::string::npos;
+}
+
+}
+
 auto main() -> int {
     auto original_temp_root = std::filesystem::temp_directory_path();
     auto smoke_temp_root =
@@ -181,8 +206,11 @@ auto main() -> int {
         pipeline.emit_llvm(examples / "dynamic_array_owned_parameter.or");
     assert(!owned_dynamic_array_parameter_example.has_errors());
     assert(
-        owned_dynamic_array_parameter_example.ir_text.find(
-            "define void @__orison_owned_cleanup.Payload(ptr %value)"
+        find_owned_cleanup_ir(
+            owned_dynamic_array_parameter_example.ir_text,
+            "define void",
+            "Payload",
+            "(ptr %value)"
         ) != std::string::npos
     );
     assert(
@@ -194,8 +222,11 @@ auto main() -> int {
         pipeline.emit_llvm(examples / "local_dynamic_array_owned_replacement.or");
     assert(!owned_dynamic_array_replacement_example.has_errors());
     assert(
-        owned_dynamic_array_replacement_example.ir_text.find(
-            "call void @__orison_owned_cleanup.Payload(ptr %items.dynamic_array_assign"
+        find_owned_cleanup_ir(
+            owned_dynamic_array_replacement_example.ir_text,
+            "call void",
+            "Payload",
+            "(ptr %items.dynamic_array_assign"
         ) != std::string::npos
     );
     assert(
@@ -548,8 +579,11 @@ auto main() -> int {
         ) != std::string::npos
     );
     auto const owned_example_drop =
-        owned_computed_local_same_owner_dynamic_array_example.ir_text.find(
-            "call void @__orison_owned_cleanup.Payload(ptr %items.computed_dynamic_array_cleanup"
+        find_owned_cleanup_ir(
+            owned_computed_local_same_owner_dynamic_array_example.ir_text,
+            "call void",
+            "Payload",
+            "(ptr %items.computed_dynamic_array_cleanup"
         );
     auto const owned_example_deallocation =
         owned_computed_local_same_owner_dynamic_array_example.ir_text.find(
@@ -640,8 +674,11 @@ auto main() -> int {
         ) != std::string::npos
     );
     auto const owned_nested_drop =
-        owned_computed_local_nested_same_owner_dynamic_array_example.ir_text.find(
-            "call void @__orison_owned_cleanup.Payload(ptr %items.computed_dynamic_array_cleanup"
+        find_owned_cleanup_ir(
+            owned_computed_local_nested_same_owner_dynamic_array_example.ir_text,
+            "call void",
+            "Payload",
+            "(ptr %items.computed_dynamic_array_cleanup"
         );
     auto const owned_nested_deallocation =
         owned_computed_local_nested_same_owner_dynamic_array_example.ir_text.find(
@@ -709,8 +746,11 @@ auto main() -> int {
     auto choice_owned_tag_check = choice_dynamic_array_owned_payload.ir_text.find(
         "%buffer.Ready.values.choice_dynamic_array_cleanup2.is_active = icmp eq i32"
     );
-    auto choice_owned_drop = choice_dynamic_array_owned_payload.ir_text.find(
-        "call void @__orison_owned_cleanup.Payload(ptr %buffer.Ready.values.choice_dynamic_array_cleanup0.drop.element.addr)"
+    auto choice_owned_drop = find_owned_cleanup_ir(
+        choice_dynamic_array_owned_payload.ir_text,
+        "call void",
+        "Payload",
+        "(ptr %buffer.Ready.values.choice_dynamic_array_cleanup0.drop.element.addr)"
     );
     auto choice_owned_deallocate = choice_dynamic_array_owned_payload.ir_text.find(
         "call void @__orison_dynamic_array_deallocate(ptr "
@@ -749,8 +789,11 @@ auto main() -> int {
         "%buffer.Ready.values.choice_dynamic_array_cleanup.payload, 0",
         choice_distinct_payload_load
     );
-    auto choice_distinct_drop = choice_dynamic_array_distinct_payload.ir_text.find(
-        "call void @__orison_owned_cleanup.Payload(ptr %buffer.Ready.values.choice_dynamic_array_cleanup0.drop.element.addr)"
+    auto choice_distinct_drop = find_owned_cleanup_ir(
+        choice_dynamic_array_distinct_payload.ir_text,
+        "call void",
+        "Payload",
+        "(ptr %buffer.Ready.values.choice_dynamic_array_cleanup0.drop.element.addr)"
     );
     auto choice_distinct_deallocate = choice_dynamic_array_distinct_payload.ir_text.find(
         "call void @__orison_dynamic_array_deallocate(ptr "
@@ -760,8 +803,11 @@ auto main() -> int {
     auto choice_distinct_switch = choice_dynamic_array_distinct_payload.ir_text.find(
         "define i32 @consume_switch({ i32, [24 x i8] } %buffer)"
     );
-    auto choice_distinct_switch_drop = choice_dynamic_array_distinct_payload.ir_text.find(
-        "call void @__orison_owned_cleanup.Payload(ptr %values.dynamic_array_cleanup"
+    auto choice_distinct_switch_drop = find_owned_cleanup_ir(
+        choice_dynamic_array_distinct_payload.ir_text,
+        "call void",
+        "Payload",
+        "(ptr %values.dynamic_array_cleanup"
     );
     auto choice_distinct_switch_deallocate = choice_dynamic_array_distinct_payload.ir_text.find(
         "call void @__orison_dynamic_array_deallocate(ptr %values.dynamic_array_cleanup"
@@ -848,13 +894,19 @@ auto main() -> int {
         ) != std::string::npos
     );
     assert(
-        owned_dynamic_array_parameter_cleanup.ir_text.find(
-            "define void @__orison_owned_cleanup.Payload(ptr %value)"
+        find_owned_cleanup_ir(
+            owned_dynamic_array_parameter_cleanup.ir_text,
+            "define void",
+            "Payload",
+            "(ptr %value)"
         ) != std::string::npos
     );
     assert(
-        owned_dynamic_array_parameter_cleanup.ir_text.find(
-            "call void @__orison_owned_cleanup.Payload(ptr %items.dynamic_array_cleanup0.drop.element.addr)"
+        find_owned_cleanup_ir(
+            owned_dynamic_array_parameter_cleanup.ir_text,
+            "call void",
+            "Payload",
+            "(ptr %items.dynamic_array_cleanup0.drop.element.addr)"
         ) != std::string::npos
     );
     assert(

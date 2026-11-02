@@ -2847,6 +2847,7 @@ auto build_lowering_context(
     diagnostics::DiagnosticBag& diagnostics
 ) -> LoweringContext {
     auto context = LoweringContext {};
+    context.package_name = module.package_name;
     auto record_names = std::unordered_set<std::string> {};
     auto generic_records = std::unordered_map<std::string, syntax::RecordSyntax const*> {};
     auto generic_choices = std::unordered_map<std::string, syntax::ChoiceSyntax const*> {};

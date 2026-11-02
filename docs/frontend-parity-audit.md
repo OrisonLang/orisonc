@@ -3816,3 +3816,7 @@ This file tracks which source-language frontend slices are reflected in the curr
   `__orison_method.<package>.<receiver>.<method>`. Two packages can define the same method on the same receiver, compile
   separately, link with one consumer, and execute distinct behavior. Generic method specializations remain unchanged.
   A same-named record in two packages exposed a separate package-neutral owned-cleanup symbol collision for follow-up.
+- 2026-11-01: Generated owned-cleanup definitions and calls now use
+  `__orison_owned_cleanup.<mangled-type>.<package>`. Semantic authorization and every cleanup planning path preserve the
+  source package. Two packages defining `Counter` compile separately, link together, and run without cleanup-symbol
+  collisions. Package-neutral naming remains limited to module-free lowering fixtures. No source syntax changed.

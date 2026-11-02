@@ -277,6 +277,45 @@ void assert_failure_with_no_stdout_contains(
     assert(result.stderr_text.find(expected_message) != std::string::npos);
 }
 
+auto find_expected_fragment(
+    std::string const& text,
+    std::string_view expected_fragment,
+    std::size_t after = 0
+) -> std::size_t {
+    auto const direct = text.find(expected_fragment, after);
+    if (direct != std::string::npos) {
+        return direct;
+    }
+
+    auto const marker = expected_fragment.find("__orison_owned_cleanup.");
+    constexpr auto symbol_characters = std::string_view {
+        "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_.<>"
+    };
+    auto const symbol_end = expected_fragment.find_first_not_of(
+        symbol_characters,
+        marker + std::string_view {"__orison_owned_cleanup."}.size()
+    );
+    if (marker == std::string_view::npos || symbol_end == std::string_view::npos) {
+        return std::string::npos;
+    }
+
+    auto const prefix = expected_fragment.substr(0, symbol_end);
+    auto candidate = text.find(prefix, after);
+    while (candidate != std::string::npos) {
+        auto const actual_symbol_end = text.find_first_not_of(symbol_characters, candidate + prefix.size());
+        if (actual_symbol_end != std::string::npos &&
+            text.compare(
+                actual_symbol_end,
+                expected_fragment.size() - symbol_end,
+                expected_fragment.substr(symbol_end)
+            ) == 0) {
+            return candidate;
+        }
+        candidate = text.find(prefix, candidate + 1);
+    }
+    return std::string::npos;
+}
+
 void assert_success_with_stdout_contains(
     orison::driver::CompileResult const& result,
     std::initializer_list<std::string_view> expected_fragments
@@ -284,11 +323,11 @@ void assert_success_with_stdout_contains(
     assert(result.exit_code == 0);
     assert(result.stderr_text.empty());
     for (auto expected_fragment : expected_fragments) {
-        if (result.stdout_text.find(expected_fragment) == std::string::npos) {
+        if (find_expected_fragment(result.stdout_text, expected_fragment) == std::string::npos) {
             std::cerr << "missing expected fragment: " << expected_fragment << '\n';
             std::cerr << "stdout:\n" << result.stdout_text << '\n';
         }
-        assert(result.stdout_text.find(expected_fragment) != std::string::npos);
+        assert(find_expected_fragment(result.stdout_text, expected_fragment) != std::string::npos);
     }
 }
 
@@ -300,7 +339,7 @@ void assert_success_with_stdout_contains_in_order(
     assert(result.stderr_text.empty());
     auto search_offset = std::size_t {0};
     for (auto expected_fragment : expected_fragments) {
-        auto found = result.stdout_text.find(expected_fragment, search_offset);
+        auto found = find_expected_fragment(result.stdout_text, expected_fragment, search_offset);
         if (found == std::string::npos) {
             std::cerr << "missing expected fragment in order: " << expected_fragment << '\n';
             std::cerr << "stdout:\n" << result.stdout_text << '\n';
@@ -573,15 +612,19 @@ int main() {
             "define private void @__orison_thread_cleanup.launch.12.0(ptr %environment) {\n"
             "entry:\n"
             "  %cleanup.field.0 = getelementptr { %record.Payload }, ptr %environment, i32 0, i32 0\n"
-            "  ; cleanup candidate payload: Payload field 0 drop __orison_owned_cleanup.Payload\n"
-            "  call void @__orison_owned_cleanup.Payload(ptr %cleanup.field.0)\n"
+            "  ; cleanup candidate payload: Payload field 0 drop __orison_owned_cleanup.Payload.demo.dropreadiness\n"
+            "  call void @__orison_owned_cleanup.Payload.demo.dropreadiness(ptr %cleanup.field.0)\n"
             "  ret void\n"
             "}",
         }
     );
     assert(planned_drop_emit.stdout_text.find("planned drop __orison_owned_cleanup.Payload") == std::string::npos);
     assert(planned_drop_emit.stdout_text.find("declare void @__orison_owned_cleanup.Payload(ptr)") == std::string::npos);
-    assert(planned_drop_emit.stdout_text.find("define void @__orison_owned_cleanup.Payload(ptr %value)") != std::string::npos);
+    assert(
+        planned_drop_emit.stdout_text.find(
+            "define void @__orison_owned_cleanup.Payload.demo.dropreadiness(ptr %value)"
+        ) != std::string::npos
+    );
 
     auto planned_drop_report = run_planned_drops(app, planned_drop_report_path);
     assert_success_with_stdout_contains(planned_drop_report, {"planned drop __orison_owned_cleanup.Payload"});
@@ -637,7 +680,9 @@ int main() {
     assert(parsed_owned_cleanup_candidate_emit.exit_code == 0);
     assert(parsed_owned_cleanup_candidate_emit.stderr_text.empty());
     assert(
-        parsed_owned_cleanup_candidate_emit.stdout_text.find("define void @__orison_owned_cleanup.Payload(ptr %value)") !=
+        parsed_owned_cleanup_candidate_emit.stdout_text.find(
+            "define void @__orison_owned_cleanup.Payload.demo.parsedownedcleanup(ptr %value)"
+        ) !=
         std::string::npos
     );
 

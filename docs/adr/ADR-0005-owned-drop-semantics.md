@@ -359,6 +359,10 @@ inventing semantics outside the spec/tour.
   rendered `drop obligation` text remains compatibility output.
 - Semantic cleanup report orchestration now uses owned-cleanup source filenames and helper names internally. CLI flags,
   rendered report text, and drop-readiness source-correlation naming remain compatibility surfaces.
+- Generated owned-cleanup symbols for source modules use
+  `__orison_owned_cleanup.<mangled-type>.<package>`. Semantic authorization and lowering plans retain the package
+  identity so fixed-array, DynamicArray, aggregate, concurrency, and runtime-indexed cleanup calls use the same symbol
+  as the generated definition. Package-neutral symbols remain available only to low-level fixtures without a module.
 
 ## Consequences
 
@@ -375,6 +379,7 @@ inventing semantics outside the spec/tour.
   prelude emits every required finite drop declaration.
 - Ordinary Orison writers do not spell cleanup calls or implement a public `Drop` protocol. Cleanup remains observable
   through diagnostics, audit reports, and generated LLVM/runtime ABI symbols only.
+- Separate packages can define the same owned type name and link their generated cleanup definitions without collision.
 
 ## Follow-up work
 

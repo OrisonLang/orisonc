@@ -51,8 +51,9 @@ Public concrete generic specializations use the same package qualification. Pack
 generic method specializations, and imported generic specialization remain outside this decision's implemented scope.
 Distinct packages can define the same non-generic receiver method and link into one executable without a symbol
 collision. The compiler-reserved `__orison_` prefix prevents source and foreign declarations from claiming generated
-method symbols. Generated owned-cleanup symbols remain package-neutral and can still collide for same-named record
-types from different packages.
+method symbols. Generated owned-cleanup symbols use
+`__orison_owned_cleanup.<mangled-type>.<package>`, so same-named record types from different packages can link in one
+executable.
 
 ## Follow-up work
 
@@ -61,4 +62,3 @@ types from different packages.
 - Define cross-package generic specialization before lowering imported generic functions.
 - Define collision-safe symbols or internal linkage for package-visible top-level functions and generic method
   specializations.
-- Package-qualify generated owned-cleanup symbols.
