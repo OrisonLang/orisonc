@@ -3836,3 +3836,7 @@ This file tracks which source-language frontend slices are reflected in the curr
   `orison-specialization-requests` artifact. The driver emits consumer requests, loads repeatable request artifacts,
   aggregates them into producer options, and compiles separately linked producer and consumer objects successfully.
   Automatic dependency graph scheduling and object selection remain open. No source syntax changed.
+- 2026-11-02: `orisonc --build-plan` now consumes an explicit version-1 package-to-source map, resolves paths relative
+  to the plan, selects the entry package's reachable imports, builds typed interfaces, iterates specialization requests
+  to a stable set, and links only reachable objects. Generic producer-consumer execution and exclusion of an unrelated
+  second entry point are pinned through the driver. No source syntax changed.

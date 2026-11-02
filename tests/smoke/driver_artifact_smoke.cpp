@@ -100,6 +100,23 @@ auto run_build(
     return app.run(std::span<char const* const>(argv.data(), argv.size()));
 }
 
+auto run_build_plan(
+    orison::driver::CompilerApp const& app,
+    std::filesystem::path const& plan_path,
+    std::filesystem::path const& output_path
+) -> orison::driver::CompileResult {
+    auto plan_path_text = plan_path.string();
+    auto output_path_text = output_path.string();
+    std::array<char const*, 5> argv {
+        "orisonc",
+        "--build-plan",
+        plan_path_text.c_str(),
+        "-o",
+        output_path_text.c_str()
+    };
+    return app.run(std::span<char const* const>(argv.data(), argv.size()));
+}
+
 auto run_program(orison::driver::CompilerApp const& app, std::filesystem::path const& source_path)
     -> orison::driver::CompileResult {
     auto source_path_text = source_path.string();
@@ -221,7 +238,7 @@ auto main() -> int {
         ) != std::string::npos
     );
 
-    auto generic_producer_path = smoke_temp_root / "generic_producer.or";
+    auto generic_producer_path = smoke_temp_root / "generic producer.or";
     write_fixture(
         generic_producer_path,
         "external.generics",
@@ -235,7 +252,7 @@ auto main() -> int {
         run_emit_package_interface(app, generic_producer_path, generic_interface_path);
     assert_success_with_empty_stdout(generic_interface_result);
 
-    auto generic_consumer_path = smoke_temp_root / "generic_consumer.or";
+    auto generic_consumer_path = smoke_temp_root / "generic consumer.or";
     write_fixture(
         generic_consumer_path,
         "demo.genericconsumer",
@@ -338,6 +355,72 @@ auto main() -> int {
     );
     assert(!generic_link.has_errors());
     assert(std::system(generic_executable_path.string().c_str()) == 0);
+
+    auto unrelated_path = smoke_temp_root / "unrelated.or";
+    write_fixture(
+        unrelated_path,
+        "demo.unrelated",
+        {
+            "function main() -> UInt32",
+            "    99 as UInt32",
+        }
+    );
+    auto build_plan_path = smoke_temp_root / "generic.obp";
+    {
+        auto output = std::ofstream(build_plan_path);
+        output << "orison-build-plan 1\n";
+        output << "entry demo.genericconsumer\n";
+        output << "module demo.unrelated unrelated.or\n";
+        output << "module external.generics generic producer.or\n";
+        output << "module demo.genericconsumer generic consumer.or\n";
+    }
+    auto build_plan_executable_path = smoke_temp_root / "generic_build_plan";
+    auto build_plan_result = run_build_plan(
+        app,
+        build_plan_path,
+        build_plan_executable_path
+    );
+    assert_success_with_empty_stdout(build_plan_result);
+    assert(std::system(build_plan_executable_path.string().c_str()) == 0);
+
+    auto invalid_build_plan_path = smoke_temp_root / "invalid.obp";
+    {
+        auto output = std::ofstream(invalid_build_plan_path);
+        output << "orison-build-plan 2\n";
+    }
+    auto invalid_build_plan_result = run_build_plan(
+        app,
+        invalid_build_plan_path,
+        smoke_temp_root / "invalid_build_plan"
+    );
+    assert(invalid_build_plan_result.exit_code == 1);
+    assert(invalid_build_plan_result.stdout_text.empty());
+    assert(
+        invalid_build_plan_result.stderr_text.find(
+            "unsupported build plan version '2'"
+        ) != std::string::npos
+    );
+
+    auto incomplete_build_plan_path = smoke_temp_root / "incomplete.obp";
+    {
+        auto output = std::ofstream(incomplete_build_plan_path);
+        output << "orison-build-plan 1\n";
+        output << "entry demo.genericconsumer\n";
+        output << "module demo.genericconsumer generic consumer.or\n";
+    }
+    auto incomplete_build_plan_result = run_build_plan(
+        app,
+        incomplete_build_plan_path,
+        smoke_temp_root / "incomplete_build_plan"
+    );
+    assert(incomplete_build_plan_result.exit_code == 1);
+    assert(incomplete_build_plan_result.stdout_text.empty());
+    assert(
+        incomplete_build_plan_result.stderr_text.find(
+            "build plan has no module for imported package 'external.generics' required by "
+            "'demo.genericconsumer'"
+        ) != std::string::npos
+    );
 
     auto invalid_specialization_requests_path = smoke_temp_root / "invalid.osr";
     {

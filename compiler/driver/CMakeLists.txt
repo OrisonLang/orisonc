@@ -1,4 +1,5 @@
 add_library(orison_driver STATIC
+    src/build_plan.cpp
     src/computed_cleanup_reports.cpp
     src/compiler_app.cpp
     src/runtime_indexed_cleanup_reports.cpp

@@ -2,6 +2,7 @@
 
 #include "computed_cleanup_reports.hpp"
 
+#include "orison/driver/build_plan.hpp"
 #include "orison/driver/runtime_indexed_cleanup_reports.hpp"
 #include "orison/lowering/drop_metadata.hpp"
 #include "orison/lowering/concurrency_plan.hpp"
@@ -181,7 +182,8 @@ auto usage_text() -> std::string {
            "--runtime-indexed-constructor-move-production-readiness <file> | "
            "--emit-package-interface <file> -o <output> | "
            "--emit-specialization-requests <file> -o <output> | "
-           "--emit-object <file> -o <output> | --build <file> -o <executable>)";
+           "--emit-object <file> -o <output> | --build <file> -o <executable> | "
+           "--build-plan <plan> -o <executable>)";
 }
 
 auto load_package_interface(
@@ -1611,6 +1613,16 @@ auto CompilerApp::run(std::span<char const* const> args) const -> CompileResult 
             };
         }
         return CompileResult {.exit_code = 0};
+    }
+
+    if (args.size() == command_index + 4 &&
+        std::string_view(args[command_index]) == "--build-plan" &&
+        std::string_view(args[command_index + 2]) == "-o") {
+        return compile_build_plan(
+            std::filesystem::path(args[command_index + 1]),
+            std::filesystem::path(args[command_index + 3]),
+            options
+        );
     }
 
     if (args.size() == 3 && std::string_view(args[1]) == "--parse") {
