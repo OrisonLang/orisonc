@@ -943,6 +943,7 @@ auto method_call_source_type(
 
 auto collect_generic_function_specializations(
     syntax::ModuleSyntax const& module,
+    semantics::SemanticModuleSummary const& semantic_module,
     std::unordered_map<std::string, LoweredFunctionSignature> const& functions
 ) -> std::vector<std::shared_ptr<syntax::FunctionSyntax>> {
     auto generic_functions = std::unordered_map<std::string, syntax::FunctionSyntax const*> {};
@@ -950,6 +951,32 @@ auto collect_generic_function_specializations(
         if (!function.generic_parameters.empty()) {
             generic_functions.emplace(function.name, &function);
         }
+    }
+    auto imported_generic_functions = std::vector<syntax::FunctionSyntax> {};
+    imported_generic_functions.reserve(semantic_module.functions.size());
+    for (auto const& function : semantic_module.functions) {
+        if (function.kind != semantics::SemanticFunctionKind::imported_source_function ||
+            function.generic_parameters.empty()) {
+            continue;
+        }
+        auto parameters = std::vector<syntax::ParameterSyntax> {};
+        parameters.reserve(function.parameters.size());
+        for (auto const& parameter : function.parameters) {
+            parameters.push_back(syntax::ParameterSyntax {
+                .name = parameter.name,
+                .type = parse_source_type_name(parameter.type_name),
+            });
+        }
+        imported_generic_functions.push_back(syntax::FunctionSyntax {
+            .visibility = syntax::Visibility::public_visibility,
+            .name = function.name,
+            .generic_parameters = function.generic_parameters,
+            .parameters = std::move(parameters),
+            .return_type = parse_source_type_name(function.return_type_name),
+        });
+    }
+    for (auto const& function : imported_generic_functions) {
+        generic_functions.emplace(function.name, &function);
     }
     if (generic_functions.empty()) {
         return {};
@@ -2895,8 +2922,7 @@ auto build_lowering_context(
     }
 
     for (auto const& function : semantic_module.functions) {
-        if (function.kind != semantics::SemanticFunctionKind::imported_source_function ||
-            !function.generic_parameters.empty()) {
+        if (function.kind != semantics::SemanticFunctionKind::imported_source_function) {
             continue;
         }
         auto parameters = std::vector<syntax::ParameterSyntax> {};
@@ -2917,6 +2943,11 @@ auto build_lowering_context(
             record_names,
             context.choices
         );
+        signature.generic_parameters = function.generic_parameters;
+        if (!function.generic_parameters.empty()) {
+            context.functions.emplace(function.name, std::move(signature));
+            continue;
+        }
         if (!has_supported_function_signature_types(signature)) {
             diagnostics.error(
                 function.line == 0 ? 1 : function.line,
@@ -2936,11 +2967,35 @@ auto build_lowering_context(
         context.imported_declarations.push_back(std::move(signature));
     }
 
-    context.generic_function_specializations = collect_generic_function_specializations(module, context.functions);
+    context.generic_function_specializations = collect_generic_function_specializations(
+        module,
+        semantic_module,
+        context.functions
+    );
     for (auto const& specialization_ptr : context.generic_function_specializations) {
         auto const& specialization = *specialization_ptr;
         auto symbol_name = specialization.name;
-        if (specialization.visibility == syntax::Visibility::public_visibility && specialization.name != "main") {
+        auto const base_name = generic_specialization_base_name(specialization.name);
+        auto const imported_function = base_name.has_value()
+            ? std::ranges::find_if(
+                  semantic_module.functions,
+                  [&](semantics::SemanticFunctionSummary const& function) {
+                      return function.kind == semantics::SemanticFunctionKind::imported_source_function &&
+                          !function.generic_parameters.empty() &&
+                          function.name == *base_name;
+                  }
+              )
+            : semantic_module.functions.end();
+        if (imported_function != semantic_module.functions.end()) {
+            auto const specialization_suffix = specialization.name.substr(base_name->size());
+            symbol_name = lowered_package_function_symbol_name(
+                imported_function->source_package_name,
+                imported_function->source_declaration_name + specialization_suffix
+            );
+        } else if (
+            specialization.visibility == syntax::Visibility::public_visibility &&
+            specialization.name != "main"
+        ) {
             symbol_name = lowered_package_function_symbol_name(module.package_name, specialization.name);
         }
         auto signature = lower_contextual_function_signature(
@@ -2953,6 +3008,13 @@ auto build_lowering_context(
         signature.generic_parameters = specialization.generic_parameters;
         record_dynamic_array_descriptor_parameter_types(specialization, signature, true);
         if (!has_supported_function_signature_types(signature)) {
+            if (imported_function != semantic_module.functions.end()) {
+                diagnostics.error(
+                    specialization.line == 0 ? 1 : specialization.line,
+                    "imported generic function '" + *base_name +
+                        "' specialization has a signature that is not supported by lowering"
+                );
+            }
             continue;
         }
         if (!symbol_registry.register_symbol(
@@ -2964,6 +3026,10 @@ auto build_lowering_context(
             continue;
         }
         context.functions[specialization.name] = signature;
+        if (imported_function != semantic_module.functions.end()) {
+            context.imported_declarations.push_back(signature);
+            context.imported_generic_function_specialization_names.insert(specialization.name);
+        }
     }
 
     for (auto const& implementation : module.implementations) {

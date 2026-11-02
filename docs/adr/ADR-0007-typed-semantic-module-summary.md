@@ -40,15 +40,18 @@ consume semantic summary descriptor facts directly. Direct lowering fixtures now
 Semantic descriptor report helpers now use descriptor-summary terminology. The DynamicArray descriptor projection helper
 and runtime origin overloads have been removed. Internal DynamicArray descriptor boundary fields and blockers now use
 descriptor-summary binding terminology in typed C++ state.
-Lowering consumes non-generic imported function summaries as fixed external LLVM declarations. Calls continue to use
-the local binding for lookup and emit the exported declaration symbol. Imported generic calls stop with a targeted
-lowering diagnostic until cross-package specialization is defined.
+Lowering consumes imported function summaries as external LLVM declarations. Calls continue to use the local binding
+for lookup and emit the exported declaration symbol. Generic calls infer concrete substitutions through the existing
+monomorphization path and declare
+`__orison_fn.<source-package>.<source-declaration>__<specialization-types>` without emitting a consumer-side definition.
 Producer and consumer modules can now emit separate object images and link them in one host-link invocation. This
 proves the fixed imported-call ABI through execution while keeping dependency discovery and object selection outside
 the language syntax.
 Distinct packages can export the same public function name and link into one executable without a symbol collision.
-Public concrete generic specializations use the same package qualification. Imported generic specialization remains
-outside this decision's implemented scope.
+Public concrete generic specializations use the same package qualification. A consumer can link an imported generic
+call when the producer object already contains the matching specialization and the concrete signature uses supported
+lowered ABI types. Automatic producer specialization requests and imported aggregate ABI lowering remain outside this
+decision's implemented scope.
 Distinct packages can define the same non-generic receiver method and link into one executable without a symbol
 collision. The compiler-reserved `__orison_` prefix prevents source and foreign declarations from claiming generated
 method symbols. Generated owned-cleanup symbols use
@@ -61,4 +64,5 @@ Module-free synthetic lowering fixtures retain package-neutral generic method sy
 
 - Migrate the remaining report command/helper names away from descriptor-origin terminology only when the pinned CLI
   text can change intentionally.
-- Define cross-package generic specialization before lowering imported generic functions.
+- Coordinate consumer-requested generic specializations with producer compilation.
+- Extend imported generic specialization after imported aggregate ABI lowering is available.

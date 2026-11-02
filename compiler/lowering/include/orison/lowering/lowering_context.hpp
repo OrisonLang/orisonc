@@ -10,6 +10,7 @@
 #include <string>
 #include <string_view>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
 namespace orison::lowering {
@@ -76,6 +77,7 @@ struct LoweringContext {
     std::vector<LoweredFunctionSignature> foreign_declarations;
     std::vector<LoweredFunctionSignature> imported_declarations;
     std::vector<std::shared_ptr<syntax::FunctionSyntax>> generic_function_specializations;
+    std::unordered_set<std::string> imported_generic_function_specialization_names;
     std::vector<GenericMethodSpecialization> generic_method_specializations;
 };
 

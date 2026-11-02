@@ -3824,3 +3824,7 @@ This file tracks which source-language frontend slices are reflected in the curr
   `__orison_method.<package>.<receiver>.<method>__<specialization-types>`. Two packages emit the same receiver and
   specialization, link in one executable, and run distinct behavior without symbol collisions. Module-free lowering
   fixtures remain package-neutral. No source syntax changed.
+- 2026-11-01: Imported generic scalar calls now reuse concrete inference and emit external declarations and calls using
+  `__orison_fn.<source-package>.<source-declaration>__<specialization-types>`. A separately compiled producer with the
+  matching specialization links and runs, while the consumer emits no duplicate definition. Producer specialization
+  coordination and imported aggregate ABI lowering remain open. No source syntax changed.

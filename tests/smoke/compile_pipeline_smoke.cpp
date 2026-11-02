@@ -2192,16 +2192,108 @@ auto main() -> int {
     assert(!collision_link.has_errors());
     assert(std::system(collision_executable.string().c_str()) == 0);
 
+    auto imported_generic_function_lowering_path = smoke_temp_root / "imported_generic_function_lowering.or";
+    {
+        std::ofstream output(imported_generic_function_lowering_path);
+        output << "package demo.imports\n";
+        output << "import\n";
+        output << "    choose as select from external.types\n";
+        output << "function choose_value() -> UInt32\n";
+        output << "    select(1 as UInt32, 2 as UInt32)\n";
+    }
     auto imported_generic_function_lowering = pipeline.emit_llvm(
+        imported_generic_function_lowering_path,
+        package_interface_options
+    );
+    assert(!imported_generic_function_lowering.has_errors());
+    assert(
+        imported_generic_function_lowering.ir_text.find(
+            "declare i32 @__orison_fn.external.types.choose__UInt32(i32, i32)"
+        ) != std::string::npos
+    );
+    assert(
+        imported_generic_function_lowering.ir_text.find(
+            "call i32 @__orison_fn.external.types.choose__UInt32(i32 1, i32 2)"
+        ) != std::string::npos
+    );
+    auto imported_generic_aggregate_lowering = pipeline.emit_llvm(
         imported_function_access_path,
         package_interface_options
     );
-    assert(imported_generic_function_lowering.has_errors());
+    assert(imported_generic_aggregate_lowering.has_errors());
     assert(
-        imported_generic_function_lowering.error_text.find(
-            "lowering imported generic function 'select' is not yet supported"
+        imported_generic_aggregate_lowering.error_text.find(
+            "imported generic function 'inspect' specialization has a signature that is not supported by lowering"
         ) != std::string::npos
     );
+    assert(
+        imported_generic_aggregate_lowering.error_text.find(
+            "lowering context is missing generic function specialization"
+        ) == std::string::npos
+    );
+
+    auto imported_generic_producer_path = smoke_temp_root / "imported_generic_producer.or";
+    {
+        std::ofstream output(imported_generic_producer_path);
+        output << "package external.generics\n";
+        output << "public function choose<Value>(left: Value, right: Value) -> Value\n";
+        output << "    left\n";
+        output << "function instantiate_choose() -> UInt32\n";
+        output << "    choose(0 as UInt32, 1 as UInt32)\n";
+    }
+    auto imported_generic_producer = pipeline.emit_object(imported_generic_producer_path);
+    assert(!imported_generic_producer.has_errors());
+    assert(
+        imported_generic_producer.ir_text.find(
+            "define i32 @__orison_fn.external.generics.choose__UInt32(i32 %left, i32 %right)"
+        ) != std::string::npos
+    );
+
+    auto imported_generic_consumer_path = smoke_temp_root / "imported_generic_consumer.or";
+    {
+        std::ofstream output(imported_generic_consumer_path);
+        output << "package demo.genericimports\n";
+        output << "import\n";
+        output << "    choose as select from external.generics\n";
+        output << "function main() -> UInt32\n";
+        output << "    select(40 as UInt32, 41 as UInt32) - 40 as UInt32\n";
+    }
+    auto imported_generic_consumer = pipeline.emit_object(
+        imported_generic_consumer_path,
+        orison::pipeline::CompilePipelineOptions {
+            .available_package_interfaces = {
+                orison::semantics::build_package_interface(imported_generic_producer.parse_result.module),
+            },
+        }
+    );
+    assert(!imported_generic_consumer.has_errors());
+    assert(
+        imported_generic_consumer.ir_text.find(
+            "declare i32 @__orison_fn.external.generics.choose__UInt32(i32, i32)"
+        ) != std::string::npos
+    );
+    assert(
+        imported_generic_consumer.ir_text.find(
+            "call i32 @__orison_fn.external.generics.choose__UInt32(i32 40, i32 41)"
+        ) != std::string::npos
+    );
+    assert(
+        imported_generic_consumer.ir_text.find(
+            "define i32 @__orison_fn.external.generics.choose__UInt32"
+        ) == std::string::npos
+    );
+
+    auto imported_generic_object_images = std::array<std::string_view, 2> {
+        imported_generic_producer.object_bytes,
+        imported_generic_consumer.object_bytes,
+    };
+    auto imported_generic_executable = smoke_temp_root / "imported_generic_consumer";
+    auto imported_generic_link = orison::link::HostLinker {}.link(
+        imported_generic_object_images,
+        imported_generic_executable
+    );
+    assert(!imported_generic_link.has_errors());
+    assert(std::system(imported_generic_executable.string().c_str()) == 0);
 
     auto imported_function_arity_path = smoke_temp_root / "imported_function_arity.or";
     {
