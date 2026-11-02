@@ -23,8 +23,8 @@ same source identity for lowering.
 Public top-level Orison functions use deterministic LLVM symbols in the form
 `__orison_fn.<package>.<declaration>`. Imported fixed calls derive the same symbol from their preserved source identity.
 Non-generic implementation and extension methods use deterministic LLVM symbols in the form
-`__orison_method.<package>.<receiver>.<method>`. Generic method specializations retain their existing symbols until a
-cross-package specialization policy is defined.
+`__orison_method.<package>.<receiver>.<method>`. Generic method specializations use the same package-qualified base with
+specialization suffixes: `__orison_method.<package>.<receiver>.<method>__<specialization-types>`.
 The host entry point `main` and programmer-declared C ABI symbols retain their required external names.
 
 ## Consequences
@@ -47,18 +47,18 @@ Producer and consumer modules can now emit separate object images and link them 
 proves the fixed imported-call ABI through execution while keeping dependency discovery and object selection outside
 the language syntax.
 Distinct packages can export the same public function name and link into one executable without a symbol collision.
-Public concrete generic specializations use the same package qualification. Package-visible top-level functions,
-generic method specializations, and imported generic specialization remain outside this decision's implemented scope.
+Public concrete generic specializations use the same package qualification. Imported generic specialization remains
+outside this decision's implemented scope.
 Distinct packages can define the same non-generic receiver method and link into one executable without a symbol
 collision. The compiler-reserved `__orison_` prefix prevents source and foreign declarations from claiming generated
 method symbols. Generated owned-cleanup symbols use
 `__orison_owned_cleanup.<mangled-type>.<package>`, so same-named record types from different packages can link in one
 executable.
+Distinct packages can also emit the same receiver and generic method specialization without a symbol collision.
+Module-free synthetic lowering fixtures retain package-neutral generic method symbols.
 
 ## Follow-up work
 
 - Migrate the remaining report command/helper names away from descriptor-origin terminology only when the pinned CLI
   text can change intentionally.
 - Define cross-package generic specialization before lowering imported generic functions.
-- Define collision-safe symbols or internal linkage for package-visible top-level functions and generic method
-  specializations.

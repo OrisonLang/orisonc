@@ -2096,11 +2096,11 @@ auto main() -> int {
         output << "record Counter\n";
         output << "    public value: UInt32\n";
         output << "extend Counter\n";
-        output << "    function adjusted(this: shared This) -> UInt32\n";
+        output << "    function adjusted<T>(this: shared This, ignored: T) -> UInt32\n";
         output << "        this.value + 1 as UInt32\n";
         output << "public function increment(value: UInt32) -> UInt32\n";
         output << "    let counter = Counter(value)\n";
-        output << "    counter.adjusted()\n";
+        output << "    counter.adjusted(0 as UInt64)\n";
     }
     auto first_collision_producer = pipeline.emit_object(first_collision_producer_path);
     assert(!first_collision_producer.has_errors());
@@ -2111,7 +2111,7 @@ auto main() -> int {
     );
         assert(
             first_collision_producer.ir_text.find(
-            "define i32 @__orison_method.first.math.Counter.adjusted(%record.Counter %this)"
+            "define i32 @__orison_method.first.math.Counter.adjusted__UInt64(%record.Counter %this, i64 %ignored)"
             ) != std::string::npos
         );
     assert(
@@ -2127,11 +2127,11 @@ auto main() -> int {
         output << "record Counter\n";
         output << "    public value: UInt32\n";
         output << "extend Counter\n";
-        output << "    function adjusted(this: shared This) -> UInt32\n";
+        output << "    function adjusted<T>(this: shared This, ignored: T) -> UInt32\n";
         output << "        this.value + 2 as UInt32\n";
         output << "public function increment(value: UInt32) -> UInt32\n";
         output << "    let counter = Counter(value)\n";
-        output << "    counter.adjusted()\n";
+        output << "    counter.adjusted(0 as UInt64)\n";
     }
     auto second_collision_producer = pipeline.emit_object(second_collision_producer_path);
     assert(!second_collision_producer.has_errors());
@@ -2142,7 +2142,7 @@ auto main() -> int {
     );
         assert(
             second_collision_producer.ir_text.find(
-            "define i32 @__orison_method.second.math.Counter.adjusted(%record.Counter %this)"
+            "define i32 @__orison_method.second.math.Counter.adjusted__UInt64(%record.Counter %this, i64 %ignored)"
             ) != std::string::npos
         );
     assert(
@@ -22634,7 +22634,7 @@ auto main() -> int {
         multi_payload_count_items_extract + 1
     );
     auto const multi_payload_count_call = multi_payload_choice_nested_count_ir.find(
-        "call i64 @method.DynamicArray_Payload_.count__Payload",
+        "call i64 @__orison_method.fixtures.dynamicarray.receivermultipayloadchoicecomputedindexnestedfieldmethodchaincountrun.DynamicArray_Payload_.count__Payload",
         multi_payload_count_marker_extract
     );
     auto const multi_payload_count_marker_subtract =
@@ -22678,7 +22678,7 @@ auto main() -> int {
         multi_variant_count_items_extract + 1
     );
     auto const multi_variant_count_call = multi_variant_choice_nested_count_ir.find(
-        "call i64 @method.DynamicArray_Payload_.count__Payload",
+        "call i64 @__orison_method.fixtures.dynamicarray.receivermultivariantchoicecomputedindexnestedfieldmethodchaincountrun.DynamicArray_Payload_.count__Payload",
         multi_variant_count_marker_extract
     );
     auto const multi_variant_count_fallback_payload =

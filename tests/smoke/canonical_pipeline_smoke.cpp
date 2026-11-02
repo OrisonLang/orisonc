@@ -146,7 +146,8 @@ auto main() -> int {
     }
     assert_pipeline_fixture(
         "dynamic_array_complete_contract.or",
-        "define void @method.DynamicArray_Payload_.replace_first__Payload"
+        "define void @__orison_method.fixtures.dynamicarray.completecontract."
+        "DynamicArray_Payload_.replace_first__Payload"
     );
     std::filesystem::remove_all(smoke_temp_root);
     return 0;

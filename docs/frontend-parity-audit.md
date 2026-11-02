@@ -3820,3 +3820,7 @@ This file tracks which source-language frontend slices are reflected in the curr
   `__orison_owned_cleanup.<mangled-type>.<package>`. Semantic authorization and every cleanup planning path preserve the
   source package. Two packages defining `Counter` compile separately, link together, and run without cleanup-symbol
   collisions. Package-neutral naming remains limited to module-free lowering fixtures. No source syntax changed.
+- 2026-11-01: Generic method specialization symbols now use
+  `__orison_method.<package>.<receiver>.<method>__<specialization-types>`. Two packages emit the same receiver and
+  specialization, link in one executable, and run distinct behavior without symbol collisions. Module-free lowering
+  fixtures remain package-neutral. No source syntax changed.

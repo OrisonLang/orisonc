@@ -11,7 +11,7 @@
 
 namespace {
 
-auto normalize_owned_cleanup_symbols_for_shape_assertions(std::string output) -> std::string {
+auto normalize_generated_symbols_for_shape_assertions(std::string output) -> std::string {
     constexpr auto marker = std::string_view {"__orison_owned_cleanup."};
     auto offset = std::size_t {0};
     while ((offset = output.find(marker, offset)) != std::string::npos) {
@@ -22,6 +22,28 @@ auto normalize_owned_cleanup_symbols_for_shape_assertions(std::string output) ->
             offset = type_end;
         } else {
             offset += marker.size();
+        }
+    }
+
+    constexpr auto package_marker = std::string_view {"; package "};
+    auto const package_start = output.find(package_marker);
+    auto const package_end = output.find('\n', package_start);
+    if (package_start != std::string::npos && package_end != std::string::npos) {
+        auto const package_name = output.substr(
+            package_start + package_marker.size(),
+            package_end - package_start - package_marker.size()
+        );
+        auto const method_prefix = "__orison_method." + package_name + ".";
+        offset = 0;
+        while ((offset = output.find(method_prefix, offset)) != std::string::npos) {
+            auto const symbol_end = output.find_first_of(" (\n\r\t", offset + method_prefix.size());
+            auto const specialization = output.find("__", offset + method_prefix.size());
+            if (symbol_end != std::string::npos && specialization != std::string::npos && specialization < symbol_end) {
+                output.replace(offset, method_prefix.size(), "method.");
+                offset += std::string_view {"method."}.size();
+            } else {
+                offset += method_prefix.size();
+            }
         }
     }
     return output;
@@ -43,7 +65,7 @@ auto read_successful_command_output(std::string const& command) -> std::string {
         std::fprintf(stderr, "command failed:\n%s\n\noutput:\n%s\n", command.c_str(), output.c_str());
     }
     assert(status == 0);
-    return normalize_owned_cleanup_symbols_for_shape_assertions(std::move(output));
+    return normalize_generated_symbols_for_shape_assertions(std::move(output));
 }
 
 auto read_failing_command_output(std::string const& command) -> std::string {

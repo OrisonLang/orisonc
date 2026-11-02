@@ -3019,6 +3019,10 @@ auto build_lowering_context(
         if (specialization.method == nullptr) {
             continue;
         }
+        specialization.symbol_name = lowered_package_method_symbol_name(
+            module.package_name,
+            specialization.symbol_name
+        );
         auto receiver_type = parse_source_type_name(specialization.receiver_type_name);
         auto signature = lower_method_signature(
             receiver_type,
