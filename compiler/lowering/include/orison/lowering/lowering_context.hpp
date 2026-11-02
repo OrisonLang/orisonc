@@ -78,6 +78,7 @@ struct LoweringContext {
     std::vector<LoweredFunctionSignature> imported_declarations;
     std::vector<std::shared_ptr<syntax::FunctionSyntax>> generic_function_specializations;
     std::unordered_set<std::string> imported_generic_function_specialization_names;
+    std::vector<semantics::GenericFunctionSpecializationRequest> generic_function_specialization_requests;
     std::vector<GenericMethodSpecialization> generic_method_specializations;
 };
 
@@ -95,7 +96,8 @@ struct LoweredMethodLookup {
 auto build_lowering_context(
     syntax::ModuleSyntax const& module,
     semantics::SemanticModuleSummary const& semantic_module,
-    diagnostics::DiagnosticBag& diagnostics
+    diagnostics::DiagnosticBag& diagnostics,
+    std::vector<semantics::GenericFunctionSpecializationRequest> const& specialization_requests = {}
 ) -> LoweringContext;
 
 auto build_lowering_context(

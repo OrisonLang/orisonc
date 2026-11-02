@@ -4754,7 +4754,14 @@ auto emit_module(
     }
     output << "\n";
 
-    auto context = build_lowering_context(module, semantic_result.semantic_module, result.diagnostics);
+    auto context = build_lowering_context(
+        module,
+        semantic_result.semantic_module,
+        result.diagnostics,
+        options.generic_function_specialization_requests
+    );
+    result.generic_function_specialization_requests =
+        context.generic_function_specialization_requests;
     if (result.has_errors()) {
         return result;
     }

@@ -3828,3 +3828,7 @@ This file tracks which source-language frontend slices are reflected in the curr
   `__orison_fn.<source-package>.<source-declaration>__<specialization-types>`. A separately compiled producer with the
   matching specialization links and runs, while the consumer emits no duplicate definition. Producer specialization
   coordination and imported aggregate ABI lowering remain open. No source syntax changed.
+- 2026-11-02: Imported generic scalar consumers now publish typed specialization requests containing source package,
+  exported declaration, and ordered concrete type arguments. Producer compilation consumes and deduplicates those
+  requests, emits the matching public specialization without a local seed call, and links and runs with the consumer.
+  Request artifact serialization and dependency build orchestration remain open. No source syntax changed.

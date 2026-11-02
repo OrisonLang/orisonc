@@ -2238,16 +2238,9 @@ auto main() -> int {
         output << "package external.generics\n";
         output << "public function choose<Value>(left: Value, right: Value) -> Value\n";
         output << "    left\n";
-        output << "function instantiate_choose() -> UInt32\n";
-        output << "    choose(0 as UInt32, 1 as UInt32)\n";
     }
-    auto imported_generic_producer = pipeline.emit_object(imported_generic_producer_path);
-    assert(!imported_generic_producer.has_errors());
-    assert(
-        imported_generic_producer.ir_text.find(
-            "define i32 @__orison_fn.external.generics.choose__UInt32(i32 %left, i32 %right)"
-        ) != std::string::npos
-    );
+    auto imported_generic_producer_analysis = pipeline.analyze(imported_generic_producer_path);
+    assert(!imported_generic_producer_analysis.has_errors());
 
     auto imported_generic_consumer_path = smoke_temp_root / "imported_generic_consumer.or";
     {
@@ -2258,15 +2251,24 @@ auto main() -> int {
         output << "function main() -> UInt32\n";
         output << "    select(40 as UInt32, 41 as UInt32) - 40 as UInt32\n";
     }
+    auto imported_generic_consumer_options = orison::pipeline::production_compile_pipeline_options();
+    imported_generic_consumer_options.available_package_interfaces = {
+        orison::semantics::build_package_interface(
+            imported_generic_producer_analysis.parse_result.module
+        ),
+    };
     auto imported_generic_consumer = pipeline.emit_object(
         imported_generic_consumer_path,
-        orison::pipeline::CompilePipelineOptions {
-            .available_package_interfaces = {
-                orison::semantics::build_package_interface(imported_generic_producer.parse_result.module),
-            },
-        }
+        imported_generic_consumer_options
     );
     assert(!imported_generic_consumer.has_errors());
+    assert(imported_generic_consumer.generic_function_specialization_requests.size() == 1);
+    auto const& imported_generic_request =
+        imported_generic_consumer.generic_function_specialization_requests.front();
+    assert(imported_generic_request.package_name == "external.generics");
+    assert(imported_generic_request.declaration_name == "choose");
+    assert(imported_generic_request.type_arguments.size() == 1);
+    assert(imported_generic_request.type_arguments.front().name == "UInt32");
     assert(
         imported_generic_consumer.ir_text.find(
             "declare i32 @__orison_fn.external.generics.choose__UInt32(i32, i32)"
@@ -2281,6 +2283,29 @@ auto main() -> int {
         imported_generic_consumer.ir_text.find(
             "define i32 @__orison_fn.external.generics.choose__UInt32"
         ) == std::string::npos
+    );
+
+    auto imported_generic_producer_options = orison::pipeline::production_compile_pipeline_options();
+    imported_generic_producer_options.generic_function_specialization_requests =
+        imported_generic_consumer.generic_function_specialization_requests;
+    imported_generic_producer_options.generic_function_specialization_requests.push_back(
+        imported_generic_request
+    );
+    auto imported_generic_producer = pipeline.emit_object(
+        imported_generic_producer_path,
+        imported_generic_producer_options
+    );
+    assert(!imported_generic_producer.has_errors());
+    assert(
+        imported_generic_producer.ir_text.find(
+            "define i32 @__orison_fn.external.generics.choose__UInt32(i32 %left, i32 %right)"
+        ) != std::string::npos
+    );
+    assert(
+        occurrence_count(
+            imported_generic_producer.ir_text,
+            "define i32 @__orison_fn.external.generics.choose__UInt32"
+        ) == 1
     );
 
     auto imported_generic_object_images = std::array<std::string_view, 2> {

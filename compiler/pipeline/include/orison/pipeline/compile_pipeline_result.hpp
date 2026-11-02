@@ -52,6 +52,7 @@ struct CompilePipelineResult {
     std::optional<source::SourceFile> source_file;
     syntax::ParseResult parse_result;
     semantics::SemanticAnalysisResult semantic_result;
+    std::vector<semantics::GenericFunctionSpecializationRequest> generic_function_specialization_requests;
     std::string ir_text;
     std::string object_bytes;
     SemanticOwnedCleanupState semantic_owned_cleanup_state;

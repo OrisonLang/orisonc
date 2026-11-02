@@ -24,6 +24,7 @@ enum class DynamicArrayDescriptorLifetimePlanFaultInjection {
 struct CompilePipelineOptions {
     semantics::SemanticAnalysisOptions semantic_analysis;
     std::vector<semantics::PackageInterface> available_package_interfaces;
+    std::vector<semantics::GenericFunctionSpecializationRequest> generic_function_specialization_requests;
     std::vector<semantics::OwnedCleanupImplementation> test_only_semantic_owned_cleanup_implementations;
     std::vector<semantics::OwnedCleanupImplementationCandidate> test_only_semantic_owned_cleanup_implementation_candidates;
     std::vector<semantics::OwnedCleanupLoweringAuthorization> test_only_semantic_owned_cleanup_lowering_authorizations;

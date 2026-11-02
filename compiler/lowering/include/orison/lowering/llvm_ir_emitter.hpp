@@ -252,6 +252,7 @@ auto format_computed_dynamic_array_for_production_emission_gate_metadata_report(
 struct LlvmIrEmissionResult {
     diagnostics::DiagnosticBag diagnostics;
     std::string ir_text;
+    std::vector<semantics::GenericFunctionSpecializationRequest> generic_function_specialization_requests;
     std::vector<ConcurrencyDropCleanupPlan> drop_cleanups;
     std::vector<OwnedCleanupAction> owned_cleanup_actions;
     std::vector<OwnedCleanupDeclaration> owned_cleanup_declarations;

@@ -5007,6 +5007,8 @@ void populate_lowering_emission_reports(
     CompilePipelineOptions const& options
 ) {
     result.ir_text = std::move(emission.ir_text);
+    result.generic_function_specialization_requests =
+        std::move(emission.generic_function_specialization_requests);
     auto const cleanup_proof_model = build_computed_cleanup_proof_model(
         result.ir_text,
         emission.computed_dynamic_array_inserted_cleanup_handoffs,

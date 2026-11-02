@@ -576,6 +576,125 @@ auto specialized_function_copy(
     return specialized;
 }
 
+auto specialization_request_for_imported_function(
+    semantics::SemanticFunctionSummary const& imported_function,
+    syntax::FunctionSyntax const& specialization
+) -> std::optional<semantics::GenericFunctionSpecializationRequest> {
+    if (imported_function.parameters.size() != specialization.parameters.size()) {
+        return std::nullopt;
+    }
+
+    auto const generic_parameters = generic_parameter_set(imported_function.generic_parameters);
+    auto substitutions = std::unordered_map<std::string, syntax::TypeSyntax> {};
+    for (auto index = std::size_t {0}; index < imported_function.parameters.size(); ++index) {
+        if (!unify_constructor_type(
+                parse_source_type_name(imported_function.parameters[index].type_name),
+                specialization.parameters[index].type,
+                generic_parameters,
+                substitutions
+            )) {
+            return std::nullopt;
+        }
+    }
+
+    auto request = semantics::GenericFunctionSpecializationRequest {
+        .package_name = imported_function.source_package_name,
+        .declaration_name = imported_function.source_declaration_name,
+    };
+    request.type_arguments.reserve(imported_function.generic_parameters.size());
+    for (auto const& generic_parameter : imported_function.generic_parameters) {
+        auto substitution = substitutions.find(generic_parameter);
+        if (substitution == substitutions.end()) {
+            return std::nullopt;
+        }
+        request.type_arguments.push_back(substitution->second);
+    }
+    return request;
+}
+
+auto same_specialization_request(
+    semantics::GenericFunctionSpecializationRequest const& left,
+    semantics::GenericFunctionSpecializationRequest const& right
+) -> bool {
+    if (left.package_name != right.package_name ||
+        left.declaration_name != right.declaration_name ||
+        left.type_arguments.size() != right.type_arguments.size()) {
+        return false;
+    }
+    for (auto index = std::size_t {0}; index < left.type_arguments.size(); ++index) {
+        if (render_source_type_name(left.type_arguments[index]) !=
+            render_source_type_name(right.type_arguments[index])) {
+            return false;
+        }
+    }
+    return true;
+}
+
+void append_requested_generic_function_specializations(
+    syntax::ModuleSyntax const& module,
+    std::vector<semantics::GenericFunctionSpecializationRequest> const& requests,
+    std::vector<std::shared_ptr<syntax::FunctionSyntax>>& specializations,
+    diagnostics::DiagnosticBag& diagnostics
+) {
+    for (auto const& request : requests) {
+        if (request.package_name != module.package_name) {
+            continue;
+        }
+        auto function = std::ranges::find_if(
+            module.functions,
+            [&](syntax::FunctionSyntax const& candidate) {
+                return candidate.name == request.declaration_name;
+            }
+        );
+        if (function == module.functions.end()) {
+            diagnostics.error(
+                1,
+                "generic specialization request names unknown function '" + request.declaration_name + "'"
+            );
+            continue;
+        }
+        if (function->visibility != syntax::Visibility::public_visibility) {
+            diagnostics.error(
+                function->line,
+                "generic specialization request names non-public function '" + request.declaration_name + "'"
+            );
+            continue;
+        }
+        if (function->generic_parameters.empty()) {
+            diagnostics.error(
+                function->line,
+                "generic specialization request names non-generic function '" + request.declaration_name + "'"
+            );
+            continue;
+        }
+        if (function->generic_parameters.size() != request.type_arguments.size()) {
+            diagnostics.error(
+                function->line,
+                "generic specialization request for '" + request.declaration_name +
+                    "' has the wrong number of type arguments"
+            );
+            continue;
+        }
+
+        auto substitutions = std::unordered_map<std::string, syntax::TypeSyntax> {};
+        for (auto index = std::size_t {0}; index < function->generic_parameters.size(); ++index) {
+            substitutions.emplace(function->generic_parameters[index], request.type_arguments[index]);
+        }
+        auto specialization = specialized_function_copy(*function, substitutions);
+        auto const already_recorded = std::ranges::any_of(
+            specializations,
+            [&](std::shared_ptr<syntax::FunctionSyntax> const& existing) {
+                return existing->name == specialization.name;
+            }
+        );
+        if (!already_recorded) {
+            specializations.push_back(
+                std::make_shared<syntax::FunctionSyntax>(std::move(specialization))
+            );
+        }
+    }
+}
+
 auto specialized_method_copy(
     syntax::FunctionSyntax const& method,
     syntax::TypeSyntax const& concrete_receiver_type,
@@ -2871,7 +2990,8 @@ void collect_all_record_layouts(
 auto build_lowering_context(
     syntax::ModuleSyntax const& module,
     semantics::SemanticModuleSummary const& semantic_module,
-    diagnostics::DiagnosticBag& diagnostics
+    diagnostics::DiagnosticBag& diagnostics,
+    std::vector<semantics::GenericFunctionSpecializationRequest> const& specialization_requests
 ) -> LoweringContext {
     auto context = LoweringContext {};
     context.package_name = module.package_name;
@@ -2972,6 +3092,12 @@ auto build_lowering_context(
         semantic_module,
         context.functions
     );
+    append_requested_generic_function_specializations(
+        module,
+        specialization_requests,
+        context.generic_function_specializations,
+        diagnostics
+    );
     for (auto const& specialization_ptr : context.generic_function_specializations) {
         auto const& specialization = *specialization_ptr;
         auto symbol_name = specialization.name;
@@ -3029,6 +3155,19 @@ auto build_lowering_context(
         if (imported_function != semantic_module.functions.end()) {
             context.imported_declarations.push_back(signature);
             context.imported_generic_function_specialization_names.insert(specialization.name);
+            auto request = specialization_request_for_imported_function(
+                *imported_function,
+                specialization
+            );
+            if (request.has_value() &&
+                !std::ranges::any_of(
+                    context.generic_function_specialization_requests,
+                    [&](semantics::GenericFunctionSpecializationRequest const& existing) {
+                        return same_specialization_request(existing, *request);
+                    }
+                )) {
+                context.generic_function_specialization_requests.push_back(std::move(*request));
+            }
         }
     }
 

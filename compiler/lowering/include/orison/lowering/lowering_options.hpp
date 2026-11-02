@@ -2,6 +2,7 @@
 
 #include "orison/lowering/dynamic_array_runtime.hpp"
 #include "orison/semantics/drop_model.hpp"
+#include "orison/semantics/package_interface.hpp"
 
 #include <cstddef>
 #include <string_view>
@@ -77,6 +78,7 @@ struct LlvmIrEmissionOptions {
     std::vector<DynamicArrayDescriptorLifetimePlan> dynamic_array_descriptor_lifetime_plans;
     std::vector<std::string> owned_cleanup_definition_symbols;
     std::vector<semantics::OwnedCleanupLoweringAuthorization> semantic_owned_cleanup_lowering_authorizations;
+    std::vector<semantics::GenericFunctionSpecializationRequest> generic_function_specialization_requests;
 };
 
 struct ComputedDynamicArrayCleanupCallInsertionCapability {

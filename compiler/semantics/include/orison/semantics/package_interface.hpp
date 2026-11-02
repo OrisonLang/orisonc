@@ -70,6 +70,12 @@ struct ImportedFunctionDeclaration {
     PackageFunctionDeclaration declaration;
 };
 
+struct GenericFunctionSpecializationRequest {
+    std::string package_name;
+    std::string declaration_name;
+    std::vector<syntax::TypeSyntax> type_arguments;
+};
+
 auto build_package_interface(syntax::ModuleSyntax const& module) -> PackageInterface;
 
 auto serialize_package_interface(PackageInterface const& package_interface) -> std::string;

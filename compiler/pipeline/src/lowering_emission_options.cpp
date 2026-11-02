@@ -77,6 +77,8 @@ auto build_lowering_emission_options(
     LoweringEmissionMode mode
 ) -> lowering::LlvmIrEmissionOptions {
     auto emission_options = lowering::LlvmIrEmissionOptions {};
+    emission_options.generic_function_specialization_requests =
+        options.generic_function_specialization_requests;
     emission_options.semantic_owned_cleanup_lowering_authorizations =
         options.test_only_semantic_owned_cleanup_lowering_authorizations;
     emission_options.semantic_owned_cleanup_lowering_authorizations.insert(
