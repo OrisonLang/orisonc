@@ -3863,3 +3863,6 @@ This file tracks which source-language frontend slices are reflected in the curr
   producer lowering materializes the requested public record from the consumer package interface under a reserved
   internal name, while producer source analysis remains import-limited. The separately compiled objects link and run;
   no package cycle or source syntax was added.
+- 2026-11-03: Specialization-only aggregate materialization now recursively closes over same-package public record
+  fields and choice payloads. A consumer-owned `Payload` record containing a `State` choice carrying a `Detail` record
+  passes through an external generic specialization, links, and preserves its runtime value. No source syntax changed.

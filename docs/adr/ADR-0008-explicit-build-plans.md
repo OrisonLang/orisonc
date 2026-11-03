@@ -31,7 +31,8 @@ All reachable source-package interfaces are available during specialization roun
 lower a requested specialization over a public type declared by a consumer package without importing that package in
 source. The type layout is materialized only inside lowering under a compiler-reserved name. Ordinary producer source
 analysis remains limited to its declared imports, so specialization scheduling does not create a source dependency
-cycle or expose undeclared names.
+cycle or expose undeclared names. Materialization follows public record fields and choice payloads recursively within
+the type's package interface.
 
 ADR-0009 defines opt-in object caching for source packages in a build plan.
 
@@ -43,7 +44,8 @@ implementation recompiles reachable modules while specialization requests grow; 
 Each source package currently maps to one source file, and every reachable package dependency must be present in the
 plan. A prebuilt generic object must already contain every specialization required by its consumers.
 Consumer-local public records can serve as concrete arguments to source-built generic producers. Non-public types and
-types absent from explicit package-interface inputs cannot be materialized by the producer.
+types absent from explicit package-interface inputs cannot be materialized by the producer. Nested same-package public
+records and choices retain their complete ABI layout in producer specializations.
 
 ## Follow-up work
 

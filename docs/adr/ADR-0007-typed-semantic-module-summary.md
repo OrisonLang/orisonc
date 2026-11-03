@@ -67,7 +67,9 @@ Version 2 stores each lowering type together with a recursive package-qualified 
 types can therefore use different aliases in producer and consumer modules while selecting one specialization symbol.
 The generic producer uses an explicit source import when one exists. Otherwise, lowering may materialize a requested
 public aggregate under a compiler-reserved local name from an available package interface. This materialization is
-limited to specialization lowering and does not make the type visible to ordinary producer source analysis.
+limited to specialization lowering and does not make the type visible to ordinary producer source analysis. Public
+record fields and choice payloads recursively materialize same-package public aggregate dependencies, with every copied
+type reference rewritten to its compiler-reserved local name.
 The driver emits request artifacts with `--emit-specialization-requests` and accepts repeatable
 `--specialization-requests` inputs, allowing build orchestration to aggregate consumer requests for producer
 compilation. ADR-0008 defines explicit dependency scheduling and object selection through driver build plans.
@@ -84,4 +86,4 @@ Module-free synthetic lowering fixtures retain package-neutral generic method sy
 - Migrate the remaining report command/helper names away from descriptor-origin terminology only when the pinned CLI
   text can change intentionally.
 - Use the explicit build-plan orchestration defined by ADR-0008 for dependency scheduling and object selection.
-- Extend specialization-only aggregate materialization to public layout dependencies referenced by aggregate fields.
+- Preserve package identity for cross-package types referenced by public record fields and choice payloads.
