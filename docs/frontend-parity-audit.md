@@ -3851,3 +3851,7 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-11-02: LLVM lowering now consumes imported record and choice declarations reconstructed from package interfaces.
   Fixed cross-package functions pass and return both aggregate kinds through separately compiled objects, and imported
   generic functions can request, emit, link, and execute record specializations. No source syntax changed.
+- 2026-11-02: Imported type metadata now preserves local aliases, and imported generic specialization requests
+  canonicalize aliases from the function's source package to producer declaration names. A consumer using
+  `ExternalPair` now declares and requests `choose__Pair`, then links and executes the producer specialization. No
+  source syntax changed.

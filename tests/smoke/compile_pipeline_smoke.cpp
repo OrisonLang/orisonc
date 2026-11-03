@@ -2118,8 +2118,8 @@ auto main() -> int {
         std::ofstream output(imported_aggregate_consumer_path);
         output << "package demo.aggregateimports\n";
         output << "import\n";
-        output << "    Pair from external.aggregates\n";
-        output << "    Result from external.aggregates\n";
+        output << "    Pair as ExternalPair from external.aggregates\n";
+        output << "    Result as ExternalResult from external.aggregates\n";
         output << "    make_pair from external.aggregates\n";
         output << "    sum_pair from external.aggregates\n";
         output << "    make_result from external.aggregates\n";
@@ -2140,12 +2140,12 @@ auto main() -> int {
     assert(!imported_aggregate_consumer.has_errors());
     assert(
         imported_aggregate_consumer.ir_text.find(
-            "declare %record.Pair @__orison_fn.external.aggregates.make_pair(i32, i32)"
+            "declare %record.ExternalPair @__orison_fn.external.aggregates.make_pair(i32, i32)"
         ) != std::string::npos
     );
     assert(
         imported_aggregate_consumer.ir_text.find(
-            "declare i32 @__orison_fn.external.aggregates.sum_pair(%record.Pair)"
+            "declare i32 @__orison_fn.external.aggregates.sum_pair(%record.ExternalPair)"
         ) != std::string::npos
     );
     assert(
@@ -2380,7 +2380,7 @@ auto main() -> int {
         std::ofstream output(imported_generic_aggregate_consumer_path);
         output << "package demo.genericaggregateimports\n";
         output << "import\n";
-        output << "    Pair from external.generics\n";
+        output << "    Pair as ExternalPair from external.generics\n";
         output << "    make_pair from external.generics\n";
         output << "    sum_pair from external.generics\n";
         output << "    choose as select from external.generics\n";
@@ -2402,7 +2402,7 @@ auto main() -> int {
     assert(imported_generic_aggregate_request.type_arguments.front().name == "Pair");
     assert(
         imported_generic_aggregate_consumer.ir_text.find(
-            "declare %record.Pair @__orison_fn.external.generics.choose__Pair(%record.Pair, %record.Pair)"
+            "declare %record.ExternalPair @__orison_fn.external.generics.choose__Pair(%record.ExternalPair, %record.ExternalPair)"
         ) != std::string::npos
     );
 

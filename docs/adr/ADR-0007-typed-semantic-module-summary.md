@@ -52,6 +52,10 @@ signatures. Fixed imported functions can pass and return records and choices acr
 Imported generic specialization requests may carry concrete record types; the producer uses its local aggregate layout
 to emit the requested specialization, while the consumer uses the matching imported layout. These paths reuse existing
 aggregate lowering and do not add source syntax.
+Imported type metadata retains the consumer-local binding alongside source package and declaration identity. Generic
+specialization requests canonicalize aggregate aliases from the target function's package back to their source
+declaration names. Consumer declarations therefore keep local LLVM layout names while their external specialization
+symbols and producer requests use producer-visible type names.
 Distinct packages can export the same public function name and link into one executable without a symbol collision.
 Public concrete generic specializations use the same package qualification. A consumer can link an imported generic
 call when the concrete signature uses supported lowered ABI types. Consumer lowering publishes typed specialization
@@ -75,5 +79,5 @@ Module-free synthetic lowering fixtures retain package-neutral generic method sy
 - Migrate the remaining report command/helper names away from descriptor-origin terminology only when the pinned CLI
   text can change intentionally.
 - Use the explicit build-plan orchestration defined by ADR-0008 for dependency scheduling and object selection.
-- Define canonical cross-package type identity for aggregate aliases before allowing differently named local aliases to
-  determine specialization symbols.
+- Extend specialization identity with package-qualified type arguments for concrete types imported from packages other
+  than the target function's package.

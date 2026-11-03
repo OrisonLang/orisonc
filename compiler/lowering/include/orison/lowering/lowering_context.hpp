@@ -99,7 +99,8 @@ auto build_lowering_context(
     diagnostics::DiagnosticBag& diagnostics,
     std::vector<semantics::GenericFunctionSpecializationRequest> const& specialization_requests = {},
     std::vector<syntax::RecordSyntax> const& imported_records = {},
-    std::vector<syntax::ChoiceSyntax> const& imported_choices = {}
+    std::vector<syntax::ChoiceSyntax> const& imported_choices = {},
+    std::vector<semantics::ImportedTypeDeclarationMetadata> const& imported_types = {}
 ) -> LoweringContext;
 
 auto build_lowering_context(

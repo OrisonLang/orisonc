@@ -705,6 +705,7 @@ auto resolve_imported_type_declarations(
             imported_declarations.push_back(ImportedTypeDeclarationMetadata {
                 .package_name = package_interface.package_name,
                 .declaration_name = declaration->name,
+                .local_name = import.alias.empty() ? import.name : import.alias,
                 .generic_arity = declaration->generic_arity,
             });
             break;

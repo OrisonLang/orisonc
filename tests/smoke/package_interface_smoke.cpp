@@ -331,6 +331,7 @@ int main() {
     assert(imported_declarations.size() == 2);
     assert(imported_declarations.front().package_name == "external.types");
     assert(imported_declarations.front().declaration_name == "Pair");
+    assert(imported_declarations.front().local_name == "ExternalPair");
     assert(imported_declarations.front().generic_arity == 2);
 
     auto imported_aggregates = orison::semantics::resolve_imported_aggregate_declarations(

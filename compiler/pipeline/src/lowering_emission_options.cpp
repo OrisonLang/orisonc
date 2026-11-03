@@ -81,6 +81,10 @@ auto build_lowering_emission_options(
     auto emission_options = lowering::LlvmIrEmissionOptions {};
     emission_options.generic_function_specialization_requests =
         options.generic_function_specialization_requests;
+    emission_options.imported_type_declarations = semantics::resolve_imported_type_declarations(
+        result.parse_result.module,
+        options.available_package_interfaces
+    );
     auto imported_aggregates = semantics::resolve_imported_aggregate_declarations(
         result.parse_result.module,
         options.available_package_interfaces

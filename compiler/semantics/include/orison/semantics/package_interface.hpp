@@ -55,6 +55,7 @@ struct PackageInterfaceParseResult {
 struct ImportedTypeDeclarationMetadata {
     std::string package_name;
     std::string declaration_name;
+    std::string local_name;
     std::size_t generic_arity = 0;
 };
 
