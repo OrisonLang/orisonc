@@ -27,6 +27,12 @@ stable, merges link libraries, and links only reachable object images. This is b
 Prebuilt packages contribute their parsed interface, object image, declared dependencies, and declared host libraries;
 they are not recompiled.
 
+All reachable source-package interfaces are available during specialization rounds. A generic producer may therefore
+lower a requested specialization over a public type declared by a consumer package without importing that package in
+source. The type layout is materialized only inside lowering under a compiler-reserved name. Ordinary producer source
+analysis remains limited to its declared imports, so specialization scheduling does not create a source dependency
+cycle or expose undeclared names.
+
 ADR-0009 defines opt-in object caching for source packages in a build plan.
 
 ## Consequences
@@ -36,6 +42,8 @@ search. Unreachable plan modules do not contribute interfaces, objects, entry po
 implementation recompiles reachable modules while specialization requests grow; it does not cache intermediate objects.
 Each source package currently maps to one source file, and every reachable package dependency must be present in the
 plan. A prebuilt generic object must already contain every specialization required by its consumers.
+Consumer-local public records can serve as concrete arguments to source-built generic producers. Non-public types and
+types absent from explicit package-interface inputs cannot be materialized by the producer.
 
 ## Follow-up work
 

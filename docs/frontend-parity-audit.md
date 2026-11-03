@@ -3859,3 +3859,7 @@ This file tracks which source-language frontend slices are reflected in the curr
   package-qualified identities. A consumer and generic producer import `external.shared.Payload` under different aliases,
   emit one `external_shared_Payload` specialization symbol, link with the shared type producer, and execute. No source
   syntax changed.
+- 2026-11-03: Generic specialization requests now identify concrete types declared by the consumer package. Build-plan
+  producer lowering materializes the requested public record from the consumer package interface under a reserved
+  internal name, while producer source analysis remains import-limited. The separately compiled objects link and run;
+  no package cycle or source syntax was added.

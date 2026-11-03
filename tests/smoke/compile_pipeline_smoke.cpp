@@ -2554,7 +2554,7 @@ auto main() -> int {
     assert(missing_type_import_producer.has_errors());
     assert(
         missing_type_import_producer.error_text.find(
-            "generic specialization request for 'choose' uses a type that is not imported by the producer"
+            "generic specialization request for 'choose' uses a type that is unavailable through explicit producer inputs"
         ) != std::string::npos
     );
 

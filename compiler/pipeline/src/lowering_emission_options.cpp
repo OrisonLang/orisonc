@@ -2,10 +2,132 @@
 
 #include "orison/semantics/drop_model.hpp"
 
+#include <algorithm>
+#include <string>
+#include <string_view>
 #include <utility>
 
 namespace orison::pipeline {
 namespace {
+
+auto encoded_specialization_type_component(std::string_view value) -> std::string {
+    constexpr auto hex_digits = std::string_view {"0123456789abcdef"};
+    auto encoded = std::string {};
+    encoded.reserve(value.size() * 2);
+    for (auto character : value) {
+        auto const byte = static_cast<unsigned char>(character);
+        encoded += hex_digits[byte >> 4];
+        encoded += hex_digits[byte & 0x0f];
+    }
+    return encoded;
+}
+
+auto specialization_type_local_name(
+    semantics::GenericSpecializationTypeIdentity const& identity
+) -> std::string {
+    return "__orison_specialization_type_" +
+        encoded_specialization_type_component(identity.package_name) + "_" +
+        encoded_specialization_type_component(identity.declaration_name);
+}
+
+void append_specialization_type_declaration(
+    semantics::GenericSpecializationTypeIdentity const& identity,
+    std::string_view producer_package,
+    std::vector<semantics::PackageInterface> const& package_interfaces,
+    std::vector<semantics::ImportedTypeDeclarationMetadata>& imported_types,
+    semantics::ImportedAggregateDeclarations& imported_aggregates
+) {
+    for (auto const& argument : identity.generic_arguments) {
+        append_specialization_type_declaration(
+            argument,
+            producer_package,
+            package_interfaces,
+            imported_types,
+            imported_aggregates
+        );
+    }
+    if (identity.package_name.empty() || identity.package_name == producer_package) {
+        return;
+    }
+    if (std::ranges::any_of(
+            imported_types,
+            [&](semantics::ImportedTypeDeclarationMetadata const& declaration) {
+                return declaration.package_name == identity.package_name &&
+                    declaration.declaration_name == identity.declaration_name;
+            }
+        )) {
+        return;
+    }
+
+    auto package_interface = std::ranges::find_if(
+        package_interfaces,
+        [&](semantics::PackageInterface const& candidate) {
+            return candidate.package_name == identity.package_name;
+        }
+    );
+    if (package_interface == package_interfaces.end()) {
+        return;
+    }
+    auto declaration = std::ranges::find_if(
+        package_interface->exported_type_declarations,
+        [&](semantics::PackageTypeDeclaration const& candidate) {
+            return candidate.name == identity.declaration_name;
+        }
+    );
+    if (declaration == package_interface->exported_type_declarations.end()) {
+        return;
+    }
+    if (declaration->kind != semantics::PackageTypeDeclarationKind::record &&
+        declaration->kind != semantics::PackageTypeDeclarationKind::choice) {
+        return;
+    }
+
+    auto const local_name = specialization_type_local_name(identity);
+    imported_types.push_back(semantics::ImportedTypeDeclarationMetadata {
+        .package_name = identity.package_name,
+        .declaration_name = identity.declaration_name,
+        .local_name = local_name,
+        .generic_arity = declaration->generic_arity,
+    });
+    if (declaration->kind == semantics::PackageTypeDeclarationKind::record) {
+        imported_aggregates.records.push_back(syntax::RecordSyntax {
+            .visibility = syntax::Visibility::public_visibility,
+            .name = local_name,
+            .generic_parameters = declaration->generic_parameters,
+            .fields = declaration->public_record_fields,
+        });
+    } else if (declaration->kind == semantics::PackageTypeDeclarationKind::choice) {
+        imported_aggregates.choices.push_back(syntax::ChoiceSyntax {
+            .visibility = syntax::Visibility::public_visibility,
+            .name = local_name,
+            .generic_parameters = declaration->generic_parameters,
+            .variants = declaration->choice_variants,
+        });
+    }
+}
+
+void append_specialization_type_declarations(
+    syntax::ModuleSyntax const& module,
+    std::vector<semantics::GenericFunctionSpecializationRequest> const& requests,
+    std::vector<semantics::PackageInterface> const& package_interfaces,
+    std::vector<semantics::ImportedTypeDeclarationMetadata>& imported_types,
+    semantics::ImportedAggregateDeclarations& imported_aggregates
+) {
+    for (auto const& request : requests) {
+        if (request.package_name != module.package_name) {
+            continue;
+        }
+        for (auto const& identity : request.type_identities) {
+            append_specialization_type_declaration(
+                identity,
+                module.package_name,
+                package_interfaces,
+                imported_types,
+                imported_aggregates
+            );
+        }
+    }
+}
 
 void authorize_dynamic_array_owned_element_cleanups(
     std::vector<semantics::OwnedCleanupLoweringAuthorization>& authorizations
@@ -88,6 +210,13 @@ auto build_lowering_emission_options(
     auto imported_aggregates = semantics::resolve_imported_aggregate_declarations(
         result.parse_result.module,
         options.available_package_interfaces
+    );
+    append_specialization_type_declarations(
+        result.parse_result.module,
+        options.generic_function_specialization_requests,
+        options.available_package_interfaces,
+        emission_options.imported_type_declarations,
+        imported_aggregates
     );
     emission_options.imported_record_declarations = std::move(imported_aggregates.records);
     emission_options.imported_choice_declarations = std::move(imported_aggregates.choices);

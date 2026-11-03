@@ -579,6 +579,7 @@ auto specialized_function_copy(
 auto canonicalize_specialization_type(
     syntax::TypeSyntax type,
     std::vector<semantics::ImportedTypeDeclarationMetadata> const& imported_types,
+    syntax::ModuleSyntax const& module,
     semantics::GenericSpecializationTypeIdentity& identity
 ) -> syntax::TypeSyntax {
     auto declaration = std::ranges::find_if(
@@ -593,12 +594,26 @@ auto canonicalize_specialization_type(
         type.name = declaration->declaration_name;
     } else {
         identity.declaration_name = type.name;
+        auto const is_local_type = std::ranges::any_of(
+            module.type_aliases,
+            [&](syntax::TypeAliasSyntax const& candidate) { return candidate.name == type.name; }
+        ) || std::ranges::any_of(
+            module.records,
+            [&](syntax::RecordSyntax const& candidate) { return candidate.name == type.name; }
+        ) || std::ranges::any_of(
+            module.choices,
+            [&](syntax::ChoiceSyntax const& candidate) { return candidate.name == type.name; }
+        );
+        if (is_local_type) {
+            identity.package_name = module.package_name;
+        }
     }
     identity.generic_arguments.resize(type.generic_arguments.size());
     for (auto index = std::size_t {0}; index < type.generic_arguments.size(); ++index) {
         type.generic_arguments[index] = canonicalize_specialization_type(
             std::move(type.generic_arguments[index]),
             imported_types,
+            module,
             identity.generic_arguments[index]
         );
     }
@@ -698,7 +713,8 @@ auto localize_requested_specialization_type(
 auto specialization_request_for_imported_function(
     semantics::SemanticFunctionSummary const& imported_function,
     syntax::FunctionSyntax const& specialization,
-    std::vector<semantics::ImportedTypeDeclarationMetadata> const& imported_types
+    std::vector<semantics::ImportedTypeDeclarationMetadata> const& imported_types,
+    syntax::ModuleSyntax const& module
 ) -> std::optional<semantics::GenericFunctionSpecializationRequest> {
     if (imported_function.parameters.size() != specialization.parameters.size()) {
         return std::nullopt;
@@ -730,7 +746,7 @@ auto specialization_request_for_imported_function(
         }
         auto identity = semantics::GenericSpecializationTypeIdentity {};
         request.type_arguments.push_back(canonicalize_specialization_type(
-            substitution->second, imported_types, identity
+            substitution->second, imported_types, module, identity
         ));
         request.type_identities.push_back(std::move(identity));
     }
@@ -814,7 +830,7 @@ void append_requested_generic_function_specializations(
                 diagnostics.error(
                     function->line,
                     "generic specialization request for '" + request.declaration_name +
-                        "' uses a type that is not imported by the producer"
+                        "' uses a type that is unavailable through explicit producer inputs"
                 );
                 can_localize = false;
                 break;
@@ -3306,7 +3322,8 @@ auto build_lowering_context(
             imported_specialization_request = specialization_request_for_imported_function(
                 *imported_function,
                 specialization,
-                imported_types
+                imported_types,
+                module
             );
             auto const specialization_suffix = imported_specialization_request.has_value()
                 ? specialization_type_suffix(

@@ -385,6 +385,40 @@ auto main() -> int {
     assert_success_with_empty_stdout(build_plan_result);
     assert(std::system(build_plan_executable_path.string().c_str()) == 0);
 
+    auto local_type_consumer_path = smoke_temp_root / "local type consumer.or";
+    write_fixture(
+        local_type_consumer_path,
+        "demo.localtypeconsumer",
+        {
+            "import",
+            "    choose as select from external.generics",
+            "public record Payload",
+            "    public value: UInt32",
+            "function make_payload(value: UInt32) -> Payload",
+            "    Payload(value)",
+            "function read_payload(value: Payload) -> UInt32",
+            "    value.value",
+            "function main() -> UInt32",
+            "    read_payload(select(make_payload(40 as UInt32), make_payload(41 as UInt32))) - 40 as UInt32",
+        }
+    );
+    auto local_type_build_plan_path = smoke_temp_root / "local_type_generic.obp";
+    {
+        auto output = std::ofstream(local_type_build_plan_path);
+        output << "orison-build-plan 1\n";
+        output << "entry demo.localtypeconsumer\n";
+        output << "module external.generics generic producer.or\n";
+        output << "module demo.localtypeconsumer local type consumer.or\n";
+    }
+    auto local_type_executable_path = smoke_temp_root / "local_type_generic_build_plan";
+    auto local_type_build_plan_result = run_build_plan(
+        app,
+        local_type_build_plan_path,
+        local_type_executable_path
+    );
+    assert_success_with_empty_stdout(local_type_build_plan_result);
+    assert(std::system(local_type_executable_path.string().c_str()) == 0);
+
     auto build_cache_path = smoke_temp_root / "build cache";
     auto cached_write_times = std::vector<
         std::pair<std::filesystem::path, std::filesystem::file_time_type>

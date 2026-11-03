@@ -65,7 +65,9 @@ call to seed monomorphization. Specialization requests use a separate determinis
 `orison-specialization-requests 2`; they are not source syntax and are not serialized into package-interface artifacts.
 Version 2 stores each lowering type together with a recursive package-qualified type identity. Third-party aggregate
 types can therefore use different aliases in producer and consumer modules while selecting one specialization symbol.
-The generic producer must import each third-party type so lowering can map canonical identity to a local ABI layout.
+The generic producer uses an explicit source import when one exists. Otherwise, lowering may materialize a requested
+public aggregate under a compiler-reserved local name from an available package interface. This materialization is
+limited to specialization lowering and does not make the type visible to ordinary producer source analysis.
 The driver emits request artifacts with `--emit-specialization-requests` and accepts repeatable
 `--specialization-requests` inputs, allowing build orchestration to aggregate consumer requests for producer
 compilation. ADR-0008 defines explicit dependency scheduling and object selection through driver build plans.
@@ -82,5 +84,4 @@ Module-free synthetic lowering fixtures retain package-neutral generic method sy
 - Migrate the remaining report command/helper names away from descriptor-origin terminology only when the pinned CLI
   text can change intentionally.
 - Use the explicit build-plan orchestration defined by ADR-0008 for dependency scheduling and object selection.
-- Extend package-qualified specialization identity to consumer-local public types once package cycles and producer
-  access to consumer interfaces have an explicit build-plan policy.
+- Extend specialization-only aggregate materialization to public layout dependencies referenced by aggregate fields.
