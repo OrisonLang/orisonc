@@ -3855,3 +3855,7 @@ This file tracks which source-language frontend slices are reflected in the curr
   canonicalize aliases from the function's source package to producer declaration names. A consumer using
   `ExternalPair` now declares and requests `choose__Pair`, then links and executes the producer specialization. No
   source syntax changed.
+- 2026-11-02: Generic specialization request artifacts now use version 2 and pair lowering types with recursive
+  package-qualified identities. A consumer and generic producer import `external.shared.Payload` under different aliases,
+  emit one `external_shared_Payload` specialization symbol, link with the shared type producer, and execute. No source
+  syntax changed.

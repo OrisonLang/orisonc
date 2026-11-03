@@ -17,6 +17,8 @@ directory. Plans without this record perform no cache reads or writes.
 Each source-package cache key is a SHA-256 digest of a cache-schema identifier, production compiler-profile identifier,
 package name, source bytes, canonical reachable package interfaces, and canonical specialization requests targeting
 that package. Imported interfaces and requests supplied through driver options participate in the same canonical data.
+Version-2 specialization request canonicalization includes recursive package-qualified type identities, so aliases do
+not split cache entries while distinct same-named external types select different entries.
 
 An entry stores object bytes, discovered specialization requests, and link libraries in separate files. A readiness
 record is published last. A hit restores all three outputs so generic fixed-point scheduling behaves the same as a

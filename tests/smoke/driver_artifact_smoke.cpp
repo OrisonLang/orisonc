@@ -280,8 +280,8 @@ auto main() -> int {
         );
         assert(
             contents ==
-            "orison-specialization-requests 1\n"
-            "request external.generics choose 1 UInt32\n"
+            "orison-specialization-requests 2\n"
+            "request external.generics choose 1 UInt32 UInt32\n"
         );
     }
 
@@ -521,7 +521,7 @@ auto main() -> int {
     auto invalid_specialization_requests_path = smoke_temp_root / "invalid.osr";
     {
         auto output = std::ofstream(invalid_specialization_requests_path);
-        output << "orison-specialization-requests 2\n";
+        output << "orison-specialization-requests 3\n";
     }
     auto invalid_specialization_requests_path_text = invalid_specialization_requests_path.string();
     std::array<char const*, 5> invalid_specialization_requests_argv {
@@ -541,7 +541,7 @@ auto main() -> int {
     assert(invalid_specialization_requests_result.stdout_text.empty());
     assert(
         invalid_specialization_requests_result.stderr_text.find(
-            "unsupported specialization request version '2'"
+            "unsupported specialization request version '3'"
         ) != std::string::npos
     );
 

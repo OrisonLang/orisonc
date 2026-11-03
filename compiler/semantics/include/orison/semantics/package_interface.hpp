@@ -71,10 +71,19 @@ struct ImportedFunctionDeclaration {
     PackageFunctionDeclaration declaration;
 };
 
+struct GenericSpecializationTypeIdentity {
+    std::string package_name;
+    std::string declaration_name;
+    std::vector<GenericSpecializationTypeIdentity> generic_arguments;
+
+    auto operator==(GenericSpecializationTypeIdentity const&) const -> bool = default;
+};
+
 struct GenericFunctionSpecializationRequest {
     std::string package_name;
     std::string declaration_name;
     std::vector<syntax::TypeSyntax> type_arguments;
+    std::vector<GenericSpecializationTypeIdentity> type_identities;
 };
 
 struct GenericFunctionSpecializationRequestParseResult {

@@ -204,9 +204,19 @@ int main() {
             .type_arguments = {
                 {
                     .name = "DynamicArray",
-                    .generic_arguments = {{.name = "UInt32"}},
+                    .generic_arguments = {{.name = "ExternalPair"}},
                 },
                 {.name = "UInt64"},
+            },
+            .type_identities = {
+                {
+                    .declaration_name = "DynamicArray",
+                    .generic_arguments = {{
+                        .package_name = "external.types",
+                        .declaration_name = "Pair",
+                    }},
+                },
+                {.declaration_name = "UInt64"},
             },
         },
         {
@@ -219,9 +229,10 @@ int main() {
         orison::semantics::serialize_generic_function_specialization_requests(specialization_requests);
     assert(
         serialized_specialization_requests ==
-        "orison-specialization-requests 1\n"
-        "request external.generics choose 1 UInt32\n"
-        "request external.generics combine 2 DynamicArray<UInt32> UInt64\n"
+        "orison-specialization-requests 2\n"
+        "request external.generics choose 1 UInt32 UInt32\n"
+        "request external.generics combine 2 DynamicArray<Pair> "
+            "DynamicArray<external.types::Pair> UInt64 UInt64\n"
     );
     auto parsed_specialization_requests =
         orison::semantics::parse_generic_function_specialization_requests(
@@ -229,6 +240,8 @@ int main() {
         );
     assert(!parsed_specialization_requests.has_error());
     assert(parsed_specialization_requests.requests.size() == 2);
+    assert(parsed_specialization_requests.requests[1].type_identities[0].generic_arguments[0].package_name ==
+        "external.types");
     assert(
         orison::semantics::serialize_generic_function_specialization_requests(
             parsed_specialization_requests.requests
@@ -244,16 +257,16 @@ int main() {
     );
     auto unsupported_specialization_request_version =
         orison::semantics::parse_generic_function_specialization_requests(
-            "orison-specialization-requests 2\n"
+            "orison-specialization-requests 3\n"
         );
     assert(unsupported_specialization_request_version.has_error());
     assert(
         unsupported_specialization_request_version.error_message ==
-        "unsupported specialization request version '2'"
+        "unsupported specialization request version '3'"
     );
     auto invalid_specialization_request_count =
         orison::semantics::parse_generic_function_specialization_requests(
-            "orison-specialization-requests 1\n"
+            "orison-specialization-requests 2\n"
             "request external.generics choose 0\n"
         );
     assert(invalid_specialization_request_count.has_error());
@@ -263,8 +276,8 @@ int main() {
     );
     auto invalid_specialization_request_type =
         orison::semantics::parse_generic_function_specialization_requests(
-            "orison-specialization-requests 1\n"
-            "request external.generics choose 1 View<\n"
+            "orison-specialization-requests 2\n"
+            "request external.generics choose 1 View< UInt32\n"
         );
     assert(invalid_specialization_request_type.has_error());
     assert(
@@ -273,9 +286,9 @@ int main() {
     );
     auto duplicate_specialization_request =
         orison::semantics::parse_generic_function_specialization_requests(
-            "orison-specialization-requests 1\n"
-            "request external.generics choose 1 UInt32\n"
-            "request external.generics choose 1 UInt32\n"
+            "orison-specialization-requests 2\n"
+            "request external.generics choose 1 UInt32 UInt32\n"
+            "request external.generics choose 1 UInt32 UInt32\n"
         );
     assert(duplicate_specialization_request.has_error());
     assert(

@@ -11,7 +11,7 @@ namespace orison::semantics {
 namespace {
 
 constexpr auto package_interface_format_version = std::size_t {2};
-constexpr auto generic_specialization_request_format_version = std::size_t {1};
+constexpr auto generic_specialization_request_format_version = std::size_t {2};
 
 auto declaration_kind_text(PackageTypeDeclarationKind kind) -> std::string_view {
     switch (kind) {
@@ -118,6 +118,72 @@ auto parse_type(std::string_view text) -> std::optional<syntax::TypeSyntax> {
     return type;
 }
 
+auto default_type_identity(syntax::TypeSyntax const& type) -> GenericSpecializationTypeIdentity {
+    auto identity = GenericSpecializationTypeIdentity {.declaration_name = type.name};
+    identity.generic_arguments.reserve(type.generic_arguments.size());
+    for (auto const& argument : type.generic_arguments) {
+        identity.generic_arguments.push_back(default_type_identity(argument));
+    }
+    return identity;
+}
+
+auto render_type_identity(GenericSpecializationTypeIdentity const& identity) -> std::string {
+    auto rendered = identity.package_name.empty()
+        ? identity.declaration_name
+        : identity.package_name + "::" + identity.declaration_name;
+    if (identity.generic_arguments.empty()) {
+        return rendered;
+    }
+    rendered += '<';
+    for (auto index = std::size_t {0}; index < identity.generic_arguments.size(); ++index) {
+        if (index > 0) {
+            rendered += ',';
+        }
+        rendered += render_type_identity(identity.generic_arguments[index]);
+    }
+    rendered += '>';
+    return rendered;
+}
+
+auto canonical_type_from_identity(GenericSpecializationTypeIdentity const& identity) -> syntax::TypeSyntax {
+    auto type = syntax::TypeSyntax {.name = identity.declaration_name};
+    type.generic_arguments.reserve(identity.generic_arguments.size());
+    for (auto const& argument : identity.generic_arguments) {
+        type.generic_arguments.push_back(canonical_type_from_identity(argument));
+    }
+    return type;
+}
+
+auto type_identity_from_wire_type(syntax::TypeSyntax const& type)
+    -> std::optional<GenericSpecializationTypeIdentity> {
+    auto separator = type.name.rfind("::");
+    auto identity = GenericSpecializationTypeIdentity {};
+    if (separator == std::string::npos) {
+        identity.declaration_name = type.name;
+    } else {
+        identity.package_name = type.name.substr(0, separator);
+        identity.declaration_name = type.name.substr(separator + 2);
+    }
+    if (identity.declaration_name.empty()) {
+        return std::nullopt;
+    }
+    for (auto const& argument : type.generic_arguments) {
+        auto converted = type_identity_from_wire_type(argument);
+        if (!converted.has_value()) {
+            return std::nullopt;
+        }
+        identity.generic_arguments.push_back(std::move(*converted));
+    }
+    return identity;
+}
+
+auto parse_type_identity(std::string_view text) -> std::optional<GenericSpecializationTypeIdentity> {
+    auto wire_type = parse_type(text);
+    return wire_type.has_value()
+        ? type_identity_from_wire_type(*wire_type)
+        : std::nullopt;
+}
+
 auto parse_count(std::string_view text) -> std::optional<std::size_t> {
     auto value = std::size_t {};
     auto [end, error] = std::from_chars(text.data(), text.data() + text.size(), value);
@@ -129,8 +195,11 @@ auto parse_count(std::string_view text) -> std::optional<std::size_t> {
 
 auto specialization_request_sort_key(GenericFunctionSpecializationRequest const& request) -> std::string {
     auto key = request.package_name + "\n" + request.declaration_name;
-    for (auto const& type_argument : request.type_arguments) {
-        key += "\n" + render_type(type_argument);
+    for (auto index = std::size_t {0}; index < request.type_arguments.size(); ++index) {
+        auto identity = index < request.type_identities.size()
+            ? request.type_identities[index]
+            : default_type_identity(request.type_arguments[index]);
+        key += "\n" + render_type_identity(identity);
     }
     return key;
 }
@@ -595,8 +664,12 @@ auto serialize_generic_function_specialization_requests(
         previous_key = std::move(key);
         output << "request " << request.package_name << ' ' << request.declaration_name << ' '
                << request.type_arguments.size();
-        for (auto const& type_argument : request.type_arguments) {
-            output << ' ' << render_type(type_argument);
+        for (auto index = std::size_t {0}; index < request.type_arguments.size(); ++index) {
+            auto identity = index < request.type_identities.size()
+                ? request.type_identities[index]
+                : default_type_identity(request.type_arguments[index]);
+            output << ' ' << render_type(canonical_type_from_identity(identity))
+                   << ' ' << render_type_identity(identity);
         }
         output << '\n';
     }
@@ -651,7 +724,8 @@ auto parse_generic_function_specialization_requests(std::string_view text)
         }
         for (auto index = std::size_t {0}; index < *type_argument_count; ++index) {
             auto type_text = std::string {};
-            if (!(request_line >> type_text)) {
+            auto identity_text = std::string {};
+            if (!(request_line >> type_text >> identity_text)) {
                 return specialization_request_parse_error(
                     "invalid specialization request at line " + std::to_string(line_number)
                 );
@@ -663,6 +737,14 @@ auto parse_generic_function_specialization_requests(std::string_view text)
                 );
             }
             request.type_arguments.push_back(std::move(*type));
+            auto identity = parse_type_identity(identity_text);
+            if (!identity.has_value()) {
+                return specialization_request_parse_error(
+                    "invalid specialization request type identity at line " +
+                    std::to_string(line_number)
+                );
+            }
+            request.type_identities.push_back(std::move(*identity));
         }
         if (request_line >> extra) {
             return specialization_request_parse_error(

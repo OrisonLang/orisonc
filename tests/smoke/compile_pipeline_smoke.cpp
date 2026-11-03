@@ -2461,6 +2461,133 @@ auto main() -> int {
     assert(!imported_generic_aggregate_link.has_errors());
     assert(std::system(imported_generic_aggregate_executable.string().c_str()) == 0);
 
+    auto third_party_type_producer_path = smoke_temp_root / "third_party_type_producer.or";
+    {
+        std::ofstream output(third_party_type_producer_path);
+        output << "package external.shared\n";
+        output << "public record Payload\n";
+        output << "    public value: UInt32\n";
+        output << "public function make_payload(value: UInt32) -> Payload\n";
+        output << "    Payload(value)\n";
+        output << "public function read_payload(value: Payload) -> UInt32\n";
+        output << "    value.value\n";
+    }
+    auto third_party_type_producer = pipeline.emit_object(third_party_type_producer_path);
+    assert(!third_party_type_producer.has_errors());
+    auto third_party_type_interface =
+        orison::semantics::build_package_interface(third_party_type_producer.parse_result.module);
+
+    auto third_party_generic_producer_path = smoke_temp_root / "third_party_generic_producer.or";
+    {
+        std::ofstream output(third_party_generic_producer_path);
+        output << "package external.thirdparty.generics\n";
+        output << "import\n";
+        output << "    Payload as ProducerPayload from external.shared\n";
+        output << "public function choose<Value>(left: Value, right: Value) -> Value\n";
+        output << "    left\n";
+    }
+    auto third_party_generic_interface_options = orison::pipeline::production_compile_pipeline_options();
+    third_party_generic_interface_options.available_package_interfaces = {third_party_type_interface};
+    auto third_party_generic_analysis = pipeline.analyze(
+        third_party_generic_producer_path,
+        third_party_generic_interface_options
+    );
+    assert(!third_party_generic_analysis.has_errors());
+    auto third_party_generic_interface =
+        orison::semantics::build_package_interface(third_party_generic_analysis.parse_result.module);
+
+    auto third_party_consumer_path = smoke_temp_root / "third_party_consumer.or";
+    {
+        std::ofstream output(third_party_consumer_path);
+        output << "package demo.thirdparty\n";
+        output << "import\n";
+        output << "    Payload as ConsumerPayload from external.shared\n";
+        output << "    make_payload from external.shared\n";
+        output << "    read_payload from external.shared\n";
+        output << "    choose as select from external.thirdparty.generics\n";
+        output << "function main() -> UInt32\n";
+        output << "    let selected = select(make_payload(42 as UInt32), make_payload(1 as UInt32))\n";
+        output << "    read_payload(selected) - 42 as UInt32\n";
+    }
+    auto third_party_consumer_options = orison::pipeline::production_compile_pipeline_options();
+    third_party_consumer_options.available_package_interfaces = {
+        third_party_type_interface,
+        third_party_generic_interface,
+    };
+    auto third_party_consumer = pipeline.emit_object(
+        third_party_consumer_path,
+        third_party_consumer_options
+    );
+    assert(!third_party_consumer.has_errors());
+    assert(third_party_consumer.generic_function_specialization_requests.size() == 1);
+    auto const& third_party_request =
+        third_party_consumer.generic_function_specialization_requests.front();
+    assert(third_party_request.type_arguments.front().name == "Payload");
+    assert(third_party_request.type_identities.front().package_name == "external.shared");
+    assert(third_party_request.type_identities.front().declaration_name == "Payload");
+    assert(
+        third_party_consumer.ir_text.find(
+            "declare %record.ConsumerPayload "
+            "@__orison_fn.external.thirdparty.generics.choose__external_shared_Payload("
+            "%record.ConsumerPayload, %record.ConsumerPayload)"
+        ) != std::string::npos
+    );
+
+    auto missing_type_import_producer_path =
+        smoke_temp_root / "missing_type_import_generic_producer.or";
+    {
+        std::ofstream output(missing_type_import_producer_path);
+        output << "package external.missing_type_import.generics\n";
+        output << "public function choose<Value>(left: Value, right: Value) -> Value\n";
+        output << "    left\n";
+    }
+    auto missing_type_import_request = third_party_request;
+    missing_type_import_request.package_name = "external.missing_type_import.generics";
+    auto missing_type_import_options = orison::pipeline::production_compile_pipeline_options();
+    missing_type_import_options.generic_function_specialization_requests = {
+        missing_type_import_request,
+    };
+    auto missing_type_import_producer = pipeline.emit_object(
+        missing_type_import_producer_path,
+        missing_type_import_options
+    );
+    assert(missing_type_import_producer.has_errors());
+    assert(
+        missing_type_import_producer.error_text.find(
+            "generic specialization request for 'choose' uses a type that is not imported by the producer"
+        ) != std::string::npos
+    );
+
+    auto third_party_generic_producer_options = orison::pipeline::production_compile_pipeline_options();
+    third_party_generic_producer_options.available_package_interfaces = {third_party_type_interface};
+    third_party_generic_producer_options.generic_function_specialization_requests =
+        third_party_consumer.generic_function_specialization_requests;
+    auto third_party_generic_producer = pipeline.emit_object(
+        third_party_generic_producer_path,
+        third_party_generic_producer_options
+    );
+    assert(!third_party_generic_producer.has_errors());
+    assert(
+        third_party_generic_producer.ir_text.find(
+            "define %record.ProducerPayload "
+            "@__orison_fn.external.thirdparty.generics.choose__external_shared_Payload("
+            "%record.ProducerPayload %left, %record.ProducerPayload %right)"
+        ) != std::string::npos
+    );
+
+    auto third_party_object_images = std::array<std::string_view, 3> {
+        third_party_type_producer.object_bytes,
+        third_party_generic_producer.object_bytes,
+        third_party_consumer.object_bytes,
+    };
+    auto third_party_executable = smoke_temp_root / "third_party_consumer";
+    auto third_party_link = orison::link::HostLinker {}.link(
+        third_party_object_images,
+        third_party_executable
+    );
+    assert(!third_party_link.has_errors());
+    assert(std::system(third_party_executable.string().c_str()) == 0);
+
     auto imported_function_arity_path = smoke_temp_root / "imported_function_arity.or";
     {
         std::ofstream output(imported_function_arity_path);
