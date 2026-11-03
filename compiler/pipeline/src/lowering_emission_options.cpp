@@ -2,6 +2,8 @@
 
 #include "orison/semantics/drop_model.hpp"
 
+#include <utility>
+
 namespace orison::pipeline {
 namespace {
 
@@ -79,6 +81,12 @@ auto build_lowering_emission_options(
     auto emission_options = lowering::LlvmIrEmissionOptions {};
     emission_options.generic_function_specialization_requests =
         options.generic_function_specialization_requests;
+    auto imported_aggregates = semantics::resolve_imported_aggregate_declarations(
+        result.parse_result.module,
+        options.available_package_interfaces
+    );
+    emission_options.imported_record_declarations = std::move(imported_aggregates.records);
+    emission_options.imported_choice_declarations = std::move(imported_aggregates.choices);
     emission_options.semantic_owned_cleanup_lowering_authorizations =
         options.test_only_semantic_owned_cleanup_lowering_authorizations;
     emission_options.semantic_owned_cleanup_lowering_authorizations.insert(

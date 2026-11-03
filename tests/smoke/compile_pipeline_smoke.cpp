@@ -2089,6 +2089,88 @@ auto main() -> int {
     assert(!imported_function_link.has_errors());
     assert(std::system(imported_function_executable.string().c_str()) == 0);
 
+    auto imported_aggregate_producer_path = smoke_temp_root / "imported_aggregate_producer.or";
+    {
+        std::ofstream output(imported_aggregate_producer_path);
+        output << "package external.aggregates\n";
+        output << "public record Pair\n";
+        output << "    public left: UInt32\n";
+        output << "    public right: UInt32\n";
+        output << "public choice Result\n";
+        output << "    Value(value: UInt32)\n";
+        output << "    Empty\n";
+        output << "public function make_pair(left: UInt32, right: UInt32) -> Pair\n";
+        output << "    Pair(left, right)\n";
+        output << "public function sum_pair(value: Pair) -> UInt32\n";
+        output << "    value.left + value.right\n";
+        output << "public function make_result(value: UInt32) -> Result\n";
+        output << "    Value(value)\n";
+        output << "public function read_result(value: Result) -> UInt32\n";
+        output << "    switch value\n";
+        output << "        Value(item) => item\n";
+        output << "        Empty => 0 as UInt32\n";
+    }
+    auto imported_aggregate_producer = pipeline.emit_object(imported_aggregate_producer_path);
+    assert(!imported_aggregate_producer.has_errors());
+
+    auto imported_aggregate_consumer_path = smoke_temp_root / "imported_aggregate_consumer.or";
+    {
+        std::ofstream output(imported_aggregate_consumer_path);
+        output << "package demo.aggregateimports\n";
+        output << "import\n";
+        output << "    Pair from external.aggregates\n";
+        output << "    Result from external.aggregates\n";
+        output << "    make_pair from external.aggregates\n";
+        output << "    sum_pair from external.aggregates\n";
+        output << "    make_result from external.aggregates\n";
+        output << "    read_result from external.aggregates\n";
+        output << "function main() -> UInt32\n";
+        output << "    let pair = make_pair(20 as UInt32, 22 as UInt32)\n";
+        output << "    let result = make_result(sum_pair(pair))\n";
+        output << "    read_result(result) - 42 as UInt32\n";
+    }
+    auto imported_aggregate_consumer_options = orison::pipeline::production_compile_pipeline_options();
+    imported_aggregate_consumer_options.available_package_interfaces = {
+        orison::semantics::build_package_interface(imported_aggregate_producer.parse_result.module),
+    };
+    auto imported_aggregate_consumer = pipeline.emit_object(
+        imported_aggregate_consumer_path,
+        imported_aggregate_consumer_options
+    );
+    assert(!imported_aggregate_consumer.has_errors());
+    assert(
+        imported_aggregate_consumer.ir_text.find(
+            "declare %record.Pair @__orison_fn.external.aggregates.make_pair(i32, i32)"
+        ) != std::string::npos
+    );
+    assert(
+        imported_aggregate_consumer.ir_text.find(
+            "declare i32 @__orison_fn.external.aggregates.sum_pair(%record.Pair)"
+        ) != std::string::npos
+    );
+    assert(
+        imported_aggregate_consumer.ir_text.find(
+            "declare { i32, i32 } @__orison_fn.external.aggregates.make_result(i32)"
+        ) != std::string::npos
+    );
+    assert(
+        imported_aggregate_consumer.ir_text.find(
+            "declare i32 @__orison_fn.external.aggregates.read_result({ i32, i32 })"
+        ) != std::string::npos
+    );
+
+    auto imported_aggregate_object_images = std::array<std::string_view, 2> {
+        imported_aggregate_producer.object_bytes,
+        imported_aggregate_consumer.object_bytes,
+    };
+    auto imported_aggregate_executable = smoke_temp_root / "imported_aggregate_consumer";
+    auto imported_aggregate_link = orison::link::HostLinker {}.link(
+        imported_aggregate_object_images,
+        imported_aggregate_executable
+    );
+    assert(!imported_aggregate_link.has_errors());
+    assert(std::system(imported_aggregate_executable.string().c_str()) == 0);
+
     auto first_collision_producer_path = smoke_temp_root / "first_collision_producer.or";
     {
         std::ofstream output(first_collision_producer_path);
@@ -2220,22 +2302,29 @@ auto main() -> int {
         imported_function_access_path,
         package_interface_options
     );
-    assert(imported_generic_aggregate_lowering.has_errors());
+    assert(!imported_generic_aggregate_lowering.has_errors());
     assert(
-        imported_generic_aggregate_lowering.error_text.find(
-            "imported generic function 'inspect' specialization has a signature that is not supported by lowering"
+        imported_generic_aggregate_lowering.ir_text.find(
+            "declare i32 @__orison_fn.external.types.inspect_pair__UInt32__UInt64(%record.ExternalPair_UInt32__UInt64_)"
         ) != std::string::npos
     );
     assert(
-        imported_generic_aggregate_lowering.error_text.find(
-            "lowering context is missing generic function specialization"
-        ) == std::string::npos
+        imported_generic_aggregate_lowering.ir_text.find(
+            "call i32 @__orison_fn.external.types.inspect_pair__UInt32__UInt64(%record.ExternalPair_UInt32__UInt64_ %value)"
+        ) != std::string::npos
     );
 
     auto imported_generic_producer_path = smoke_temp_root / "imported_generic_producer.or";
     {
         std::ofstream output(imported_generic_producer_path);
         output << "package external.generics\n";
+        output << "public record Pair\n";
+        output << "    public left: UInt32\n";
+        output << "    public right: UInt32\n";
+        output << "public function make_pair(left: UInt32, right: UInt32) -> Pair\n";
+        output << "    Pair(left, right)\n";
+        output << "public function sum_pair(value: Pair) -> UInt32\n";
+        output << "    value.left + value.right\n";
         output << "public function choose<Value>(left: Value, right: Value) -> Value\n";
         output << "    left\n";
     }
@@ -2285,11 +2374,45 @@ auto main() -> int {
         ) == std::string::npos
     );
 
+    auto imported_generic_aggregate_consumer_path =
+        smoke_temp_root / "imported_generic_aggregate_consumer.or";
+    {
+        std::ofstream output(imported_generic_aggregate_consumer_path);
+        output << "package demo.genericaggregateimports\n";
+        output << "import\n";
+        output << "    Pair from external.generics\n";
+        output << "    make_pair from external.generics\n";
+        output << "    sum_pair from external.generics\n";
+        output << "    choose as select from external.generics\n";
+        output << "function main() -> UInt32\n";
+        output << "    let selected = select(make_pair(20 as UInt32, 22 as UInt32), make_pair(1 as UInt32, 2 as UInt32))\n";
+        output << "    sum_pair(selected) - 42 as UInt32\n";
+    }
+    auto imported_generic_aggregate_consumer = pipeline.emit_object(
+        imported_generic_aggregate_consumer_path,
+        imported_generic_consumer_options
+    );
+    assert(!imported_generic_aggregate_consumer.has_errors());
+    assert(imported_generic_aggregate_consumer.generic_function_specialization_requests.size() == 1);
+    auto const& imported_generic_aggregate_request =
+        imported_generic_aggregate_consumer.generic_function_specialization_requests.front();
+    assert(imported_generic_aggregate_request.package_name == "external.generics");
+    assert(imported_generic_aggregate_request.declaration_name == "choose");
+    assert(imported_generic_aggregate_request.type_arguments.size() == 1);
+    assert(imported_generic_aggregate_request.type_arguments.front().name == "Pair");
+    assert(
+        imported_generic_aggregate_consumer.ir_text.find(
+            "declare %record.Pair @__orison_fn.external.generics.choose__Pair(%record.Pair, %record.Pair)"
+        ) != std::string::npos
+    );
+
     auto imported_generic_producer_options = orison::pipeline::production_compile_pipeline_options();
     imported_generic_producer_options.generic_function_specialization_requests =
         imported_generic_consumer.generic_function_specialization_requests;
-    imported_generic_producer_options.generic_function_specialization_requests.push_back(
-        imported_generic_request
+    imported_generic_producer_options.generic_function_specialization_requests.insert(
+        imported_generic_producer_options.generic_function_specialization_requests.end(),
+        imported_generic_aggregate_consumer.generic_function_specialization_requests.begin(),
+        imported_generic_aggregate_consumer.generic_function_specialization_requests.end()
     );
     auto imported_generic_producer = pipeline.emit_object(
         imported_generic_producer_path,
@@ -2307,6 +2430,11 @@ auto main() -> int {
             "define i32 @__orison_fn.external.generics.choose__UInt32"
         ) == 1
     );
+    assert(
+        imported_generic_producer.ir_text.find(
+            "define %record.Pair @__orison_fn.external.generics.choose__Pair(%record.Pair %left, %record.Pair %right)"
+        ) != std::string::npos
+    );
 
     auto imported_generic_object_images = std::array<std::string_view, 2> {
         imported_generic_producer.object_bytes,
@@ -2319,6 +2447,19 @@ auto main() -> int {
     );
     assert(!imported_generic_link.has_errors());
     assert(std::system(imported_generic_executable.string().c_str()) == 0);
+
+    auto imported_generic_aggregate_object_images = std::array<std::string_view, 2> {
+        imported_generic_producer.object_bytes,
+        imported_generic_aggregate_consumer.object_bytes,
+    };
+    auto imported_generic_aggregate_executable =
+        smoke_temp_root / "imported_generic_aggregate_consumer";
+    auto imported_generic_aggregate_link = orison::link::HostLinker {}.link(
+        imported_generic_aggregate_object_images,
+        imported_generic_aggregate_executable
+    );
+    assert(!imported_generic_aggregate_link.has_errors());
+    assert(std::system(imported_generic_aggregate_executable.string().c_str()) == 0);
 
     auto imported_function_arity_path = smoke_temp_root / "imported_function_arity.or";
     {

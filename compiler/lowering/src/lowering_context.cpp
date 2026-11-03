@@ -2932,6 +2932,7 @@ auto collect_choice_layout(
 
 void collect_all_choice_layouts(
     syntax::ModuleSyntax const& module,
+    std::vector<syntax::ChoiceSyntax> const& imported_choices,
     std::vector<syntax::TypeSyntax> const& instantiated_types,
     std::unordered_map<std::string, syntax::ChoiceSyntax const*> const& generic_choices,
     std::unordered_set<std::string> const& record_names,
@@ -2940,6 +2941,12 @@ void collect_all_choice_layouts(
 ) {
     context.choices.clear();
     for (auto const& choice : module.choices) {
+        context.choices.emplace(
+            choice.name,
+            collect_choice_layout(choice, record_names, context.choices, {}, sizing_context)
+        );
+    }
+    for (auto const& choice : imported_choices) {
         context.choices.emplace(
             choice.name,
             collect_choice_layout(choice, record_names, context.choices, {}, sizing_context)
@@ -2960,6 +2967,7 @@ void collect_all_choice_layouts(
 
 void collect_all_record_layouts(
     syntax::ModuleSyntax const& module,
+    std::vector<syntax::RecordSyntax> const& imported_records,
     std::vector<syntax::TypeSyntax> const& instantiated_types,
     std::unordered_map<std::string, syntax::RecordSyntax const*> const& generic_records,
     std::unordered_set<std::string> const& record_names,
@@ -2967,6 +2975,12 @@ void collect_all_record_layouts(
 ) {
     context.records.clear();
     for (auto const& record : module.records) {
+        if (!record.generic_parameters.empty()) {
+            continue;
+        }
+        context.records.emplace(record.name, collect_record_layout(record, record_names, context.choices));
+    }
+    for (auto const& record : imported_records) {
         if (!record.generic_parameters.empty()) {
             continue;
         }
@@ -2991,7 +3005,9 @@ auto build_lowering_context(
     syntax::ModuleSyntax const& module,
     semantics::SemanticModuleSummary const& semantic_module,
     diagnostics::DiagnosticBag& diagnostics,
-    std::vector<semantics::GenericFunctionSpecializationRequest> const& specialization_requests
+    std::vector<semantics::GenericFunctionSpecializationRequest> const& specialization_requests,
+    std::vector<syntax::RecordSyntax> const& imported_records,
+    std::vector<syntax::ChoiceSyntax> const& imported_choices
 ) -> LoweringContext {
     auto context = LoweringContext {};
     context.package_name = module.package_name;
@@ -3006,7 +3022,20 @@ auto build_lowering_context(
         }
         record_names.insert(record.name);
     }
+    for (auto const& record : imported_records) {
+        if (!record.generic_parameters.empty()) {
+            generic_records.emplace(record.name, &record);
+            context.generic_record_parameters.emplace(record.name, record.generic_parameters);
+            continue;
+        }
+        record_names.insert(record.name);
+    }
     for (auto const& choice : module.choices) {
+        if (!choice.generic_parameters.empty() && choice.name != "Maybe") {
+            generic_choices.emplace(choice.name, &choice);
+        }
+    }
+    for (auto const& choice : imported_choices) {
         if (!choice.generic_parameters.empty() && choice.name != "Maybe") {
             generic_choices.emplace(choice.name, &choice);
         }
@@ -3018,10 +3047,18 @@ auto build_lowering_context(
             record_names.insert(render_record_type_name(type));
         }
     }
-    collect_all_choice_layouts(module, instantiated_types, generic_choices, record_names, context);
-    collect_all_record_layouts(module, instantiated_types, generic_records, record_names, context);
-    collect_all_choice_layouts(module, instantiated_types, generic_choices, record_names, context, &context);
-    collect_all_record_layouts(module, instantiated_types, generic_records, record_names, context);
+    collect_all_choice_layouts(
+        module, imported_choices, instantiated_types, generic_choices, record_names, context
+    );
+    collect_all_record_layouts(
+        module, imported_records, instantiated_types, generic_records, record_names, context
+    );
+    collect_all_choice_layouts(
+        module, imported_choices, instantiated_types, generic_choices, record_names, context, &context
+    );
+    collect_all_record_layouts(
+        module, imported_records, instantiated_types, generic_records, record_names, context
+    );
 
     for (auto const& function : module.functions) {
         auto symbol_name = function.name;

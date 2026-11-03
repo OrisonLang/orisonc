@@ -79,6 +79,8 @@ struct LlvmIrEmissionOptions {
     std::vector<std::string> owned_cleanup_definition_symbols;
     std::vector<semantics::OwnedCleanupLoweringAuthorization> semantic_owned_cleanup_lowering_authorizations;
     std::vector<semantics::GenericFunctionSpecializationRequest> generic_function_specialization_requests;
+    std::vector<syntax::RecordSyntax> imported_record_declarations;
+    std::vector<syntax::ChoiceSyntax> imported_choice_declarations;
 };
 
 struct ComputedDynamicArrayCleanupCallInsertionCapability {

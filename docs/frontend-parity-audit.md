@@ -3848,3 +3848,6 @@ This file tracks which source-language frontend slices are reflected in the curr
   interfaces, the production compiler profile, and package-targeted generic specialization requests. Cached objects
   restore discovered requests and link libraries, unchanged rebuilds preserve entry timestamps, and source changes
   produce new entries. No source syntax changed.
+- 2026-11-02: LLVM lowering now consumes imported record and choice declarations reconstructed from package interfaces.
+  Fixed cross-package functions pass and return both aggregate kinds through separately compiled objects, and imported
+  generic functions can request, emit, link, and execute record specializations. No source syntax changed.
