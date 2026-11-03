@@ -27,6 +27,8 @@ stable, merges link libraries, and links only reachable object images. This is b
 Prebuilt packages contribute their parsed interface, object image, declared dependencies, and declared host libraries;
 they are not recompiled.
 
+ADR-0009 defines opt-in object caching for source packages in a build plan.
+
 ## Consequences
 
 Multi-package generic programs can build and link through one deterministic driver command without implicit package
@@ -37,5 +39,4 @@ plan. A prebuilt generic object must already contain every specialization requir
 
 ## Follow-up work
 
-- Add incremental caching keyed by source, interface, options, and specialization requests.
 - Support multiple source files per package after package-level semantic merging is defined.

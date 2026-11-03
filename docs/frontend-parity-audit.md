@@ -3844,3 +3844,7 @@ This file tracks which source-language frontend slices are reflected in the curr
   dependencies and host libraries. Reachable prebuilt interfaces participate in semantic analysis, while their object
   images link without source recompilation. A precompiled generic producer and source consumer now link and execute
   through one build plan. No source syntax changed.
+- 2026-11-02: Build plans now support an explicit cache directory. SHA-256 keys cover source bytes, canonical reachable
+  interfaces, the production compiler profile, and package-targeted generic specialization requests. Cached objects
+  restore discovered requests and link libraries, unchanged rebuilds preserve entry timestamps, and source changes
+  produce new entries. No source syntax changed.

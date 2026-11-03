@@ -6,13 +6,20 @@
 #include "orison/source/source_file.hpp"
 #include "orison/syntax/module_parser.hpp"
 
+#include <llvm/ADT/StringRef.h>
+#include <llvm/Support/SHA256.h>
+
 #include <algorithm>
+#include <array>
+#include <cstdint>
 #include <fstream>
 #include <queue>
 #include <sstream>
 #include <unordered_map>
 #include <unordered_set>
 #include <utility>
+
+#include <unistd.h>
 
 namespace orison::driver {
 namespace {
@@ -21,12 +28,19 @@ constexpr auto build_plan_format_version = std::size_t {1};
 
 struct ParsedBuildModule {
     std::filesystem::path source_path;
+    std::string source_bytes;
     semantics::PackageInterface package_interface;
 };
 
 struct LoadedPrebuiltPackage {
     semantics::PackageInterface package_interface;
     std::string object_bytes;
+    std::vector<std::string> link_libraries;
+};
+
+struct CachedModuleObject {
+    std::string object_bytes;
+    std::vector<semantics::GenericFunctionSpecializationRequest> discovered_requests;
     std::vector<std::string> link_libraries;
 };
 
@@ -85,6 +99,181 @@ auto append_unique_libraries(
     }
 }
 
+void update_hash(llvm::SHA256& hash, std::string_view label, std::string_view value) {
+    auto size = std::to_string(value.size());
+    hash.update(llvm::StringRef(label.data(), label.size()));
+    hash.update(llvm::StringRef(":", 1));
+    hash.update(llvm::StringRef(size.data(), size.size()));
+    hash.update(llvm::StringRef("\n", 1));
+    hash.update(llvm::StringRef(value.data(), value.size()));
+    hash.update(llvm::StringRef("\n", 1));
+}
+
+auto hex_digest(std::array<std::uint8_t, 32> const& digest) -> std::string {
+    constexpr auto digits = std::string_view {"0123456789abcdef"};
+    auto result = std::string {};
+    result.reserve(digest.size() * 2);
+    for (auto byte : digest) {
+        result.push_back(digits[byte >> 4]);
+        result.push_back(digits[byte & 0x0f]);
+    }
+    return result;
+}
+
+auto requests_for_package(
+    std::vector<semantics::GenericFunctionSpecializationRequest> const& requests,
+    std::string_view package_name
+) -> std::vector<semantics::GenericFunctionSpecializationRequest> {
+    auto result = std::vector<semantics::GenericFunctionSpecializationRequest> {};
+    for (auto const& request : requests) {
+        if (request.package_name == package_name) {
+            result.push_back(request);
+        }
+    }
+    return result;
+}
+
+auto module_cache_key(
+    std::string_view package_name,
+    std::string_view source_bytes,
+    std::vector<semantics::PackageInterface> const& package_interfaces,
+    std::vector<semantics::GenericFunctionSpecializationRequest> const& specialization_requests
+) -> std::string {
+    auto hash = llvm::SHA256 {};
+    update_hash(hash, "schema", "orison-object-cache-key-1");
+    update_hash(hash, "compiler-profile", "orisonc-production-0.1.0");
+    update_hash(hash, "package", package_name);
+    update_hash(hash, "source", source_bytes);
+
+    auto serialized_interfaces = std::vector<std::pair<std::string, std::string>> {};
+    serialized_interfaces.reserve(package_interfaces.size());
+    for (auto const& package_interface : package_interfaces) {
+        serialized_interfaces.emplace_back(
+            package_interface.package_name,
+            semantics::serialize_package_interface(package_interface)
+        );
+    }
+    std::ranges::sort(serialized_interfaces, {}, &std::pair<std::string, std::string>::first);
+    for (auto const& [interface_package, serialized_interface] : serialized_interfaces) {
+        update_hash(hash, "interface-package", interface_package);
+        update_hash(hash, "interface", serialized_interface);
+    }
+    update_hash(
+        hash,
+        "specialization-requests",
+        semantics::serialize_generic_function_specialization_requests(specialization_requests)
+    );
+    return hex_digest(hash.final());
+}
+
+auto serialize_link_libraries(std::vector<std::string> const& libraries) -> std::string {
+    auto output = std::ostringstream {};
+    output << "orison-link-libraries 1\n";
+    for (auto const& library : libraries) {
+        output << "library " << library << '\n';
+    }
+    return output.str();
+}
+
+auto parse_link_libraries(std::string_view text) -> std::optional<std::vector<std::string>> {
+    auto input = std::istringstream {std::string(text)};
+    auto line = std::string {};
+    if (!std::getline(input, line)) {
+        return std::nullopt;
+    }
+    remove_carriage_return(line);
+    if (line != "orison-link-libraries 1") {
+        return std::nullopt;
+    }
+    auto libraries = std::vector<std::string> {};
+    while (std::getline(input, line)) {
+        remove_carriage_return(line);
+        auto line_input = std::istringstream {line};
+        auto keyword = std::string {};
+        auto library = std::string {};
+        auto extra = std::string {};
+        if (!(line_input >> keyword >> library) || keyword != "library" || line_input >> extra) {
+            return std::nullopt;
+        }
+        libraries.push_back(std::move(library));
+    }
+    return libraries;
+}
+
+auto cache_entry_path(
+    std::filesystem::path const& cache_directory,
+    std::string_view key,
+    std::string_view suffix
+) -> std::filesystem::path {
+    return cache_directory / (std::string(key) + std::string(suffix));
+}
+
+auto read_cached_module_object(
+    std::filesystem::path const& cache_directory,
+    std::string_view key
+) -> std::optional<CachedModuleObject> {
+    auto ready_path = cache_entry_path(cache_directory, key, ".ready");
+    auto ready_text = read_file_bytes(ready_path);
+    if (!ready_text.has_value() || *ready_text != "orison-object-cache 1\n") {
+        return std::nullopt;
+    }
+    auto object_bytes = read_file_bytes(cache_entry_path(cache_directory, key, ".o"));
+    auto request_text = read_file_bytes(cache_entry_path(cache_directory, key, ".osr"));
+    auto library_text = read_file_bytes(cache_entry_path(cache_directory, key, ".libs"));
+    if (!object_bytes.has_value() || object_bytes->empty() || !request_text.has_value() ||
+        !library_text.has_value()) {
+        return std::nullopt;
+    }
+    auto requests = semantics::parse_generic_function_specialization_requests(*request_text);
+    auto libraries = parse_link_libraries(*library_text);
+    if (requests.has_error() || !libraries.has_value()) {
+        return std::nullopt;
+    }
+    return CachedModuleObject {
+        .object_bytes = std::move(*object_bytes),
+        .discovered_requests = std::move(requests.requests),
+        .link_libraries = std::move(*libraries),
+    };
+}
+
+auto write_file_atomically(std::filesystem::path const& path, std::string_view bytes) -> bool {
+    auto temporary_path = path;
+    temporary_path += ".tmp." + std::to_string(static_cast<long long>(getpid()));
+    auto output = std::ofstream(temporary_path, std::ios::out | std::ios::binary | std::ios::trunc);
+    if (!output) {
+        return false;
+    }
+    output.write(bytes.data(), static_cast<std::streamsize>(bytes.size()));
+    output.close();
+    if (!output) {
+        auto error = std::error_code {};
+        std::filesystem::remove(temporary_path, error);
+        return false;
+    }
+    auto error = std::error_code {};
+    std::filesystem::rename(temporary_path, path, error);
+    if (error) {
+        std::filesystem::remove(temporary_path, error);
+        return false;
+    }
+    return true;
+}
+
+auto write_cached_module_object(
+    std::filesystem::path const& cache_directory,
+    std::string_view key,
+    CachedModuleObject const& object
+) -> bool {
+    auto request_text = semantics::serialize_generic_function_specialization_requests(
+        object.discovered_requests
+    );
+    auto library_text = serialize_link_libraries(object.link_libraries);
+    return write_file_atomically(cache_entry_path(cache_directory, key, ".o"), object.object_bytes) &&
+        write_file_atomically(cache_entry_path(cache_directory, key, ".osr"), request_text) &&
+        write_file_atomically(cache_entry_path(cache_directory, key, ".libs"), library_text) &&
+        write_file_atomically(cache_entry_path(cache_directory, key, ".ready"), "orison-object-cache 1\n");
+}
+
 }  // namespace
 
 auto parse_build_plan(std::string_view text, std::filesystem::path const& base_directory)
@@ -134,7 +323,20 @@ auto parse_build_plan(std::string_view text, std::filesystem::path const& base_d
         auto record_line = std::istringstream {line};
         auto record_kind = std::string {};
         auto package_name = std::string {};
-        if (!(record_line >> record_kind >> package_name)) {
+        if (!(record_line >> record_kind)) {
+            return parse_error("invalid build plan record at line " + std::to_string(line_number));
+        }
+        if (record_kind == "cache") {
+            auto cache_path_text = std::string {};
+            std::getline(record_line, cache_path_text);
+            cache_path_text = trim_leading_spaces(std::move(cache_path_text));
+            if (cache_path_text.empty() || plan.cache_directory.has_value()) {
+                return parse_error("invalid build plan cache declaration at line " + std::to_string(line_number));
+            }
+            plan.cache_directory = resolve_plan_path(cache_path_text, base_directory);
+            continue;
+        }
+        if (!(record_line >> package_name)) {
             return parse_error("invalid build plan record at line " + std::to_string(line_number));
         }
         auto& package = package_for(package_name);
@@ -252,6 +454,16 @@ auto compile_build_plan(
         );
     }
     auto const& plan = *parsed_plan.plan;
+    if (plan.cache_directory.has_value()) {
+        auto error = std::error_code {};
+        std::filesystem::create_directories(*plan.cache_directory, error);
+        if (error) {
+            return build_plan_error(
+                "unable to create build cache directory '" + plan.cache_directory->string() +
+                "': " + error.message()
+            );
+        }
+    }
 
     auto plan_packages = std::unordered_map<std::string, BuildPlanPackage const*> {};
     for (auto const& package : plan.packages) {
@@ -305,6 +517,7 @@ auto compile_build_plan(
                 package_name,
                 ParsedBuildModule {
                     .source_path = *package.source_path,
+                    .source_bytes = source_file->content(),
                     .package_interface = std::move(package_interface),
                 }
             );
@@ -398,7 +611,31 @@ auto compile_build_plan(
                     options.available_package_interfaces.push_back(package_interface);
                 }
             }
-            options.generic_function_specialization_requests = specialization_requests;
+            options.generic_function_specialization_requests = requests_for_package(
+                specialization_requests,
+                package_name
+            );
+
+            auto cache_key = std::string {};
+            if (plan.cache_directory.has_value()) {
+                cache_key = module_cache_key(
+                    package_name,
+                    parsed_module->second.source_bytes,
+                    options.available_package_interfaces,
+                    options.generic_function_specialization_requests
+                );
+                auto cached_object = read_cached_module_object(*plan.cache_directory, cache_key);
+                if (cached_object.has_value()) {
+                    object_images.push_back(std::move(cached_object->object_bytes));
+                    append_unique_libraries(link_libraries, cached_object->link_libraries);
+                    discovered_requests.insert(
+                        discovered_requests.end(),
+                        cached_object->discovered_requests.begin(),
+                        cached_object->discovered_requests.end()
+                    );
+                    continue;
+                }
+            }
 
             auto result = pipeline::CompilePipeline {}.emit_object(
                 parsed_module->second.source_path,
@@ -409,6 +646,21 @@ auto compile_build_plan(
                     .exit_code = 1,
                     .stderr_text = std::move(result.error_text),
                 };
+            }
+            if (plan.cache_directory.has_value() &&
+                !write_cached_module_object(
+                    *plan.cache_directory,
+                    cache_key,
+                    CachedModuleObject {
+                        .object_bytes = result.object_bytes,
+                        .discovered_requests = result.generic_function_specialization_requests,
+                        .link_libraries = result.link_libraries,
+                    }
+                )) {
+                return build_plan_error(
+                    "unable to write build cache entry '" + cache_key + "' in '" +
+                    plan.cache_directory->string() + "'"
+                );
             }
             object_images.push_back(std::move(result.object_bytes));
             append_unique_libraries(link_libraries, result.link_libraries);

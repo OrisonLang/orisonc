@@ -22,6 +22,7 @@ struct BuildPlanPackage {
 
 struct BuildPlan {
     std::string entry_package;
+    std::optional<std::filesystem::path> cache_directory;
     std::vector<BuildPlanPackage> packages;
 };
 

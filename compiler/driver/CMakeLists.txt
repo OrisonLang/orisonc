@@ -8,6 +8,8 @@ add_library(orison_driver STATIC
 target_include_directories(orison_driver
     PUBLIC
         include
+    SYSTEM PRIVATE
+        ${LLVM_INCLUDE_DIRS}
 )
 
 target_link_libraries(orison_driver
@@ -15,6 +17,8 @@ target_link_libraries(orison_driver
         orison_diagnostics
         orison_link
         orison_pipeline
+    PRIVATE
+        LLVM
 )
 
 target_compile_features(orison_driver PUBLIC cxx_std_23)

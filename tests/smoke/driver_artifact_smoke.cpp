@@ -13,6 +13,7 @@
 #include <string_view>
 #include <sys/wait.h>
 #include <unistd.h>
+#include <vector>
 
 namespace {
 
@@ -370,6 +371,7 @@ auto main() -> int {
         auto output = std::ofstream(build_plan_path);
         output << "orison-build-plan 1\n";
         output << "entry demo.genericconsumer\n";
+        output << "cache build cache\n";
         output << "module demo.unrelated unrelated.or\n";
         output << "module external.generics generic producer.or\n";
         output << "module demo.genericconsumer generic consumer.or\n";
@@ -382,6 +384,49 @@ auto main() -> int {
     );
     assert_success_with_empty_stdout(build_plan_result);
     assert(std::system(build_plan_executable_path.string().c_str()) == 0);
+
+    auto build_cache_path = smoke_temp_root / "build cache";
+    auto cached_write_times = std::vector<
+        std::pair<std::filesystem::path, std::filesystem::file_time_type>
+    > {};
+    for (auto const& entry : std::filesystem::directory_iterator(build_cache_path)) {
+        if (entry.is_regular_file()) {
+            cached_write_times.emplace_back(entry.path(), entry.last_write_time());
+        }
+    }
+    assert(cached_write_times.size() == 12);
+
+    auto cached_build_plan_executable_path = smoke_temp_root / "generic_cached_build_plan";
+    auto cached_build_plan_result = run_build_plan(
+        app,
+        build_plan_path,
+        cached_build_plan_executable_path
+    );
+    assert_success_with_empty_stdout(cached_build_plan_result);
+    assert(std::system(cached_build_plan_executable_path.string().c_str()) == 0);
+    for (auto const& [cache_path, write_time] : cached_write_times) {
+        assert(std::filesystem::last_write_time(cache_path) == write_time);
+    }
+
+    {
+        auto output = std::ofstream(generic_producer_path, std::ios::app);
+        output << "\n";
+    }
+    auto invalidated_build_plan_executable_path = smoke_temp_root / "generic_invalidated_build_plan";
+    auto invalidated_build_plan_result = run_build_plan(
+        app,
+        build_plan_path,
+        invalidated_build_plan_executable_path
+    );
+    assert_success_with_empty_stdout(invalidated_build_plan_result);
+    assert(std::system(invalidated_build_plan_executable_path.string().c_str()) == 0);
+    auto invalidated_cache_file_count = std::size_t {};
+    for (auto const& entry : std::filesystem::directory_iterator(build_cache_path)) {
+        if (entry.is_regular_file()) {
+            ++invalidated_cache_file_count;
+        }
+    }
+    assert(invalidated_cache_file_count == 20);
 
     auto prebuilt_support_path = smoke_temp_root / "prebuilt support.or";
     write_fixture(
