@@ -195,16 +195,16 @@ auto main() -> int {
         );
         assert(
             contents ==
-            "orison-package-interface 2\n"
+            "orison-package-interface 3\n"
             "package external.types\n"
             "type alias Identifier 0\n"
             "alias Identifier UInt64\n"
             "type record Pair 2 Left Right\n"
-            "field Pair first Left\n"
-            "field Pair second Right\n"
+            "field Pair first Left Left\n"
+            "field Pair second Right Right\n"
             "type interface Reader 0\n"
             "type choice Result 1 Value\n"
-            "variant Result Ok 1 value Value\n"
+            "variant Result Ok 1 value Value Value\n"
         );
     }
 
@@ -385,6 +385,19 @@ auto main() -> int {
     assert_success_with_empty_stdout(build_plan_result);
     assert(std::system(build_plan_executable_path.string().c_str()) == 0);
 
+    auto external_layout_path = smoke_temp_root / "external layout.or";
+    write_fixture(
+        external_layout_path,
+        "external.layout",
+        {
+            "public record Detail",
+            "    public value: UInt32",
+            "public function make_detail(value: UInt32) -> Detail",
+            "    Detail(value)",
+            "public function read_detail(value: Detail) -> UInt32",
+            "    value.value",
+        }
+    );
     auto local_type_consumer_path = smoke_temp_root / "local type consumer.or";
     write_fixture(
         local_type_consumer_path,
@@ -392,18 +405,19 @@ auto main() -> int {
         {
             "import",
             "    choose as select from external.generics",
-            "public record Detail",
-            "    public value: UInt32",
+            "    Detail as ExternalDetail from external.layout",
+            "    make_detail from external.layout",
+            "    read_detail from external.layout",
             "public choice State",
-            "    Ready(detail: Detail)",
+            "    Ready(detail: ExternalDetail)",
             "    Empty",
             "public record Payload",
             "    public state: State",
             "function make_payload(value: UInt32) -> Payload",
-            "    Payload(Ready(Detail(value)))",
+            "    Payload(Ready(make_detail(value)))",
             "function read_payload(value: Payload) -> UInt32",
             "    switch value.state",
-            "        Ready(detail) => detail.value",
+            "        Ready(detail) => read_detail(detail)",
             "        Empty => 0 as UInt32",
             "function main() -> UInt32",
             "    read_payload(select(make_payload(40 as UInt32), make_payload(41 as UInt32))) - 40 as UInt32",
@@ -415,6 +429,7 @@ auto main() -> int {
         output << "orison-build-plan 1\n";
         output << "entry demo.localtypeconsumer\n";
         output << "module external.generics generic producer.or\n";
+        output << "module external.layout external layout.or\n";
         output << "module demo.localtypeconsumer local type consumer.or\n";
     }
     auto local_type_executable_path = smoke_temp_root / "local_type_generic_build_plan";

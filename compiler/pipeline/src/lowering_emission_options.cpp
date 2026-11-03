@@ -38,18 +38,50 @@ void append_specialization_type_declaration(
     semantics::ImportedAggregateDeclarations& imported_aggregates
 );
 
+auto inferred_layout_type_identity(
+    syntax::TypeSyntax const& type,
+    semantics::PackageInterface const& package_interface
+) -> semantics::GenericSpecializationTypeIdentity {
+    auto identity = semantics::GenericSpecializationTypeIdentity {
+        .declaration_name = type.name,
+    };
+    auto declaration = std::ranges::find_if(
+        package_interface.exported_type_declarations,
+        [&](semantics::PackageTypeDeclaration const& candidate) {
+            return candidate.name == type.name;
+        }
+    );
+    if (declaration != package_interface.exported_type_declarations.end()) {
+        identity.package_name = package_interface.package_name;
+    }
+    for (auto const& argument : type.generic_arguments) {
+        identity.generic_arguments.push_back(
+            inferred_layout_type_identity(argument, package_interface)
+        );
+    }
+    return identity;
+}
+
 auto localize_specialization_layout_type(
     syntax::TypeSyntax type,
-    semantics::PackageInterface const& package_interface,
+    semantics::GenericSpecializationTypeIdentity const& identity,
+    semantics::PackageInterface const& containing_package_interface,
     std::string_view producer_package,
     std::vector<semantics::PackageInterface> const& package_interfaces,
     std::vector<semantics::ImportedTypeDeclarationMetadata>& imported_types,
     semantics::ImportedAggregateDeclarations& imported_aggregates
 ) -> syntax::TypeSyntax {
-    for (auto& argument : type.generic_arguments) {
-        argument = localize_specialization_layout_type(
-            std::move(argument),
-            package_interface,
+    for (auto index = std::size_t {0}; index < type.generic_arguments.size(); ++index) {
+        auto const argument_identity = index < identity.generic_arguments.size()
+            ? identity.generic_arguments[index]
+            : inferred_layout_type_identity(
+                  type.generic_arguments[index],
+                  containing_package_interface
+              );
+        type.generic_arguments[index] = localize_specialization_layout_type(
+            std::move(type.generic_arguments[index]),
+            argument_identity,
+            containing_package_interface,
             producer_package,
             package_interfaces,
             imported_types,
@@ -57,24 +89,40 @@ auto localize_specialization_layout_type(
         );
     }
 
+    auto const& identity_package = identity.package_name.empty()
+        ? containing_package_interface.package_name
+        : identity.package_name;
+    auto package_interface = std::ranges::find_if(
+        package_interfaces,
+        [&](semantics::PackageInterface const& candidate) {
+            return candidate.package_name == identity_package;
+        }
+    );
+    if (package_interface == package_interfaces.end()) {
+        return type;
+    }
+    auto const& declaration_name = identity.declaration_name.empty()
+        ? type.name
+        : identity.declaration_name;
     auto declaration = std::ranges::find_if(
-        package_interface.exported_type_declarations,
+        package_interface->exported_type_declarations,
         [&](semantics::PackageTypeDeclaration const& candidate) {
-            return candidate.name == type.name &&
+            return candidate.name == declaration_name &&
                 (candidate.kind == semantics::PackageTypeDeclarationKind::record ||
                  candidate.kind == semantics::PackageTypeDeclarationKind::choice);
         }
     );
-    if (declaration == package_interface.exported_type_declarations.end()) {
+    if (declaration == package_interface->exported_type_declarations.end()) {
         return type;
     }
 
-    auto identity = semantics::GenericSpecializationTypeIdentity {
-        .package_name = package_interface.package_name,
+    auto materialized_identity = semantics::GenericSpecializationTypeIdentity {
+        .package_name = package_interface->package_name,
         .declaration_name = declaration->name,
+        .generic_arguments = identity.generic_arguments,
     };
     append_specialization_type_declaration(
-        identity,
+        materialized_identity,
         producer_package,
         package_interfaces,
         imported_types,
@@ -83,8 +131,8 @@ auto localize_specialization_layout_type(
     auto localized = std::ranges::find_if(
         imported_types,
         [&](semantics::ImportedTypeDeclarationMetadata const& candidate) {
-            return candidate.package_name == identity.package_name &&
-                candidate.declaration_name == identity.declaration_name;
+            return candidate.package_name == materialized_identity.package_name &&
+                candidate.declaration_name == materialized_identity.declaration_name;
         }
     );
     if (localized != imported_types.end()) {
@@ -159,9 +207,13 @@ void append_specialization_type_declaration(
             .generic_parameters = declaration->generic_parameters,
             .fields = declaration->public_record_fields,
         };
-        for (auto& field : record.fields) {
-            field.type = localize_specialization_layout_type(
-                std::move(field.type),
+        for (auto index = std::size_t {0}; index < record.fields.size(); ++index) {
+            auto const identity = index < declaration->public_record_field_type_identities.size()
+                ? declaration->public_record_field_type_identities[index]
+                : inferred_layout_type_identity(record.fields[index].type, *package_interface);
+            record.fields[index].type = localize_specialization_layout_type(
+                std::move(record.fields[index].type),
+                identity,
                 *package_interface,
                 producer_package,
                 package_interfaces,
@@ -177,10 +229,23 @@ void append_specialization_type_declaration(
             .generic_parameters = declaration->generic_parameters,
             .variants = declaration->choice_variants,
         };
-        for (auto& variant : choice.variants) {
-            for (auto& payload : variant.payloads) {
-                payload.type = localize_specialization_layout_type(
-                    std::move(payload.type),
+        for (auto variant_index = std::size_t {0};
+             variant_index < choice.variants.size();
+             ++variant_index) {
+            auto& variant = choice.variants[variant_index];
+            for (auto payload_index = std::size_t {0}; payload_index < variant.payloads.size(); ++payload_index) {
+                auto const has_identity =
+                    variant_index < declaration->choice_variant_payload_type_identities.size() &&
+                    payload_index < declaration->choice_variant_payload_type_identities[variant_index].size();
+                auto const identity = has_identity
+                    ? declaration->choice_variant_payload_type_identities[variant_index][payload_index]
+                    : inferred_layout_type_identity(
+                          variant.payloads[payload_index].type,
+                          *package_interface
+                      );
+                variant.payloads[payload_index].type = localize_specialization_layout_type(
+                    std::move(variant.payloads[payload_index].type),
+                    identity,
                     *package_interface,
                     producer_package,
                     package_interfaces,

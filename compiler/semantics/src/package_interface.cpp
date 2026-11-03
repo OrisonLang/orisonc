@@ -2,7 +2,6 @@
 
 #include <algorithm>
 #include <charconv>
-#include <iterator>
 #include <sstream>
 #include <unordered_set>
 #include <utility>
@@ -10,7 +9,7 @@
 namespace orison::semantics {
 namespace {
 
-constexpr auto package_interface_format_version = std::size_t {2};
+constexpr auto package_interface_format_version = std::size_t {3};
 constexpr auto generic_specialization_request_format_version = std::size_t {2};
 
 auto declaration_kind_text(PackageTypeDeclarationKind kind) -> std::string_view {
@@ -123,6 +122,45 @@ auto default_type_identity(syntax::TypeSyntax const& type) -> GenericSpecializat
     identity.generic_arguments.reserve(type.generic_arguments.size());
     for (auto const& argument : type.generic_arguments) {
         identity.generic_arguments.push_back(default_type_identity(argument));
+    }
+    return identity;
+}
+
+auto package_interface_type_identity(
+    syntax::TypeSyntax const& type,
+    syntax::ModuleSyntax const& module
+) -> GenericSpecializationTypeIdentity {
+    auto identity = GenericSpecializationTypeIdentity {.declaration_name = type.name};
+    auto imported = std::ranges::find_if(
+        module.imports,
+        [&](syntax::ImportSyntax const& candidate) {
+            auto const local_name = candidate.alias.empty() ? candidate.name : candidate.alias;
+            return local_name == type.name;
+        }
+    );
+    if (imported != module.imports.end()) {
+        identity.package_name = imported->from_package;
+        identity.declaration_name = imported->name;
+    } else {
+        auto const local_type = std::ranges::any_of(
+            module.type_aliases,
+            [&](syntax::TypeAliasSyntax const& candidate) { return candidate.name == type.name; }
+        ) || std::ranges::any_of(
+            module.records,
+            [&](syntax::RecordSyntax const& candidate) { return candidate.name == type.name; }
+        ) || std::ranges::any_of(
+            module.choices,
+            [&](syntax::ChoiceSyntax const& candidate) { return candidate.name == type.name; }
+        ) || std::ranges::any_of(
+            module.interfaces,
+            [&](syntax::InterfaceSyntax const& candidate) { return candidate.name == type.name; }
+        );
+        if (local_type) {
+            identity.package_name = module.package_name;
+        }
+    }
+    for (auto const& argument : type.generic_arguments) {
+        identity.generic_arguments.push_back(package_interface_type_identity(argument, module));
     }
     return identity;
 }
@@ -261,13 +299,15 @@ auto build_package_interface(syntax::ModuleSyntax const& module) -> PackageInter
                 .generic_parameters = record.generic_parameters,
             });
             auto& exported_record = package_interface.exported_type_declarations.back();
-            std::ranges::copy_if(
-                record.fields,
-                std::back_inserter(exported_record.public_record_fields),
-                [](syntax::FieldSyntax const& field) {
-                    return field.visibility == syntax::Visibility::public_visibility;
+            for (auto const& field : record.fields) {
+                if (field.visibility != syntax::Visibility::public_visibility) {
+                    continue;
                 }
-            );
+                exported_record.public_record_fields.push_back(field);
+                exported_record.public_record_field_type_identities.push_back(
+                    package_interface_type_identity(field.type, module)
+                );
+            }
         }
     }
     for (auto const& choice : module.choices) {
@@ -279,6 +319,16 @@ auto build_package_interface(syntax::ModuleSyntax const& module) -> PackageInter
                 .generic_parameters = choice.generic_parameters,
                 .choice_variants = choice.variants,
             });
+            auto& exported_choice = package_interface.exported_type_declarations.back();
+            for (auto const& variant : choice.variants) {
+                auto identities = std::vector<GenericSpecializationTypeIdentity> {};
+                for (auto const& payload : variant.payloads) {
+                    identities.push_back(package_interface_type_identity(payload.type, module));
+                }
+                exported_choice.choice_variant_payload_type_identities.push_back(
+                    std::move(identities)
+                );
+            }
         }
     }
     for (auto const& interface_declaration : module.interfaces) {
@@ -340,13 +390,29 @@ auto serialize_package_interface(PackageInterface const& package_interface) -> s
         if (declaration.aliased_type.has_value()) {
             output << "alias " << declaration.name << ' ' << render_type(*declaration.aliased_type) << '\n';
         }
-        for (auto const& field : declaration.public_record_fields) {
-            output << "field " << declaration.name << ' ' << field.name << ' ' << render_type(field.type) << '\n';
+        for (auto index = std::size_t {0}; index < declaration.public_record_fields.size(); ++index) {
+            auto const& field = declaration.public_record_fields[index];
+            auto const identity = index < declaration.public_record_field_type_identities.size()
+                ? declaration.public_record_field_type_identities[index]
+                : default_type_identity(field.type);
+            output << "field " << declaration.name << ' ' << field.name << ' '
+                   << render_type(field.type) << ' ' << render_type_identity(identity) << '\n';
         }
-        for (auto const& variant : declaration.choice_variants) {
+        for (auto variant_index = std::size_t {0};
+             variant_index < declaration.choice_variants.size();
+             ++variant_index) {
+            auto const& variant = declaration.choice_variants[variant_index];
             output << "variant " << declaration.name << ' ' << variant.name << ' ' << variant.payloads.size();
-            for (auto const& payload : variant.payloads) {
-                output << ' ' << payload.name << ' ' << render_type(payload.type);
+            for (auto payload_index = std::size_t {0}; payload_index < variant.payloads.size(); ++payload_index) {
+                auto const& payload = variant.payloads[payload_index];
+                auto const has_identity =
+                    variant_index < declaration.choice_variant_payload_type_identities.size() &&
+                    payload_index < declaration.choice_variant_payload_type_identities[variant_index].size();
+                auto const identity = has_identity
+                    ? declaration.choice_variant_payload_type_identities[variant_index][payload_index]
+                    : default_type_identity(payload.type);
+                output << ' ' << payload.name << ' ' << render_type(payload.type)
+                       << ' ' << render_type_identity(identity);
             }
             output << '\n';
         }
@@ -483,12 +549,15 @@ auto parse_package_interface(std::string_view text) -> PackageInterfaceParseResu
             auto owner_name = std::string {};
             auto field_name = std::string {};
             auto type_text = std::string {};
-            if (!(declaration_line >> owner_name >> field_name >> type_text) || declaration_line >> extra) {
+            auto identity_text = std::string {};
+            if (!(declaration_line >> owner_name >> field_name >> type_text >> identity_text) ||
+                declaration_line >> extra) {
                 return parse_error("invalid package interface field declaration at line " + std::to_string(line_number));
             }
             auto* owner = find_type_declaration(result, owner_name, PackageTypeDeclarationKind::record);
             auto field_type = parse_type(type_text);
-            if (owner == nullptr || !field_type.has_value() || std::ranges::any_of(
+            auto field_identity = parse_type_identity(identity_text);
+            if (owner == nullptr || !field_type.has_value() || !field_identity.has_value() || std::ranges::any_of(
                     owner->public_record_fields,
                     [&](syntax::FieldSyntax const& field) { return field.name == field_name; }
                 )) {
@@ -499,6 +568,7 @@ auto parse_package_interface(std::string_view text) -> PackageInterfaceParseResu
                 .name = std::move(field_name),
                 .type = std::move(*field_type),
             });
+            owner->public_record_field_type_identities.push_back(std::move(*field_identity));
             continue;
         }
 
@@ -518,25 +588,30 @@ auto parse_package_interface(std::string_view text) -> PackageInterfaceParseResu
                 return parse_error("invalid package interface variant declaration at line " + std::to_string(line_number));
             }
             auto variant = syntax::ChoiceVariantSyntax {.name = std::move(variant_name)};
+            auto payload_identities = std::vector<GenericSpecializationTypeIdentity> {};
             for (auto index = std::size_t {0}; index < *payload_count; ++index) {
                 auto payload_name = std::string {};
                 auto payload_type_text = std::string {};
-                if (!(declaration_line >> payload_name >> payload_type_text)) {
+                auto payload_identity_text = std::string {};
+                if (!(declaration_line >> payload_name >> payload_type_text >> payload_identity_text)) {
                     return parse_error("invalid package interface variant declaration at line " + std::to_string(line_number));
                 }
                 auto payload_type = parse_type(payload_type_text);
-                if (!payload_type.has_value()) {
+                auto payload_identity = parse_type_identity(payload_identity_text);
+                if (!payload_type.has_value() || !payload_identity.has_value()) {
                     return parse_error("invalid package interface variant declaration at line " + std::to_string(line_number));
                 }
                 variant.payloads.push_back(syntax::NamedTypeSyntax {
                     .name = std::move(payload_name),
                     .type = std::move(*payload_type),
                 });
+                payload_identities.push_back(std::move(*payload_identity));
             }
             if (declaration_line >> extra) {
                 return parse_error("invalid package interface variant declaration at line " + std::to_string(line_number));
             }
             owner->choice_variants.push_back(std::move(variant));
+            owner->choice_variant_payload_type_identities.push_back(std::move(payload_identities));
             continue;
         }
 

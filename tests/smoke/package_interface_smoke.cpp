@@ -8,6 +8,11 @@
 int main() {
     auto producer = orison::syntax::ModuleSyntax {};
     producer.package_name = "external.types";
+    producer.imports.push_back(orison::syntax::ImportSyntax {
+        .name = "Detail",
+        .alias = "ExternalDetail",
+        .from_package = "external.shared",
+    });
     producer.type_aliases.push_back(orison::syntax::TypeAliasSyntax {
         .visibility = orison::syntax::Visibility::public_visibility,
         .name = "Identifier",
@@ -31,6 +36,11 @@ int main() {
                 .name = "hidden",
                 .type = {.name = "Right"},
             },
+            orison::syntax::FieldSyntax {
+                .visibility = orison::syntax::Visibility::public_visibility,
+                .name = "detail",
+                .type = {.name = "ExternalDetail"},
+            },
         },
     });
     producer.records.push_back(orison::syntax::RecordSyntax {.name = "InternalRecord"});
@@ -45,7 +55,7 @@ int main() {
             },
             orison::syntax::ChoiceVariantSyntax {
                 .name = "Error",
-                .payloads = {{.name = "reason", .type = {.name = "Text"}}},
+                .payloads = {{.name = "reason", .type = {.name = "ExternalDetail"}}},
             },
         },
     });
@@ -105,8 +115,10 @@ int main() {
     assert(pair->kind == orison::semantics::PackageTypeDeclarationKind::record);
     assert(pair->generic_arity == 2);
     assert(pair->generic_parameters == std::vector<std::string>({"Left", "Right"}));
-    assert(pair->public_record_fields.size() == 1);
+    assert(pair->public_record_fields.size() == 2);
     assert(pair->public_record_fields.front().name == "first");
+    assert(pair->public_record_field_type_identities[1].package_name == "external.shared");
+    assert(pair->public_record_field_type_identities[1].declaration_name == "Detail");
     auto result = find_export("Result");
     assert(result != package_interface.exported_type_declarations.end());
     assert(result->kind == orison::semantics::PackageTypeDeclarationKind::choice);
@@ -124,16 +136,17 @@ int main() {
     auto serialized = orison::semantics::serialize_package_interface(package_interface);
     assert(
         serialized ==
-        "orison-package-interface 2\n"
+        "orison-package-interface 3\n"
         "package external.types\n"
         "type alias Identifier 0\n"
         "alias Identifier UInt64\n"
         "type record Pair 2 Left Right\n"
-        "field Pair first Left\n"
+        "field Pair first Left Left\n"
+        "field Pair detail ExternalDetail external.shared::Detail\n"
         "type interface Reader 0\n"
         "type choice Result 1 Value\n"
-        "variant Result Ok 1 value Value\n"
-        "variant Result Error 1 reason Text\n"
+        "variant Result Ok 1 value Value Value\n"
+        "variant Result Error 1 reason ExternalDetail external.shared::Detail\n"
         "function transform 1 Value 1 values shared.View<Value> Result<Value> async unsafe 1 Value 2 Reader Shareable\n"
     );
     auto parsed = orison::semantics::parse_package_interface(serialized);
@@ -149,22 +162,22 @@ int main() {
     assert(empty.has_error());
     assert(empty.error_message == "package interface is empty");
     auto unsupported_version = orison::semantics::parse_package_interface(
-        "orison-package-interface 3\npackage external.types\n"
+        "orison-package-interface 4\npackage external.types\n"
     );
     assert(unsupported_version.has_error());
-    assert(unsupported_version.error_message == "unsupported package interface version '3'");
+    assert(unsupported_version.error_message == "unsupported package interface version '4'");
     auto unknown_kind = orison::semantics::parse_package_interface(
-        "orison-package-interface 2\npackage external.types\ntype unknown Pair 2 Left Right\n"
+        "orison-package-interface 3\npackage external.types\ntype unknown Pair 2 Left Right\n"
     );
     assert(unknown_kind.has_error());
     assert(unknown_kind.error_message == "unknown package interface type kind 'unknown' at line 3");
     auto invalid_arity = orison::semantics::parse_package_interface(
-        "orison-package-interface 2\npackage external.types\ntype record Pair two\n"
+        "orison-package-interface 3\npackage external.types\ntype record Pair two\n"
     );
     assert(invalid_arity.has_error());
     assert(invalid_arity.error_message == "invalid package interface generic arity 'two' at line 3");
     auto duplicate = orison::semantics::parse_package_interface(
-        "orison-package-interface 2\n"
+        "orison-package-interface 3\n"
         "package external.types\n"
         "type record Pair 2 Left Right\n"
         "type choice Pair 1 Value\n"
@@ -172,20 +185,20 @@ int main() {
     assert(duplicate.has_error());
     assert(duplicate.error_message == "duplicate package interface type declaration 'Pair' at line 4");
     auto invalid_field = orison::semantics::parse_package_interface(
-        "orison-package-interface 2\n"
+        "orison-package-interface 3\n"
         "package external.types\n"
         "type record Pair 2 Left Right\n"
-        "field Pair first View<\n"
+        "field Pair first View< View<\n"
     );
     assert(invalid_field.has_error());
     assert(invalid_field.error_message == "invalid package interface field declaration at line 4");
     auto missing_alias_target = orison::semantics::parse_package_interface(
-        "orison-package-interface 2\npackage external.types\ntype alias Identifier 0\n"
+        "orison-package-interface 3\npackage external.types\ntype alias Identifier 0\n"
     );
     assert(missing_alias_target.has_error());
     assert(missing_alias_target.error_message == "package interface alias 'Identifier' is missing its target");
     auto invalid_function = orison::semantics::parse_package_interface(
-        "orison-package-interface 2\n"
+        "orison-package-interface 3\n"
         "package external.types\n"
         "function transform 0 1 value UInt32 UInt32 sometimes safe 0\n"
     );
@@ -354,7 +367,7 @@ int main() {
     assert(imported_aggregates.records.size() == 1);
     assert(imported_aggregates.records.front().name == "ExternalPair");
     assert(imported_aggregates.records.front().generic_parameters == std::vector<std::string>({"Left", "Right"}));
-    assert(imported_aggregates.records.front().fields.size() == 1);
+    assert(imported_aggregates.records.front().fields.size() == 2);
     assert(imported_aggregates.records.front().fields.front().name == "first");
     assert(imported_aggregates.choices.size() == 1);
     assert(imported_aggregates.choices.front().name == "ExternalResult");

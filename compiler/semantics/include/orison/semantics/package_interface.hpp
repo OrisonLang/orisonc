@@ -17,6 +17,14 @@ enum class PackageTypeDeclarationKind {
     interface_declaration,
 };
 
+struct GenericSpecializationTypeIdentity {
+    std::string package_name;
+    std::string declaration_name;
+    std::vector<GenericSpecializationTypeIdentity> generic_arguments;
+
+    auto operator==(GenericSpecializationTypeIdentity const&) const -> bool = default;
+};
+
 struct PackageTypeDeclaration {
     PackageTypeDeclarationKind kind = PackageTypeDeclarationKind::type_alias;
     std::string name;
@@ -24,7 +32,9 @@ struct PackageTypeDeclaration {
     std::vector<std::string> generic_parameters;
     std::optional<syntax::TypeSyntax> aliased_type;
     std::vector<syntax::FieldSyntax> public_record_fields;
+    std::vector<GenericSpecializationTypeIdentity> public_record_field_type_identities;
     std::vector<syntax::ChoiceVariantSyntax> choice_variants;
+    std::vector<std::vector<GenericSpecializationTypeIdentity>> choice_variant_payload_type_identities;
 };
 
 struct PackageFunctionDeclaration {
@@ -69,14 +79,6 @@ struct ImportedFunctionDeclaration {
     std::string declaration_name;
     std::string local_name;
     PackageFunctionDeclaration declaration;
-};
-
-struct GenericSpecializationTypeIdentity {
-    std::string package_name;
-    std::string declaration_name;
-    std::vector<GenericSpecializationTypeIdentity> generic_arguments;
-
-    auto operator==(GenericSpecializationTypeIdentity const&) const -> bool = default;
 };
 
 struct GenericFunctionSpecializationRequest {

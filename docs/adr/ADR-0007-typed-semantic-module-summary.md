@@ -69,7 +69,10 @@ The generic producer uses an explicit source import when one exists. Otherwise, 
 public aggregate under a compiler-reserved local name from an available package interface. This materialization is
 limited to specialization lowering and does not make the type visible to ordinary producer source analysis. Public
 record fields and choice payloads recursively materialize same-package public aggregate dependencies, with every copied
-type reference rewritten to its compiler-reserved local name.
+type reference rewritten to its compiler-reserved local name. Package-interface format version 3 stores a recursive
+package-qualified type identity beside each public record field and choice payload. Imported aliases therefore retain
+their source package and declaration while recursive materialization crosses into explicitly available third-party
+interfaces.
 The driver emits request artifacts with `--emit-specialization-requests` and accepts repeatable
 `--specialization-requests` inputs, allowing build orchestration to aggregate consumer requests for producer
 compilation. ADR-0008 defines explicit dependency scheduling and object selection through driver build plans.
@@ -86,4 +89,4 @@ Module-free synthetic lowering fixtures retain package-neutral generic method sy
 - Migrate the remaining report command/helper names away from descriptor-origin terminology only when the pinned CLI
   text can change intentionally.
 - Use the explicit build-plan orchestration defined by ADR-0008 for dependency scheduling and object selection.
-- Preserve package identity for cross-package types referenced by public record fields and choice payloads.
+- Expand public type aliases encountered while materializing specialization-only aggregate layouts.

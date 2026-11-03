@@ -3866,3 +3866,7 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-11-03: Specialization-only aggregate materialization now recursively closes over same-package public record
   fields and choice payloads. A consumer-owned `Payload` record containing a `State` choice carrying a `Detail` record
   passes through an external generic specialization, links, and preserves its runtime value. No source syntax changed.
+- 2026-11-03: Package-interface format version 3 now pairs public record-field and choice-payload types with recursive
+  package-qualified identities. A consumer-owned choice carries an aliased record from a third package through an
+  external generic specialization; producer lowering follows explicit interfaces, links, and preserves the value at
+  runtime. No source syntax changed.
