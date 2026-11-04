@@ -436,6 +436,52 @@ auto main() -> int {
     assert_success_with_empty_stdout(local_type_build_plan_result);
     assert(std::system(local_type_executable_path.string().c_str()) == 0);
 
+    auto alias_abi_producer_path = smoke_temp_root / "alias abi producer.or";
+    write_fixture(
+        alias_abi_producer_path,
+        "external.aliasabi",
+        {
+            "public record Detail",
+            "    public value: UInt32",
+            "public type PublicDetail = Detail",
+            "public function make_detail(value: UInt32) -> PublicDetail",
+            "    Detail(value) as PublicDetail",
+            "public function read_detail(value: PublicDetail) -> UInt32",
+            "    value.value",
+        }
+    );
+    auto alias_abi_consumer_path = smoke_temp_root / "alias abi consumer.or";
+    write_fixture(
+        alias_abi_consumer_path,
+        "demo.aliasabiconsumer",
+        {
+            "import",
+            "    PublicDetail as ExternalDetail from external.aliasabi",
+            "    make_detail from external.aliasabi",
+            "    read_detail from external.aliasabi",
+            "function round_trip(value: ExternalDetail) -> UInt32",
+            "    read_detail(value)",
+            "function main() -> UInt32",
+            "    round_trip(make_detail(42 as UInt32)) - 42 as UInt32",
+        }
+    );
+    auto alias_abi_build_plan_path = smoke_temp_root / "alias_abi.obp";
+    {
+        auto output = std::ofstream(alias_abi_build_plan_path);
+        output << "orison-build-plan 1\n";
+        output << "entry demo.aliasabiconsumer\n";
+        output << "module external.aliasabi alias abi producer.or\n";
+        output << "module demo.aliasabiconsumer alias abi consumer.or\n";
+    }
+    auto alias_abi_executable_path = smoke_temp_root / "alias_abi_build_plan";
+    auto alias_abi_build_plan_result = run_build_plan(
+        app,
+        alias_abi_build_plan_path,
+        alias_abi_executable_path
+    );
+    assert_success_with_empty_stdout(alias_abi_build_plan_result);
+    assert(std::system(alias_abi_executable_path.string().c_str()) == 0);
+
     auto build_cache_path = smoke_temp_root / "build cache";
     auto cached_write_times = std::vector<
         std::pair<std::filesystem::path, std::filesystem::file_time_type>

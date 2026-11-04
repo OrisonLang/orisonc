@@ -4455,6 +4455,14 @@ auto lowered_expression(
                 .signedness = cast_type->signedness,
             };
         }
+        auto operand_source_type = expression.text;
+        for (auto depth = std::size_t {0}; depth < context.lowering.type_aliases.size(); ++depth) {
+            auto alias = context.lowering.type_aliases.find(operand_source_type);
+            if (alias == context.lowering.type_aliases.end() || alias->second == operand_source_type) {
+                break;
+            }
+            operand_source_type = alias->second;
+        }
         if (auto nested = lowered_expression(
                 *expression.left,
                 expected_llvm_type,
@@ -4462,7 +4470,7 @@ auto lowered_expression(
                 context,
                 session,
                 output,
-                expression.text
+                operand_source_type
             )) {
             return nested;
         }

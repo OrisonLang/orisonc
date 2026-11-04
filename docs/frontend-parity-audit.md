@@ -3874,3 +3874,7 @@ This file tracks which source-language frontend slices are reflected in the curr
   records now preserve canonical target identities, imported aliases project resolved aggregate layouts, and
   specialization-only materialization expands cycle-safe alias chains. A three-package generic executable carries a
   choice layout containing an alias-backed record payload. No source syntax changed.
+- 2026-11-03: LLVM lowering now resolves local type aliases cycle-safely for function signatures, aggregate members,
+  choice payloads, casts, and expression types. A producer accepts and returns a local record alias while a separately
+  compiled consumer imports that type under another name; the build-plan executable links and preserves the value.
+  No source syntax changed.

@@ -5176,6 +5176,22 @@ auto lowered_type_for_source_type_name(
     std::string_view type_name,
     LoweringContext const& context
 ) -> std::optional<LoweredType> {
+    auto alias = context.type_aliases.find(std::string(type_name));
+    if (alias != context.type_aliases.end() && alias->second != type_name) {
+        auto target = std::string_view {alias->second};
+        for (auto depth = std::size_t {0}; depth < context.type_aliases.size(); ++depth) {
+            auto next = context.type_aliases.find(std::string(target));
+            if (next == context.type_aliases.end()) {
+                return lowered_type_for_source_type_name(target, context);
+            }
+            if (next->second == type_name || next->second == target) {
+                return std::nullopt;
+            }
+            target = next->second;
+        }
+        return std::nullopt;
+    }
+
     constexpr auto pointer_prefix = std::string_view {"Pointer<"};
     if (type_name.starts_with(pointer_prefix) && type_name.ends_with(">") &&
         type_name.size() > pointer_prefix.size() + 1) {

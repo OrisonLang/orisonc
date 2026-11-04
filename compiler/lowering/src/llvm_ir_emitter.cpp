@@ -63,6 +63,7 @@ auto emit_record_layouts(
 ) -> std::string {
     auto output = std::ostringstream {};
     auto emitted_record_names = std::unordered_set<std::string> {};
+    auto emitted_llvm_types = std::unordered_set<std::string> {};
     for (auto const& record : module.records) {
         auto layout = context.records.find(record.name);
         if (layout == context.records.end() || !can_emit_record_layout(record, layout->second)) {
@@ -78,11 +79,13 @@ auto emit_record_layouts(
         }
         output << " }\n";
         emitted_record_names.insert(record.name);
+        emitted_llvm_types.insert(layout->second.llvm_type_name);
     }
 
     auto instantiated_record_names = std::vector<std::string> {};
     for (auto const& [record_name, layout] : context.records) {
-        if (emitted_record_names.contains(record_name)) {
+        if (emitted_record_names.contains(record_name) ||
+            emitted_llvm_types.contains(layout.llvm_type_name)) {
             continue;
         }
         auto can_emit_layout = true;
@@ -94,6 +97,7 @@ auto emit_record_layouts(
         }
         if (can_emit_layout) {
             instantiated_record_names.push_back(record_name);
+            emitted_llvm_types.insert(layout.llvm_type_name);
         }
     }
     std::ranges::sort(instantiated_record_names);
@@ -117,6 +121,7 @@ auto collect_emitted_record_type_symbols(
 ) -> std::vector<GeneratedModuleSymbol> {
     auto symbols = std::vector<GeneratedModuleSymbol> {};
     auto emitted_record_names = std::unordered_set<std::string> {};
+    auto emitted_llvm_types = std::unordered_set<std::string> {};
     for (auto const& record : module.records) {
         auto layout = context.records.find(record.name);
         if (layout == context.records.end() || !can_emit_record_layout(record, layout->second)) {
@@ -128,11 +133,13 @@ auto collect_emitted_record_type_symbols(
             .line = record.line,
         });
         emitted_record_names.insert(record.name);
+        emitted_llvm_types.insert(layout->second.llvm_type_name);
     }
 
     auto instantiated_record_names = std::vector<std::string> {};
     for (auto const& [record_name, layout] : context.records) {
-        if (emitted_record_names.contains(record_name)) {
+        if (emitted_record_names.contains(record_name) ||
+            emitted_llvm_types.contains(layout.llvm_type_name)) {
             continue;
         }
         auto can_emit_layout = true;
@@ -144,6 +151,7 @@ auto collect_emitted_record_type_symbols(
         }
         if (can_emit_layout) {
             instantiated_record_names.push_back(record_name);
+            emitted_llvm_types.insert(layout.llvm_type_name);
         }
     }
     std::ranges::sort(instantiated_record_names);

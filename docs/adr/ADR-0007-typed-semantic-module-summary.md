@@ -77,6 +77,11 @@ materialization expands alias chains before materializing the target record or c
 project the resolved aggregate layout under the consumer-local name. Alias cycles terminate without recursive
 materialization. All compiler-owned artifact formats remain version 1 before the first release; their schemas may
 change in place during this phase.
+Lowering records local type-alias targets and resolves them cycle-safely when forming function signatures, aggregate
+fields, choice payloads, casts, and expression types. Aggregate aliases project the existing record or choice layout
+under the source alias while retaining the target LLVM representation. Local and imported function parameters and
+returns can therefore use distinct source aliases across separately compiled package objects without changing the
+external calling convention.
 The driver emits request artifacts with `--emit-specialization-requests` and accepts repeatable
 `--specialization-requests` inputs, allowing build orchestration to aggregate consumer requests for producer
 compilation. ADR-0008 defines explicit dependency scheduling and object selection through driver build plans.
@@ -93,4 +98,3 @@ Module-free synthetic lowering fixtures retain package-neutral generic method sy
 - Migrate the remaining report command/helper names away from descriptor-origin terminology only when the pinned CLI
   text can change intentionally.
 - Use the explicit build-plan orchestration defined by ADR-0008 for dependency scheduling and object selection.
-- Lower alias-typed source and imported function parameters and return values.

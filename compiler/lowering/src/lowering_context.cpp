@@ -2761,8 +2761,23 @@ auto is_decimal_integer_text(std::string_view text) -> bool;
 auto contextual_type_for(
     syntax::TypeSyntax const& type,
     std::unordered_set<std::string> const& record_names,
-    std::unordered_map<std::string, LoweredChoiceLayout> const& choices
+    std::unordered_map<std::string, LoweredChoiceLayout> const& choices,
+    std::unordered_map<std::string, std::string> const& type_aliases,
+    std::unordered_set<std::string> alias_path = {}
 ) -> std::optional<std::string> {
+    auto alias = type_aliases.find(render_source_type_name(type));
+    if (alias != type_aliases.end()) {
+        if (!alias_path.insert(alias->first).second) {
+            return std::nullopt;
+        }
+        return contextual_type_for(
+            parse_source_type_name(alias->second),
+            record_names,
+            choices,
+            type_aliases,
+            std::move(alias_path)
+        );
+    }
     if (auto record_type = contextual_record_type_for(type, record_names)) {
         return record_type;
     }
@@ -2770,14 +2785,18 @@ auto contextual_type_for(
         return choice_type;
     }
     if (type.name == "Maybe" && type.generic_arguments.size() == 1) {
-        auto payload_type = contextual_type_for(type.generic_arguments.front(), record_names, choices);
+        auto payload_type = contextual_type_for(
+            type.generic_arguments.front(), record_names, choices, type_aliases
+        );
         if (payload_type.has_value()) {
             return "{ i1, " + *payload_type + " }";
         }
     }
     if (type.name == "Array" && type.generic_arguments.size() == 2 &&
         is_decimal_integer_text(type.generic_arguments[1].name)) {
-        auto element_type = contextual_type_for(type.generic_arguments[0], record_names, choices);
+        auto element_type = contextual_type_for(
+            type.generic_arguments[0], record_names, choices, type_aliases
+        );
         if (element_type.has_value() && *element_type != "void") {
             return "[" + type.generic_arguments[1].name + " x " + *element_type + "]";
         }
@@ -2790,12 +2809,15 @@ auto lower_contextual_function_signature(
     std::vector<syntax::ParameterSyntax> const& parameters,
     std::string symbol_name,
     std::unordered_set<std::string> const& record_names,
-    std::unordered_map<std::string, LoweredChoiceLayout> const& choices
+    std::unordered_map<std::string, LoweredChoiceLayout> const& choices,
+    std::unordered_map<std::string, std::string> const& type_aliases
 ) -> LoweredFunctionSignature {
     auto signature = lower_function_signature(return_type, parameters, std::move(symbol_name));
     signature.source_return_type_name = render_source_type_name(return_type);
     if (signature.return_type.empty()) {
-        if (auto contextual_type = contextual_type_for(return_type, record_names, choices)) {
+        if (auto contextual_type = contextual_type_for(
+                return_type, record_names, choices, type_aliases
+            )) {
             signature.return_type = std::move(*contextual_type);
             signature.return_signedness = IntegerSignedness::not_integer;
         }
@@ -2805,7 +2827,9 @@ auto lower_contextual_function_signature(
         if (!signature.parameter_types[index].empty()) {
             continue;
         }
-        if (auto contextual_type = contextual_type_for(parameters[index].type, record_names, choices)) {
+        if (auto contextual_type = contextual_type_for(
+                parameters[index].type, record_names, choices, type_aliases
+            )) {
             signature.parameter_types[index] = std::move(*contextual_type);
             signature.parameter_signedness[index] = IntegerSignedness::not_integer;
         }
@@ -2818,7 +2842,8 @@ auto lower_method_signature(
     syntax::FunctionSyntax const& method,
     std::string symbol_name,
     std::unordered_set<std::string> const& record_names,
-    std::unordered_map<std::string, LoweredChoiceLayout> const& choices
+    std::unordered_map<std::string, LoweredChoiceLayout> const& choices,
+    std::unordered_map<std::string, std::string> const& type_aliases
 ) -> LoweredFunctionSignature {
     auto parameters = method.parameters;
     for (auto& parameter : parameters) {
@@ -2831,7 +2856,8 @@ auto lower_method_signature(
         parameters,
         std::move(symbol_name),
         record_names,
-        choices
+        choices,
+        type_aliases
     );
     lower_exclusive_dynamic_array_receiver_pointer(receiver_type, method, signature);
     return signature;
@@ -2843,7 +2869,8 @@ auto collect_method_signature(
     std::string receiver_type_name,
     syntax::FunctionSyntax const& method,
     std::unordered_set<std::string> const& record_names,
-    std::unordered_map<std::string, LoweredChoiceLayout> const& choices
+    std::unordered_map<std::string, LoweredChoiceLayout> const& choices,
+    std::unordered_map<std::string, std::string> const& type_aliases
 ) -> LoweredMethodSignature {
     auto symbol_name = lowered_package_method_symbol_name(
         package_name,
@@ -2853,7 +2880,9 @@ auto collect_method_signature(
         .receiver_type_name = receiver_type_name,
         .method_name = method.name,
         .source_method = &method,
-        .signature = lower_method_signature(receiver_type, method, std::move(symbol_name), record_names, choices),
+        .signature = lower_method_signature(
+            receiver_type, method, std::move(symbol_name), record_names, choices, type_aliases
+        ),
     };
 }
 
@@ -2872,8 +2901,25 @@ auto is_decimal_integer_text(std::string_view text) -> bool {
 auto llvm_field_type_for(
     syntax::TypeSyntax const& type,
     std::unordered_set<std::string> const& record_names,
-    std::unordered_map<std::string, LoweredChoiceLayout> const* choices = nullptr
+    std::unordered_map<std::string, LoweredChoiceLayout> const* choices = nullptr,
+    std::unordered_map<std::string, std::string> const* type_aliases = nullptr,
+    std::unordered_set<std::string> alias_path = {}
 ) -> std::string {
+    if (type_aliases != nullptr) {
+        auto alias = type_aliases->find(render_source_type_name(type));
+        if (alias != type_aliases->end()) {
+            if (!alias_path.insert(alias->first).second) {
+                return {};
+            }
+            return llvm_field_type_for(
+                parse_source_type_name(alias->second),
+                record_names,
+                choices,
+                type_aliases,
+                std::move(alias_path)
+            );
+        }
+    }
     if (auto lowered_type = llvm_type_for(type); lowered_type.has_value()) {
         return std::string {*lowered_type};
     }
@@ -2892,13 +2938,17 @@ auto llvm_field_type_for(
     }
     if (type.name == "Array" && type.generic_arguments.size() == 2 &&
         is_decimal_integer_text(type.generic_arguments[1].name)) {
-        auto element_type = llvm_field_type_for(type.generic_arguments[0], record_names, choices);
+        auto element_type = llvm_field_type_for(
+            type.generic_arguments[0], record_names, choices, type_aliases
+        );
         if (!element_type.empty() && element_type != "void") {
             return "[" + type.generic_arguments[1].name + " x " + element_type + "]";
         }
     }
     if (type.name == "Maybe" && type.generic_arguments.size() == 1) {
-        auto payload_type = llvm_field_type_for(type.generic_arguments[0], record_names, choices);
+        auto payload_type = llvm_field_type_for(
+            type.generic_arguments[0], record_names, choices, type_aliases
+        );
         if (!payload_type.empty() && payload_type != "void") {
             return "{ i1, " + payload_type + " }";
         }
@@ -2936,7 +2986,8 @@ auto choice_variant_payload_type(std::vector<LoweredChoicePayload> const& payloa
 auto collect_record_layout(
     syntax::RecordSyntax const& record,
     std::unordered_set<std::string> const& record_names,
-    std::unordered_map<std::string, LoweredChoiceLayout> const& choices
+    std::unordered_map<std::string, LoweredChoiceLayout> const& choices,
+    std::unordered_map<std::string, std::string> const& type_aliases
 ) -> LoweredRecordLayout {
     auto layout = LoweredRecordLayout {
         .name = record.name,
@@ -2948,7 +2999,7 @@ auto collect_record_layout(
         layout.fields.push_back(LoweredRecordField {
             .name = field.name,
             .source_type_name = render_source_type_name(field.type),
-            .llvm_type = llvm_field_type_for(field.type, record_names, &choices),
+            .llvm_type = llvm_field_type_for(field.type, record_names, &choices, &type_aliases),
             .index = index,
         });
     }
@@ -2959,7 +3010,8 @@ auto collect_instantiated_record_layout(
     syntax::TypeSyntax const& concrete_type,
     syntax::RecordSyntax const& record,
     std::unordered_set<std::string> const& record_names,
-    std::unordered_map<std::string, LoweredChoiceLayout> const& choices
+    std::unordered_map<std::string, LoweredChoiceLayout> const& choices,
+    std::unordered_map<std::string, std::string> const& type_aliases
 ) -> LoweredRecordLayout {
     auto source_type_name = render_record_type_name(concrete_type);
     auto layout = LoweredRecordLayout {
@@ -2978,7 +3030,9 @@ auto collect_instantiated_record_layout(
         layout.fields.push_back(LoweredRecordField {
             .name = field.name,
             .source_type_name = render_source_type_name(substituted_type),
-            .llvm_type = llvm_field_type_for(substituted_type, record_names, &choices),
+            .llvm_type = llvm_field_type_for(
+                substituted_type, record_names, &choices, &type_aliases
+            ),
             .index = index,
         });
     }
@@ -2989,6 +3043,7 @@ auto collect_choice_layout(
     syntax::ChoiceSyntax const& choice,
     std::unordered_set<std::string> const& record_names,
     std::unordered_map<std::string, LoweredChoiceLayout> const& choices,
+    std::unordered_map<std::string, std::string> const& type_aliases,
     syntax::TypeSyntax concrete_type = {},
     LoweringContext const* sizing_context = nullptr
 ) -> LoweredChoiceLayout {
@@ -3039,7 +3094,9 @@ auto collect_choice_layout(
             has_payload = true;
             auto const& payload = variant.payloads[payload_index];
             auto substituted_payload_type = substitute_type(payload.type, substitutions);
-            auto payload_llvm = llvm_field_type_for(substituted_payload_type, record_names, &choices);
+            auto payload_llvm = llvm_field_type_for(
+                substituted_payload_type, record_names, &choices, &type_aliases
+            );
             if (!is_supported_choice_payload_llvm_type(payload_llvm)) {
                 supports_payload_abi = false;
                 if (layout.unsupported_abi_reason.empty()) {
@@ -3109,13 +3166,17 @@ void collect_all_choice_layouts(
     for (auto const& choice : module.choices) {
         context.choices.emplace(
             choice.name,
-            collect_choice_layout(choice, record_names, context.choices, {}, sizing_context)
+            collect_choice_layout(
+                choice, record_names, context.choices, context.type_aliases, {}, sizing_context
+            )
         );
     }
     for (auto const& choice : imported_choices) {
         context.choices.emplace(
             choice.name,
-            collect_choice_layout(choice, record_names, context.choices, {}, sizing_context)
+            collect_choice_layout(
+                choice, record_names, context.choices, context.type_aliases, {}, sizing_context
+            )
         );
     }
     for (auto const& type : instantiated_types) {
@@ -3126,7 +3187,14 @@ void collect_all_choice_layouts(
         auto source_type_name = render_source_type_name(type);
         context.choices.emplace(
             source_type_name,
-            collect_choice_layout(*choice->second, record_names, context.choices, type, sizing_context)
+            collect_choice_layout(
+                *choice->second,
+                record_names,
+                context.choices,
+                context.type_aliases,
+                type,
+                sizing_context
+            )
         );
     }
 }
@@ -3144,13 +3212,19 @@ void collect_all_record_layouts(
         if (!record.generic_parameters.empty()) {
             continue;
         }
-        context.records.emplace(record.name, collect_record_layout(record, record_names, context.choices));
+        context.records.emplace(
+            record.name,
+            collect_record_layout(record, record_names, context.choices, context.type_aliases)
+        );
     }
     for (auto const& record : imported_records) {
         if (!record.generic_parameters.empty()) {
             continue;
         }
-        context.records.emplace(record.name, collect_record_layout(record, record_names, context.choices));
+        context.records.emplace(
+            record.name,
+            collect_record_layout(record, record_names, context.choices, context.type_aliases)
+        );
     }
     for (auto const& type : instantiated_types) {
         auto record = generic_records.find(type.name);
@@ -3160,8 +3234,44 @@ void collect_all_record_layouts(
         auto source_type_name = render_record_type_name(type);
         context.records.emplace(
             source_type_name,
-            collect_instantiated_record_layout(type, *record->second, record_names, context.choices)
+            collect_instantiated_record_layout(
+                type, *record->second, record_names, context.choices, context.type_aliases
+            )
         );
+    }
+}
+
+void project_local_aggregate_alias_layouts(
+    syntax::ModuleSyntax const& module,
+    LoweringContext& context
+) {
+    for (auto pass = std::size_t {0}; pass < module.type_aliases.size(); ++pass) {
+        auto added_layout = false;
+        for (auto const& alias : module.type_aliases) {
+            auto const target_name = render_source_type_name(alias.aliased_type);
+            if (!context.records.contains(alias.name)) {
+                auto target = context.records.find(target_name);
+                if (target != context.records.end()) {
+                    auto layout = target->second;
+                    layout.name = alias.name;
+                    context.records.emplace(alias.name, std::move(layout));
+                    added_layout = true;
+                }
+            }
+            if (!context.choices.contains(alias.name)) {
+                auto target = context.choices.find(target_name);
+                if (target != context.choices.end()) {
+                    auto layout = target->second;
+                    layout.name = alias.name;
+                    layout.source_type_name = alias.name;
+                    context.choices.emplace(alias.name, std::move(layout));
+                    added_layout = true;
+                }
+            }
+        }
+        if (!added_layout) {
+            return;
+        }
     }
 }
 
@@ -3178,6 +3288,9 @@ auto build_lowering_context(
 ) -> LoweringContext {
     auto context = LoweringContext {};
     context.package_name = module.package_name;
+    for (auto const& alias : module.type_aliases) {
+        context.type_aliases.emplace(alias.name, render_source_type_name(alias.aliased_type));
+    }
     auto record_names = std::unordered_set<std::string> {};
     auto generic_records = std::unordered_map<std::string, syntax::RecordSyntax const*> {};
     auto generic_choices = std::unordered_map<std::string, syntax::ChoiceSyntax const*> {};
@@ -3220,12 +3333,14 @@ auto build_lowering_context(
     collect_all_record_layouts(
         module, imported_records, instantiated_types, generic_records, record_names, context
     );
+    project_local_aggregate_alias_layouts(module, context);
     collect_all_choice_layouts(
         module, imported_choices, instantiated_types, generic_choices, record_names, context, &context
     );
     collect_all_record_layouts(
         module, imported_records, instantiated_types, generic_records, record_names, context
     );
+    project_local_aggregate_alias_layouts(module, context);
 
     for (auto const& function : module.functions) {
         auto symbol_name = function.name;
@@ -3237,7 +3352,8 @@ auto build_lowering_context(
             function.parameters,
             std::move(symbol_name),
             record_names,
-            context.choices
+            context.choices,
+            context.type_aliases
         );
         signature.generic_parameters = function.generic_parameters;
         symbol_registry.register_symbol(signature.symbol_name, "source function symbol", function.line, diagnostics);
@@ -3265,7 +3381,8 @@ auto build_lowering_context(
                 function.source_declaration_name
             ),
             record_names,
-            context.choices
+            context.choices,
+            context.type_aliases
         );
         signature.generic_parameters = function.generic_parameters;
         if (!function.generic_parameters.empty()) {
@@ -3346,7 +3463,8 @@ auto build_lowering_context(
             specialization.parameters,
             std::move(symbol_name),
             record_names,
-            context.choices
+            context.choices,
+            context.type_aliases
         );
         signature.generic_parameters = specialization.generic_parameters;
         record_dynamic_array_descriptor_parameter_types(specialization, signature, true);
@@ -3395,7 +3513,8 @@ auto build_lowering_context(
                     receiver_type_name,
                     method,
                     record_names,
-                    context.choices
+                    context.choices,
+                    context.type_aliases
             );
             if (!is_uninstantiated_generic_function(method) &&
                 !is_generic_receiver_pattern(implementation.receiver_type, module)) {
@@ -3419,7 +3538,8 @@ auto build_lowering_context(
                     receiver_type_name,
                     method,
                     record_names,
-                    context.choices
+                    context.choices,
+                    context.type_aliases
             );
             if (!is_uninstantiated_generic_function(method) &&
                 !is_generic_receiver_pattern(extension.receiver_type, module)) {
@@ -3449,7 +3569,8 @@ auto build_lowering_context(
             *specialization.method,
             specialization.symbol_name,
             record_names,
-            context.choices
+            context.choices,
+            context.type_aliases
         );
         record_dynamic_array_descriptor_parameter_types(*specialization.method, signature);
         if (!has_supported_function_signature_types(signature)) {
