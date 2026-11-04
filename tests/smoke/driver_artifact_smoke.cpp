@@ -477,8 +477,6 @@ auto main() -> int {
             "        Empty => 0 as UInt32",
             "public function pass_counts(value: PublicCounts) -> PublicCounts",
             "    value",
-            "public function read_counts(value: PublicCounts) -> UInt32",
-            "    30 as UInt32",
         }
     );
     auto alias_abi_consumer_path = smoke_temp_root / "alias abi consumer.or";
@@ -497,7 +495,6 @@ auto main() -> int {
             "    make_status from external.aliasabi",
             "    pass_count from external.aliasabi",
             "    pass_counts from external.aliasabi",
-            "    read_counts from external.aliasabi",
             "    read_detail from external.aliasabi",
             "    read_maybe_count from external.aliasabi",
             "    read_status from external.aliasabi",
@@ -505,12 +502,14 @@ auto main() -> int {
             "    read_detail(value)",
             "function read_external_status(value: ExternalStatus) -> UInt32",
             "    read_status(value)",
+            "function read_external_counts(value: ExternalCounts) -> UInt32",
+            "    value[0] + value[1]",
             "function main() -> UInt32",
             "    round_trip(make_detail(42 as UInt32)) + "
             "read_external_status(make_status(7 as UInt32)) + "
             "(pass_count(5 as ExternalCount) as UInt32) + "
             "read_maybe_count(make_maybe_count(8 as UInt32)) + "
-            "read_counts(pass_counts([10 as UInt32, 20 as UInt32] as ExternalCounts)) - "
+            "read_external_counts(pass_counts([10 as UInt32, 20 as UInt32] as ExternalCounts)) - "
             "92 as UInt32",
         }
     );

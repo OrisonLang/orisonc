@@ -1484,7 +1484,7 @@ private:
         return render_type_name(substitute_generic_type_bindings(record_type, bindings));
     }
 
-    auto resolve_local_type_alias_target(
+    auto resolve_type_alias_target(
         syntax::TypeSyntax type
     ) const -> std::optional<syntax::TypeSyntax> {
         auto alias_path = std::unordered_set<std::string> {};
@@ -1493,22 +1493,50 @@ private:
                 module_.type_aliases,
                 [&](syntax::TypeAliasSyntax const& candidate) { return candidate.name == type.name; }
             );
-            if (alias == module_.type_aliases.end()) {
+            if (alias != module_.type_aliases.end()) {
+                if (!alias_path.insert(alias->name).second) {
+                    return std::nullopt;
+                }
+                type = alias->aliased_type;
+                continue;
+            }
+
+            auto imported_alias = std::ranges::find_if(
+                options_.imported_type_declarations,
+                [&](ImportedTypeDeclarationMetadata const& candidate) {
+                    return candidate.local_name == type.name &&
+                        candidate.lowering_alias_target.has_value();
+                }
+            );
+            if (imported_alias == options_.imported_type_declarations.end()) {
                 return type;
             }
-            if (!alias_path.insert(alias->name).second) {
+            if (!alias_path.insert(imported_alias->local_name).second) {
                 return std::nullopt;
             }
-            type = alias->aliased_type;
+            type = *imported_alias->lowering_alias_target;
         }
         return type;
+    }
+
+    auto resolve_type_alias_target_name(std::string const& type_name) const
+        -> std::optional<std::string> {
+        auto parsed_type = parse_rendered_type_name(type_name);
+        if (!parsed_type.has_value()) {
+            return type_name;
+        }
+        auto resolved_type = resolve_type_alias_target(std::move(*parsed_type));
+        if (!resolved_type.has_value()) {
+            return std::nullopt;
+        }
+        return render_type_name(*resolved_type);
     }
 
     auto find_choice_variant_signature(
         std::string const& variant_name,
         syntax::TypeSyntax const& choice_type
     ) const -> ChoiceVariantSignature const* {
-        auto resolved_choice_type = resolve_local_type_alias_target(choice_type);
+        auto resolved_choice_type = resolve_type_alias_target(choice_type);
         if (!resolved_choice_type.has_value()) {
             return nullptr;
         }
@@ -1532,7 +1560,7 @@ private:
     }
 
     auto is_choice_type(syntax::TypeSyntax const& choice_type) const -> bool {
-        auto resolved_choice_type = resolve_local_type_alias_target(choice_type);
+        auto resolved_choice_type = resolve_type_alias_target(choice_type);
         if (!resolved_choice_type.has_value()) {
             return false;
         }
@@ -1661,7 +1689,7 @@ private:
     auto zero_payload_choice_variant_names_if_enum_like(
         syntax::TypeSyntax const& choice_type
     ) const -> std::optional<std::vector<std::string>> {
-        auto resolved_choice_type = resolve_local_type_alias_target(choice_type);
+        auto resolved_choice_type = resolve_type_alias_target(choice_type);
         if (!resolved_choice_type.has_value()) {
             return std::nullopt;
         }
@@ -1695,7 +1723,7 @@ private:
     auto choice_variant_names_if_payload_bearing(
         syntax::TypeSyntax const& choice_type
     ) const -> std::optional<std::vector<std::string>> {
-        auto resolved_choice_type = resolve_local_type_alias_target(choice_type);
+        auto resolved_choice_type = resolve_type_alias_target(choice_type);
         if (!resolved_choice_type.has_value()) {
             return std::nullopt;
         }
@@ -1729,14 +1757,14 @@ private:
         std::string const& variant_name,
         syntax::TypeSyntax const& subject_type
     ) const -> std::optional<syntax::TypeSyntax> {
-        auto resolved_subject_type = resolve_local_type_alias_target(subject_type);
+        auto resolved_subject_type = resolve_type_alias_target(subject_type);
         if (resolved_subject_type.has_value() &&
             find_choice_variant_signature(variant_name, *resolved_subject_type) != nullptr) {
             return resolved_subject_type;
         }
 
         if (subject_type.name == "Box" && subject_type.generic_arguments.size() == 1) {
-            auto wrapped_type = resolve_local_type_alias_target(subject_type.generic_arguments.front());
+            auto wrapped_type = resolve_type_alias_target(subject_type.generic_arguments.front());
             if (wrapped_type.has_value() &&
                 find_choice_variant_signature(variant_name, *wrapped_type) != nullptr) {
                 return wrapped_type;
@@ -1872,11 +1900,15 @@ private:
             }
             {
                 auto source_type_name = infer_expression_type_name(*expression.left);
-                auto pointee_type_name = pointer_pointee_type_name(source_type_name);
+                auto resolved_source_type_name = resolve_type_alias_target_name(source_type_name);
+                if (!resolved_source_type_name.has_value()) {
+                    return {};
+                }
+                auto pointee_type_name = pointer_pointee_type_name(*resolved_source_type_name);
                 if (!pointee_type_name.empty()) {
                     return pointee_type_name;
                 }
-                return container_element_type_name(source_type_name);
+                return container_element_type_name(*resolved_source_type_name);
             }
         case syntax::ExpressionKind::member_access:
         case syntax::ExpressionKind::null_safe_member_access:
@@ -2675,7 +2707,10 @@ private:
 
         if (expression.left) {
             auto base_type_name = infer_expression_type_name(*expression.left);
-            if (!base_type_name.empty() && !is_indexable_type_name(base_type_name)) {
+            auto resolved_base_type_name = resolve_type_alias_target_name(base_type_name);
+            if (!base_type_name.empty() &&
+                (!resolved_base_type_name.has_value() ||
+                 !is_indexable_type_name(*resolved_base_type_name))) {
                 diagnostics_.error(
                     expression.line,
                     "index access requires Array, View, DynamicArray, or Pointer base: " + base_type_name
@@ -2685,7 +2720,10 @@ private:
         }
 
         auto index_type_name = infer_expression_type_name(expression.arguments.front());
-        if (!index_type_name.empty() && !is_integer_type_name(index_type_name)) {
+        auto resolved_index_type_name = resolve_type_alias_target_name(index_type_name);
+        if (!index_type_name.empty() &&
+            (!resolved_index_type_name.has_value() ||
+             !is_integer_type_name(*resolved_index_type_name))) {
             diagnostics_.error(
                 expression.line,
                 "index access currently requires an integer index expression"

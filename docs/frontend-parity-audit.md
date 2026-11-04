@@ -3884,3 +3884,6 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-11-04: Imported alias metadata now carries cycle-safe scalar and finite-composite lowering targets. Renamed aliases of
   `UInt32`, concrete `Maybe<UInt32>`, and `Array<UInt32, 2>` cross separately compiled function ABI boundaries, link,
   and execute. Alias-aware indexing and other semantic operation queries remain follow-up work. No source syntax changed.
+- 2026-11-04: Index validation, element inference, and LLVM expression emission now expand cycle-safe local and imported
+  alias chains. A renamed imported `Array<UInt32, 2>` is indexed in the consumer after a separate-object round trip,
+  links, and preserves both elements at runtime. Other type-directed operations remain follow-up work. No syntax changed.

@@ -677,6 +677,15 @@ int main() {
     assert(computed_cleanup_insertion_capability.enabled);
 
     auto context = orison::lowering::LoweringContext {};
+    context.type_aliases.emplace("Counts", "Array<UInt32, 2>");
+    context.type_aliases.emplace("PublicCounts", "Counts");
+    context.type_aliases.emplace("CycleLeft", "CycleRight");
+    context.type_aliases.emplace("CycleRight", "CycleLeft");
+    assert(
+        orison::lowering::resolved_source_type_alias_name("PublicCounts", context) ==
+        "Array<UInt32, 2>"
+    );
+    assert(!orison::lowering::resolved_source_type_alias_name("CycleLeft", context).has_value());
     context.records.emplace("Bucket", orison::lowering::LoweredRecordLayout {
         .name = "Bucket",
         .llvm_type_name = "%record.Bucket",
@@ -1035,6 +1044,7 @@ int main() {
     state.source_type_names["wrapper_pointer"] = "Pointer<Wrapper>";
     state.source_type_names["left_values"] = "Array<UInt32, 3>";
     state.source_type_names["right_values"] = "Array<UInt32, 3>";
+    state.source_type_names["aliased_values"] = "PublicCounts";
     state.source_type_names["box"] = "Maybe<Box<UInt32>>";
     state.source_type_names["holders"] = "Array<IndexedBucket, 2>";
     state.source_type_names["grid"] = "Array<Array<IndexedBucket, 2>, 2>";
@@ -7724,6 +7734,13 @@ int main() {
             context,
             state
         ) == "Array<UInt32, 3>"
+    );
+    assert(
+        orison::lowering::source_type_name_for_expression(
+            index(name("aliased_values")),
+            context,
+            state
+        ) == "UInt32"
     );
     assert(
         orison::lowering::source_type_name_for_expression(

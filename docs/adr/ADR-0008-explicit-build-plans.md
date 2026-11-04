@@ -58,4 +58,3 @@ expanded target for function ABI types. Ordinary record and choice aliases conti
 ## Follow-up work
 
 - Support multiple source files per package after package-level semantic merging is defined.
-- Expand aliases in semantic operation queries so indexing and other type-directed operations accept alias-typed values.

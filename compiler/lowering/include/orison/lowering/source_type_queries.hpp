@@ -642,6 +642,11 @@ auto generic_record_constructor_inference_failure_detail(
     FunctionLoweringState const& state
 ) -> std::optional<std::string>;
 
+auto resolved_source_type_alias_name(
+    std::string_view type_name,
+    LoweringContext const& context
+) -> std::optional<std::string>;
+
 auto lowered_type_for_source_type_name(
     std::string_view type_name,
     LoweringContext const& context

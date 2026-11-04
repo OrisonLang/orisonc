@@ -4256,10 +4256,23 @@ auto lowered_expression(
             return std::nullopt;
         }
 
-        auto element_source_type = array_element_source_type_name(*base_source_type);
+        auto resolved_base_source_type = resolved_source_type_alias_name(
+            *base_source_type,
+            context.lowering
+        );
+        if (!resolved_base_source_type.has_value()) {
+            record_expression_lowering_failure(
+                failures,
+                ExpressionLoweringFailureReason::unsupported_expression,
+                expression.text
+            );
+            return std::nullopt;
+        }
+
+        auto element_source_type = array_element_source_type_name(*resolved_base_source_type);
         auto is_view_index = false;
         if (!element_source_type.has_value()) {
-            element_source_type = view_element_source_type_name(*base_source_type);
+            element_source_type = view_element_source_type_name(*resolved_base_source_type);
             is_view_index = element_source_type.has_value();
         }
         if (!element_source_type.has_value()) {

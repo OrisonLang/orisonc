@@ -15,6 +15,7 @@
 #include <array>
 #include <iterator>
 #include <memory>
+#include <unordered_set>
 #include <utility>
 
 namespace orison::lowering {
@@ -5172,24 +5173,39 @@ auto generic_record_constructor_inference_failure_detail(
     return message;
 }
 
+auto resolved_source_type_alias_name(
+    std::string_view type_name,
+    LoweringContext const& context
+) -> std::optional<std::string> {
+    auto alias = context.type_aliases.find(std::string(type_name));
+    if (alias == context.type_aliases.end()) {
+        return std::string {type_name};
+    }
+
+    auto target = std::string_view {alias->second};
+    auto alias_path = std::unordered_set<std::string> {std::string {type_name}};
+    while (true) {
+        if (!alias_path.insert(std::string {target}).second) {
+            return std::nullopt;
+        }
+        auto next = context.type_aliases.find(std::string(target));
+        if (next == context.type_aliases.end()) {
+            return std::string {target};
+        }
+        target = next->second;
+    }
+}
+
 auto lowered_type_for_source_type_name(
     std::string_view type_name,
     LoweringContext const& context
 ) -> std::optional<LoweredType> {
-    auto alias = context.type_aliases.find(std::string(type_name));
-    if (alias != context.type_aliases.end() && alias->second != type_name) {
-        auto target = std::string_view {alias->second};
-        for (auto depth = std::size_t {0}; depth < context.type_aliases.size(); ++depth) {
-            auto next = context.type_aliases.find(std::string(target));
-            if (next == context.type_aliases.end()) {
-                return lowered_type_for_source_type_name(target, context);
-            }
-            if (next->second == type_name || next->second == target) {
-                return std::nullopt;
-            }
-            target = next->second;
-        }
+    auto resolved_type_name = resolved_source_type_alias_name(type_name, context);
+    if (!resolved_type_name.has_value()) {
         return std::nullopt;
+    }
+    if (*resolved_type_name != type_name) {
+        return lowered_type_for_source_type_name(*resolved_type_name, context);
     }
 
     constexpr auto pointer_prefix = std::string_view {"Pointer<"};
@@ -5372,16 +5388,27 @@ auto source_type_name_for_expression(
             return std::nullopt;
         }
 
-        auto indexed_source_type = pointer_pointee_source_type_name(*base_source_type);
-        auto array_element = array_element_source_type_name(indexed_source_type.value_or(*base_source_type));
+        auto resolved_base_source_type = resolved_source_type_alias_name(*base_source_type, context);
+        if (!resolved_base_source_type.has_value()) {
+            return std::nullopt;
+        }
+
+        auto indexed_source_type = pointer_pointee_source_type_name(*resolved_base_source_type);
+        auto array_element = array_element_source_type_name(
+            indexed_source_type.value_or(*resolved_base_source_type)
+        );
         if (array_element.has_value()) {
             return std::move(array_element);
         }
-        auto view_element = view_element_source_type_name(indexed_source_type.value_or(*base_source_type));
+        auto view_element = view_element_source_type_name(
+            indexed_source_type.value_or(*resolved_base_source_type)
+        );
         if (view_element.has_value()) {
             return view_element;
         }
-        return dynamic_array_element_source_type_name(indexed_source_type.value_or(*base_source_type));
+        return dynamic_array_element_source_type_name(
+            indexed_source_type.value_or(*resolved_base_source_type)
+        );
     }
 
     if (expression.kind == syntax::ExpressionKind::ternary && expression.right != nullptr &&

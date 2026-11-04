@@ -10611,6 +10611,22 @@ void test_index_access_integer_index_success() {
     assert_fixture_success(path);
 }
 
+void test_index_access_alias_types_success() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_index_access_alias_types_success.or";
+    write_concurrency_fixture(
+        path,
+        "demo.aliasindex",
+        {
+            "type Counts = Array<UInt32, 2>",
+            "type CountIndex = UInt32",
+            "function read_count(values: Counts, index: CountIndex) -> UInt32",
+            "    values[index]",
+        }
+    );
+
+    assert_fixture_success(path);
+}
+
 void test_call_unsafe_function_outside_unsafe_context_failure() {
     auto path = std::filesystem::temp_directory_path() / "orison_semantics_call_unsafe_function_failure.or";
     write_concurrency_fixture(
@@ -15526,6 +15542,7 @@ int main() {
     test_nested_address_of_and_raw_offset_success();
     test_index_access_noninteger_index_failure();
     test_index_access_integer_index_success();
+    test_index_access_alias_types_success();
     test_call_unsafe_function_outside_unsafe_context_failure();
     test_call_unsafe_function_inside_unsafe_block_success();
     test_pointer_construction_outside_unsafe_context_failure();

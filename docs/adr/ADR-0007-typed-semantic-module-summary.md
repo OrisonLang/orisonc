@@ -85,6 +85,9 @@ external calling convention.
 Semantic choice-shape queries expand local alias chains with cycle detection. This permits variant construction,
 payload binding, and exhaustiveness analysis through an alias while preserving nominal alias identity for ordinary
 value compatibility and explicit conversions.
+Semantic index validation and element-type inference expand local and imported alias chains with cycle detection.
+Lowering applies the same resolution before fixed-array and view element queries, so alias-typed indexed expressions
+retain their element type through LLVM emission. Ordinary assignability remains nominal.
 The driver emits request artifacts with `--emit-specialization-requests` and accepts repeatable
 `--specialization-requests` inputs, allowing build orchestration to aggregate consumer requests for producer
 compilation. ADR-0008 defines explicit dependency scheduling and object selection through driver build plans.
