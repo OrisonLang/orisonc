@@ -4291,6 +4291,25 @@ void test_switch_accepts_exhaustive_payload_choice_without_default_success() {
     assert_fixture_success(path);
 }
 
+void test_switch_accepts_exhaustive_multi_hop_choice_alias_success() {
+    auto path = std::filesystem::temp_directory_path() /
+        "orison_semantics_switch_exhaustive_multi_hop_choice_alias_success.or";
+    auto output = std::ofstream(path);
+    output << "package demo.patterns\n";
+    output << "choice Status\n";
+    output << "    Ready(value: Int64)\n";
+    output << "    Empty\n";
+    output << "type StatusAlias = Status\n";
+    output << "type PublicStatus = StatusAlias\n";
+    output << "function read(value: PublicStatus) -> Int64\n";
+    output << "    switch value\n";
+    output << "        Ready(payload) => payload\n";
+    output << "        Empty => 0\n";
+    output.close();
+
+    assert_fixture_success(path);
+}
+
 void test_switch_accepts_reversed_exhaustive_payload_choice_without_default_success() {
     auto path =
         std::filesystem::temp_directory_path() /
@@ -15108,6 +15127,7 @@ int main() {
     test_switch_accepts_exhaustive_zero_payload_choice_without_default_success();
     test_switch_rejects_redundant_payload_choice_default_after_full_cover_failure();
     test_switch_accepts_exhaustive_payload_choice_without_default_success();
+    test_switch_accepts_exhaustive_multi_hop_choice_alias_success();
     test_switch_accepts_reversed_exhaustive_payload_choice_without_default_success();
     test_switch_accepts_literal_payload_choice_arm_with_default_success();
     test_switch_rejects_literal_payload_choice_arm_without_default_failure();

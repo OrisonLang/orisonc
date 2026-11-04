@@ -443,11 +443,23 @@ auto main() -> int {
         {
             "public record Detail",
             "    public value: UInt32",
-            "public type PublicDetail = Detail",
+            "public type DetailAlias = Detail",
+            "public type PublicDetail = DetailAlias",
+            "public choice Status",
+            "    Ready(value: UInt32)",
+            "    Empty",
+            "public type StatusAlias = Status",
+            "public type PublicStatus = StatusAlias",
             "public function make_detail(value: UInt32) -> PublicDetail",
             "    Detail(value) as PublicDetail",
             "public function read_detail(value: PublicDetail) -> UInt32",
             "    value.value",
+            "public function make_status(value: UInt32) -> PublicStatus",
+            "    Ready(value) as PublicStatus",
+            "public function read_status(value: PublicStatus) -> UInt32",
+            "    switch value",
+            "        Ready(payload) => payload",
+            "        Empty => 0 as UInt32",
         }
     );
     auto alias_abi_consumer_path = smoke_temp_root / "alias abi consumer.or";
@@ -457,12 +469,18 @@ auto main() -> int {
         {
             "import",
             "    PublicDetail as ExternalDetail from external.aliasabi",
+            "    PublicStatus as ExternalStatus from external.aliasabi",
             "    make_detail from external.aliasabi",
+            "    make_status from external.aliasabi",
             "    read_detail from external.aliasabi",
+            "    read_status from external.aliasabi",
             "function round_trip(value: ExternalDetail) -> UInt32",
             "    read_detail(value)",
+            "function read_external_status(value: ExternalStatus) -> UInt32",
+            "    read_status(value)",
             "function main() -> UInt32",
-            "    round_trip(make_detail(42 as UInt32)) - 42 as UInt32",
+            "    round_trip(make_detail(42 as UInt32)) + "
+            "read_external_status(make_status(7 as UInt32)) - 49 as UInt32",
         }
     );
     auto alias_abi_build_plan_path = smoke_temp_root / "alias_abi.obp";

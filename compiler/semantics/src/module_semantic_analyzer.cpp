@@ -1484,10 +1484,34 @@ private:
         return render_type_name(substitute_generic_type_bindings(record_type, bindings));
     }
 
+    auto resolve_local_type_alias_target(
+        syntax::TypeSyntax type
+    ) const -> std::optional<syntax::TypeSyntax> {
+        auto alias_path = std::unordered_set<std::string> {};
+        while (type.generic_arguments.empty()) {
+            auto alias = std::ranges::find_if(
+                module_.type_aliases,
+                [&](syntax::TypeAliasSyntax const& candidate) { return candidate.name == type.name; }
+            );
+            if (alias == module_.type_aliases.end()) {
+                return type;
+            }
+            if (!alias_path.insert(alias->name).second) {
+                return std::nullopt;
+            }
+            type = alias->aliased_type;
+        }
+        return type;
+    }
+
     auto find_choice_variant_signature(
         std::string const& variant_name,
         syntax::TypeSyntax const& choice_type
     ) const -> ChoiceVariantSignature const* {
+        auto resolved_choice_type = resolve_local_type_alias_target(choice_type);
+        if (!resolved_choice_type.has_value()) {
+            return nullptr;
+        }
         for (auto const& signature : choice_variant_signatures_) {
             if (signature.variant_name != variant_name) {
                 continue;
@@ -1496,7 +1520,7 @@ private:
             std::unordered_map<std::string, syntax::TypeSyntax> bindings;
             if (match_generic_type_pattern(
                     signature.choice_type,
-                    choice_type,
+                    *resolved_choice_type,
                     signature.generic_parameters,
                     bindings
                 )) {
@@ -1508,11 +1532,15 @@ private:
     }
 
     auto is_choice_type(syntax::TypeSyntax const& choice_type) const -> bool {
+        auto resolved_choice_type = resolve_local_type_alias_target(choice_type);
+        if (!resolved_choice_type.has_value()) {
+            return false;
+        }
         for (auto const& signature : choice_variant_signatures_) {
             std::unordered_map<std::string, syntax::TypeSyntax> bindings;
             if (match_generic_type_pattern(
                     signature.choice_type,
-                    choice_type,
+                    *resolved_choice_type,
                     signature.generic_parameters,
                     bindings
                 )) {
@@ -1633,13 +1661,17 @@ private:
     auto zero_payload_choice_variant_names_if_enum_like(
         syntax::TypeSyntax const& choice_type
     ) const -> std::optional<std::vector<std::string>> {
+        auto resolved_choice_type = resolve_local_type_alias_target(choice_type);
+        if (!resolved_choice_type.has_value()) {
+            return std::nullopt;
+        }
         std::vector<std::string> variants;
         auto matched_choice = false;
         for (auto const& signature : choice_variant_signatures_) {
             std::unordered_map<std::string, syntax::TypeSyntax> bindings;
             if (!match_generic_type_pattern(
                     signature.choice_type,
-                    choice_type,
+                    *resolved_choice_type,
                     signature.generic_parameters,
                     bindings
                 )) {
@@ -1663,6 +1695,10 @@ private:
     auto choice_variant_names_if_payload_bearing(
         syntax::TypeSyntax const& choice_type
     ) const -> std::optional<std::vector<std::string>> {
+        auto resolved_choice_type = resolve_local_type_alias_target(choice_type);
+        if (!resolved_choice_type.has_value()) {
+            return std::nullopt;
+        }
         std::vector<std::string> variants;
         auto matched_choice = false;
         auto has_payload_variant = false;
@@ -1670,7 +1706,7 @@ private:
             std::unordered_map<std::string, syntax::TypeSyntax> bindings;
             if (!match_generic_type_pattern(
                     signature.choice_type,
-                    choice_type,
+                    *resolved_choice_type,
                     signature.generic_parameters,
                     bindings
                 )) {
@@ -1693,13 +1729,16 @@ private:
         std::string const& variant_name,
         syntax::TypeSyntax const& subject_type
     ) const -> std::optional<syntax::TypeSyntax> {
-        if (find_choice_variant_signature(variant_name, subject_type) != nullptr) {
-            return subject_type;
+        auto resolved_subject_type = resolve_local_type_alias_target(subject_type);
+        if (resolved_subject_type.has_value() &&
+            find_choice_variant_signature(variant_name, *resolved_subject_type) != nullptr) {
+            return resolved_subject_type;
         }
 
         if (subject_type.name == "Box" && subject_type.generic_arguments.size() == 1) {
-            auto const& wrapped_type = subject_type.generic_arguments.front();
-            if (find_choice_variant_signature(variant_name, wrapped_type) != nullptr) {
+            auto wrapped_type = resolve_local_type_alias_target(subject_type.generic_arguments.front());
+            if (wrapped_type.has_value() &&
+                find_choice_variant_signature(variant_name, *wrapped_type) != nullptr) {
                 return wrapped_type;
             }
         }

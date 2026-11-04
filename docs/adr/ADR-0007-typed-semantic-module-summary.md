@@ -82,6 +82,9 @@ fields, choice payloads, casts, and expression types. Aggregate aliases project 
 under the source alias while retaining the target LLVM representation. Local and imported function parameters and
 returns can therefore use distinct source aliases across separately compiled package objects without changing the
 external calling convention.
+Semantic choice-shape queries expand local alias chains with cycle detection. This permits variant construction,
+payload binding, and exhaustiveness analysis through an alias while preserving nominal alias identity for ordinary
+value compatibility and explicit conversions.
 The driver emits request artifacts with `--emit-specialization-requests` and accepts repeatable
 `--specialization-requests` inputs, allowing build orchestration to aggregate consumer requests for producer
 compilation. ADR-0008 defines explicit dependency scheduling and object selection through driver build plans.

@@ -3878,3 +3878,6 @@ This file tracks which source-language frontend slices are reflected in the curr
   choice payloads, casts, and expression types. A producer accepts and returns a local record alias while a separately
   compiled consumer imports that type under another name; the build-plan executable links and preserves the value.
   No source syntax changed.
+- 2026-11-03: Semantic choice-shape queries now expand cycle-safe local alias chains for variant membership, payload
+  bindings, and exhaustiveness. Separate producer and consumer objects pass a payload-bearing choice through two local
+  aliases and a renamed import, then link and preserve the payload at runtime. No source syntax changed.
