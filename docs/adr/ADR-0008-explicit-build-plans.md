@@ -51,7 +51,11 @@ types absent from explicit package-interface inputs cannot be materialized by th
 records and choices retain their complete ABI layout in producer specializations, including public aggregate members
 whose canonical declarations come from another reachable package.
 Public aliases may name those aggregate members without changing the materialized ABI layout.
+Imported alias metadata also carries a cycle-safe, fully expanded lowering target when the target is a scalar, fixed
+array, or concrete `Maybe<T>`. Consumer lowering preserves the local import name for semantic identity while using the
+expanded target for function ABI types. Ordinary record and choice aliases continue to use projected imported layouts.
 
 ## Follow-up work
 
 - Support multiple source files per package after package-level semantic merging is defined.
+- Expand aliases in semantic operation queries so indexing and other type-directed operations accept alias-typed values.

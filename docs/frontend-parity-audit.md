@@ -3881,3 +3881,6 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-11-03: Semantic choice-shape queries now expand cycle-safe local alias chains for variant membership, payload
   bindings, and exhaustiveness. Separate producer and consumer objects pass a payload-bearing choice through two local
   aliases and a renamed import, then link and preserve the payload at runtime. No source syntax changed.
+- 2026-11-04: Imported alias metadata now carries cycle-safe scalar and finite-composite lowering targets. Renamed aliases of
+  `UInt32`, concrete `Maybe<UInt32>`, and `Array<UInt32, 2>` cross separately compiled function ABI boundaries, link,
+  and execute. Alias-aware indexing and other semantic operation queries remain follow-up work. No source syntax changed.

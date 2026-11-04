@@ -68,6 +68,7 @@ struct ImportedTypeDeclarationMetadata {
     std::string declaration_name;
     std::string local_name;
     std::size_t generic_arity = 0;
+    std::optional<syntax::TypeSyntax> lowering_alias_target;
 };
 
 struct ImportedAggregateDeclarations {

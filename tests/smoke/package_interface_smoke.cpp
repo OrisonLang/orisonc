@@ -341,6 +341,11 @@ int main() {
         .from_package = "external.types",
     });
     consumer.imports.push_back(orison::syntax::ImportSyntax {
+        .name = "Identifier",
+        .alias = "ExternalIdentifier",
+        .from_package = "external.types",
+    });
+    consumer.imports.push_back(orison::syntax::ImportSyntax {
         .name = "transform",
         .alias = "external_transform",
         .from_package = "external.types",
@@ -389,11 +394,20 @@ int main() {
         consumer,
         available_interfaces
     );
-    assert(imported_declarations.size() == 3);
+    assert(imported_declarations.size() == 4);
     assert(imported_declarations.front().package_name == "external.types");
     assert(imported_declarations.front().declaration_name == "Pair");
     assert(imported_declarations.front().local_name == "ExternalPair");
     assert(imported_declarations.front().generic_arity == 2);
+    auto imported_identifier = std::ranges::find_if(
+        imported_declarations,
+        [](orison::semantics::ImportedTypeDeclarationMetadata const& declaration) {
+            return declaration.local_name == "ExternalIdentifier";
+        }
+    );
+    assert(imported_identifier != imported_declarations.end());
+    assert(imported_identifier->lowering_alias_target.has_value());
+    assert(imported_identifier->lowering_alias_target->name == "UInt64");
 
     auto imported_aggregates = orison::semantics::resolve_imported_aggregate_declarations(
         consumer,
@@ -439,6 +453,12 @@ int main() {
         .name = "First",
         .from_package = "external.cyclic",
     });
+    auto cyclic_imported_declarations = orison::semantics::resolve_imported_type_declarations(
+        cyclic_consumer,
+        {cyclic_interface}
+    );
+    assert(cyclic_imported_declarations.size() == 1);
+    assert(!cyclic_imported_declarations.front().lowering_alias_target.has_value());
     auto cyclic_aggregates = orison::semantics::resolve_imported_aggregate_declarations(
         cyclic_consumer,
         {cyclic_interface}

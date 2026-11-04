@@ -2778,6 +2778,9 @@ auto contextual_type_for(
             std::move(alias_path)
         );
     }
+    if (auto direct_type = llvm_type_for(type); direct_type.has_value()) {
+        return std::string {*direct_type};
+    }
     if (auto record_type = contextual_record_type_for(type, record_names)) {
         return record_type;
     }
@@ -2804,6 +2807,21 @@ auto contextual_type_for(
     return std::nullopt;
 }
 
+auto resolve_contextual_alias_type(
+    syntax::TypeSyntax type,
+    std::unordered_map<std::string, std::string> const& type_aliases
+) -> syntax::TypeSyntax {
+    auto alias_path = std::unordered_set<std::string> {};
+    while (true) {
+        auto const source_name = render_source_type_name(type);
+        auto alias = type_aliases.find(source_name);
+        if (alias == type_aliases.end() || !alias_path.insert(source_name).second) {
+            return type;
+        }
+        type = parse_source_type_name(alias->second);
+    }
+}
+
 auto lower_contextual_function_signature(
     syntax::TypeSyntax const& return_type,
     std::vector<syntax::ParameterSyntax> const& parameters,
@@ -2812,11 +2830,23 @@ auto lower_contextual_function_signature(
     std::unordered_map<std::string, LoweredChoiceLayout> const& choices,
     std::unordered_map<std::string, std::string> const& type_aliases
 ) -> LoweredFunctionSignature {
-    auto signature = lower_function_signature(return_type, parameters, std::move(symbol_name));
+    auto resolved_return_type = resolve_contextual_alias_type(return_type, type_aliases);
+    auto resolved_parameters = parameters;
+    for (auto& parameter : resolved_parameters) {
+        parameter.type = resolve_contextual_alias_type(parameter.type, type_aliases);
+    }
+    auto signature = lower_function_signature(
+        resolved_return_type,
+        resolved_parameters,
+        std::move(symbol_name)
+    );
     signature.source_return_type_name = render_source_type_name(return_type);
+    for (auto index = std::size_t {0}; index < parameters.size(); ++index) {
+        signature.parameter_source_type_names[index] = render_source_type_name(parameters[index].type);
+    }
     if (signature.return_type.empty()) {
         if (auto contextual_type = contextual_type_for(
-                return_type, record_names, choices, type_aliases
+                resolved_return_type, record_names, choices, type_aliases
             )) {
             signature.return_type = std::move(*contextual_type);
             signature.return_signedness = IntegerSignedness::not_integer;
@@ -2828,7 +2858,7 @@ auto lower_contextual_function_signature(
             continue;
         }
         if (auto contextual_type = contextual_type_for(
-                parameters[index].type, record_names, choices, type_aliases
+                resolved_parameters[index].type, record_names, choices, type_aliases
             )) {
             signature.parameter_types[index] = std::move(*contextual_type);
             signature.parameter_signedness[index] = IntegerSignedness::not_integer;
@@ -3290,6 +3320,14 @@ auto build_lowering_context(
     context.package_name = module.package_name;
     for (auto const& alias : module.type_aliases) {
         context.type_aliases.emplace(alias.name, render_source_type_name(alias.aliased_type));
+    }
+    for (auto const& imported_type : imported_types) {
+        if (imported_type.lowering_alias_target.has_value()) {
+            context.type_aliases.emplace(
+                imported_type.local_name,
+                render_source_type_name(*imported_type.lowering_alias_target)
+            );
+        }
     }
     auto record_names = std::unordered_set<std::string> {};
     auto generic_records = std::unordered_map<std::string, syntax::RecordSyntax const*> {};

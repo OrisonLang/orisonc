@@ -169,6 +169,68 @@ struct ResolvedPackageAggregate {
     PackageTypeDeclaration const* declaration = nullptr;
 };
 
+auto type_from_identity(GenericSpecializationTypeIdentity const& identity) -> syntax::TypeSyntax {
+    auto type = syntax::TypeSyntax {.name = identity.declaration_name};
+    for (auto const& argument : identity.generic_arguments) {
+        type.generic_arguments.push_back(type_from_identity(argument));
+    }
+    return type;
+}
+
+auto resolve_package_alias_target(
+    GenericSpecializationTypeIdentity const& identity,
+    PackageInterface const& containing_package_interface,
+    std::vector<PackageInterface> const& package_interfaces,
+    std::vector<std::string> alias_path = {}
+) -> std::optional<syntax::TypeSyntax> {
+    auto const& package_name = identity.package_name.empty()
+        ? containing_package_interface.package_name
+        : identity.package_name;
+    auto package_interface = std::ranges::find_if(
+        package_interfaces,
+        [&](PackageInterface const& candidate) {
+            return candidate.package_name == package_name;
+        }
+    );
+    if (package_interface == package_interfaces.end()) {
+        return type_from_identity(identity);
+    }
+    auto declaration = std::ranges::find_if(
+        package_interface->exported_type_declarations,
+        [&](PackageTypeDeclaration const& candidate) {
+            return candidate.name == identity.declaration_name;
+        }
+    );
+    if (declaration == package_interface->exported_type_declarations.end()) {
+        return type_from_identity(identity);
+    }
+    if (declaration->kind == PackageTypeDeclarationKind::record ||
+        declaration->kind == PackageTypeDeclarationKind::choice) {
+        if (declaration->name == "Maybe" && !identity.generic_arguments.empty()) {
+            return type_from_identity(identity);
+        }
+        return std::nullopt;
+    }
+    if (declaration->kind != PackageTypeDeclarationKind::type_alias ||
+        !declaration->aliased_type.has_value()) {
+        return type_from_identity(identity);
+    }
+    auto const alias_key = package_interface->package_name + "::" + declaration->name;
+    if (std::ranges::find(alias_path, alias_key) != alias_path.end()) {
+        return std::nullopt;
+    }
+    alias_path.push_back(alias_key);
+    auto const target_identity = declaration->aliased_type_identity.value_or(
+        default_type_identity(*declaration->aliased_type)
+    );
+    return resolve_package_alias_target(
+        target_identity,
+        *package_interface,
+        package_interfaces,
+        std::move(alias_path)
+    );
+}
+
 auto resolve_package_aggregate(
     GenericSpecializationTypeIdentity const& identity,
     PackageInterface const& containing_package_interface,
@@ -934,6 +996,16 @@ auto resolve_imported_type_declarations(
                 .declaration_name = declaration->name,
                 .local_name = import.alias.empty() ? import.name : import.alias,
                 .generic_arity = declaration->generic_arity,
+                .lowering_alias_target = declaration->kind == PackageTypeDeclarationKind::type_alias
+                    ? resolve_package_alias_target(
+                          GenericSpecializationTypeIdentity {
+                              .package_name = package_interface.package_name,
+                              .declaration_name = declaration->name,
+                          },
+                          package_interface,
+                          package_interfaces
+                      )
+                    : std::nullopt,
             });
             break;
         }
