@@ -88,6 +88,10 @@ value compatibility and explicit conversions.
 Semantic index validation and element-type inference expand local and imported alias chains with cycle detection.
 Lowering applies the same resolution before fixed-array and view element queries, so alias-typed indexed expressions
 retain their element type through LLVM emission. Ordinary assignability remains nominal.
+Semantic member lookup expands local and imported alias chains before record and null-safe `Maybe` inspection.
+Imported alias targets localize nested package types to the consumer's explicit import names. Lowering applies the
+same cycle-safe resolution before record-layout lookup and throughout null-safe access planning. Alias identity remains
+nominal for assignment and conversion.
 The driver emits request artifacts with `--emit-specialization-requests` and accepts repeatable
 `--specialization-requests` inputs, allowing build orchestration to aggregate consumer requests for producer
 compilation. ADR-0008 defines explicit dependency scheduling and object selection through driver build plans.

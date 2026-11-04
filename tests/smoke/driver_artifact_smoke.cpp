@@ -7,6 +7,7 @@
 #include <filesystem>
 #include <fstream>
 #include <initializer_list>
+#include <iostream>
 #include <iterator>
 #include <span>
 #include <string>
@@ -130,6 +131,9 @@ auto run_program(orison::driver::CompilerApp const& app, std::filesystem::path c
 }
 
 void assert_success_with_empty_stdout(orison::driver::CompileResult const& result) {
+    if (result.exit_code != 0 || !result.stdout_text.empty() || !result.stderr_text.empty()) {
+        std::cerr << result.stderr_text << result.stdout_text;
+    }
     assert(result.exit_code == 0);
     assert(result.stdout_text.empty());
     assert(result.stderr_text.empty());
@@ -456,6 +460,7 @@ auto main() -> int {
             "    Some(value: T)",
             "    Empty",
             "public type PublicMaybeCount = Maybe<UInt32>",
+            "public type PublicMaybeDetail = Maybe<Detail>",
             "public type PublicCounts = Array<UInt32, 2>",
             "public function make_detail(value: UInt32) -> PublicDetail",
             "    Detail(value) as PublicDetail",
@@ -471,6 +476,9 @@ auto main() -> int {
             "    value",
             "public function make_maybe_count(value: UInt32) -> PublicMaybeCount",
             "    Some(value) as PublicMaybeCount",
+            "public function make_maybe_detail(value: UInt32) -> PublicMaybeDetail",
+            "    let concrete: Maybe<Detail> = Some(Detail(value))",
+            "    concrete as PublicMaybeDetail",
             "public function read_maybe_count(value: PublicMaybeCount) -> UInt32",
             "    switch value",
             "        Some(payload) => payload",
@@ -485,13 +493,16 @@ auto main() -> int {
         "demo.aliasabiconsumer",
         {
             "import",
+            "    Detail as ExternalDetailRecord from external.aliasabi",
             "    PublicDetail as ExternalDetail from external.aliasabi",
             "    PublicCount as ExternalCount from external.aliasabi",
             "    PublicCounts as ExternalCounts from external.aliasabi",
             "    PublicMaybeCount as ExternalMaybeCount from external.aliasabi",
+            "    PublicMaybeDetail as ExternalMaybeDetail from external.aliasabi",
             "    PublicStatus as ExternalStatus from external.aliasabi",
             "    make_detail from external.aliasabi",
             "    make_maybe_count from external.aliasabi",
+            "    make_maybe_detail from external.aliasabi",
             "    make_status from external.aliasabi",
             "    pass_count from external.aliasabi",
             "    pass_counts from external.aliasabi",
@@ -499,7 +510,7 @@ auto main() -> int {
             "    read_maybe_count from external.aliasabi",
             "    read_status from external.aliasabi",
             "function round_trip(value: ExternalDetail) -> UInt32",
-            "    read_detail(value)",
+            "    value.value",
             "function read_external_status(value: ExternalStatus) -> UInt32",
             "    read_status(value)",
             "function read_external_counts(value: ExternalCounts) -> UInt32",
@@ -509,8 +520,9 @@ auto main() -> int {
             "read_external_status(make_status(7 as UInt32)) + "
             "(pass_count(5 as ExternalCount) as UInt32) + "
             "read_maybe_count(make_maybe_count(8 as UInt32)) + "
+            "read_maybe_count(make_maybe_detail(9 as UInt32)?.value as ExternalMaybeCount) + "
             "read_external_counts(pass_counts([10 as UInt32, 20 as UInt32] as ExternalCounts)) - "
-            "92 as UInt32",
+            "101 as UInt32",
         }
     );
     auto alias_abi_build_plan_path = smoke_temp_root / "alias_abi.obp";

@@ -5361,8 +5361,12 @@ auto source_type_name_for_expression(
             return std::nullopt;
         }
 
-        auto record_source_type = pointer_pointee_source_type_name(*base_source_type);
-        auto layout = context.records.find(record_source_type.value_or(*base_source_type));
+        auto resolved_base_source_type = resolved_source_type_alias_name(*base_source_type, context);
+        if (!resolved_base_source_type.has_value()) {
+            return std::nullopt;
+        }
+        auto record_source_type = pointer_pointee_source_type_name(*resolved_base_source_type);
+        auto layout = context.records.find(record_source_type.value_or(*resolved_base_source_type));
         if (layout == context.records.end()) {
             return std::nullopt;
         }

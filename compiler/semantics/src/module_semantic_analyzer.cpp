@@ -7278,18 +7278,23 @@ private:
     }
 
     auto maybe_payload_type_name(std::string const& type_name) const -> std::string {
-        if (source_type_base_name(type_name) != "Maybe") {
+        auto resolved_type_name = resolve_type_alias_target_name(type_name);
+        if (!resolved_type_name.has_value() || source_type_base_name(*resolved_type_name) != "Maybe") {
             return {};
         }
-        return first_generic_argument_type_name(type_name);
+        return first_generic_argument_type_name(*resolved_type_name);
     }
 
     auto record_layout_type_name_for_member_validation(std::string const& type_name) const -> std::string {
-        if (is_source_declared_record_type_name(type_name)) {
-            return type_name;
+        auto resolved_type_name = resolve_type_alias_target_name(type_name);
+        if (!resolved_type_name.has_value()) {
+            return {};
+        }
+        if (is_source_declared_record_type_name(*resolved_type_name)) {
+            return *resolved_type_name;
         }
 
-        auto pointee_type_name = pointer_pointee_type_name(type_name);
+        auto pointee_type_name = pointer_pointee_type_name(*resolved_type_name);
         if (!pointee_type_name.empty() && is_source_declared_record_type_name(pointee_type_name)) {
             return pointee_type_name;
         }

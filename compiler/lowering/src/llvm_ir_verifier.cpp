@@ -8,6 +8,7 @@
 #include <llvm/Support/raw_ostream.h>
 
 #include <memory>
+#include <sstream>
 #include <string>
 
 namespace orison::lowering {
@@ -22,9 +23,18 @@ auto LlvmIrVerifier::verify(std::string_view ir_text) const -> diagnostics::Diag
         context
     );
     if (!module) {
+        auto source_line = std::string {};
+        auto input = std::istringstream {std::string(ir_text)};
+        for (auto line_number = unsigned {1}; line_number <= parser_diagnostic.getLineNo(); ++line_number) {
+            if (!std::getline(input, source_line)) {
+                source_line.clear();
+                break;
+            }
+        }
         diagnostics.error(
             parser_diagnostic.getLineNo(),
-            "generated LLVM IR failed to parse: " + parser_diagnostic.getMessage().str()
+            "generated LLVM IR failed to parse: " + parser_diagnostic.getMessage().str() +
+                (source_line.empty() ? "" : "; generated line: " + source_line)
         );
         return diagnostics;
     }

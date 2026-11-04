@@ -64,7 +64,11 @@ auto plan_null_safe_member_access(
         return make_failure(NullSafePlanFailureReason::unknown_base_type, "base expression");
     }
 
-    auto current_maybe_type = *base_type;
+    auto resolved_base_type = resolved_source_type_alias_name(*base_type, context);
+    if (!resolved_base_type.has_value()) {
+        return make_failure(NullSafePlanFailureReason::expected_maybe_base, *base_type);
+    }
+    auto current_maybe_type = *resolved_base_type;
     auto current_payload_type = maybe_payload_source_type_name(current_maybe_type);
     if (!current_payload_type.has_value()) {
         return make_failure(NullSafePlanFailureReason::expected_maybe_base, current_maybe_type);
@@ -77,32 +81,40 @@ auto plan_null_safe_member_access(
 
     for (auto index = std::size_t {1}; index < chain.size(); ++index) {
         auto const& segment = *chain[index];
-        auto record = context.records.find(*current_payload_type);
-        if (record == context.records.end()) {
+        auto resolved_payload_type = resolved_source_type_alias_name(*current_payload_type, context);
+        if (!resolved_payload_type.has_value()) {
             return make_failure(NullSafePlanFailureReason::unknown_record, *current_payload_type);
+        }
+        auto record = context.records.find(*resolved_payload_type);
+        if (record == context.records.end()) {
+            return make_failure(NullSafePlanFailureReason::unknown_record, *resolved_payload_type);
         }
 
         auto const* field = find_record_field(record->second, segment.text);
         if (field == nullptr) {
             return make_failure(
                 NullSafePlanFailureReason::unknown_field,
-                *current_payload_type + "." + segment.text
+                *resolved_payload_type + "." + segment.text
             );
         }
 
         plan.segments.push_back(NullSafePlanSegment {
             .field_name = segment.text,
-            .receiver_type_name = *current_payload_type,
+            .receiver_type_name = *resolved_payload_type,
             .field_type_name = field->source_type_name,
         });
 
-        auto field_maybe_payload = maybe_payload_source_type_name(field->source_type_name);
+        auto resolved_field_type = resolved_source_type_alias_name(field->source_type_name, context);
+        if (!resolved_field_type.has_value()) {
+            return make_failure(NullSafePlanFailureReason::unknown_record, field->source_type_name);
+        }
+        auto field_maybe_payload = maybe_payload_source_type_name(*resolved_field_type);
         current_payload_type = field_maybe_payload.has_value()
             ? std::move(field_maybe_payload)
-            : std::optional<std::string> {field->source_type_name};
+            : std::optional<std::string> {*resolved_field_type};
         current_maybe_type = field_maybe_payload.has_value()
-            ? field->source_type_name
-            : maybe_type_name(field->source_type_name);
+            ? *resolved_field_type
+            : maybe_type_name(*resolved_field_type);
     }
 
     plan.result_payload_type_name = *current_payload_type;

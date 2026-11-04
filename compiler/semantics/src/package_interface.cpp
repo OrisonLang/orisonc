@@ -991,21 +991,30 @@ auto resolve_imported_type_declarations(
                 continue;
             }
 
+            auto lowering_alias_target = declaration->kind == PackageTypeDeclarationKind::type_alias
+                ? resolve_package_alias_target(
+                      GenericSpecializationTypeIdentity {
+                          .package_name = package_interface.package_name,
+                          .declaration_name = declaration->name,
+                      },
+                      package_interface,
+                      package_interfaces
+                  )
+                : std::nullopt;
+            if (lowering_alias_target.has_value()) {
+                lowering_alias_target = localize_imported_type(
+                    std::move(*lowering_alias_target),
+                    module,
+                    package_interface.package_name
+                );
+            }
+
             imported_declarations.push_back(ImportedTypeDeclarationMetadata {
                 .package_name = package_interface.package_name,
                 .declaration_name = declaration->name,
                 .local_name = import.alias.empty() ? import.name : import.alias,
                 .generic_arity = declaration->generic_arity,
-                .lowering_alias_target = declaration->kind == PackageTypeDeclarationKind::type_alias
-                    ? resolve_package_alias_target(
-                          GenericSpecializationTypeIdentity {
-                              .package_name = package_interface.package_name,
-                              .declaration_name = declaration->name,
-                          },
-                          package_interface,
-                          package_interfaces
-                      )
-                    : std::nullopt,
+                .lowering_alias_target = std::move(lowering_alias_target),
             });
             break;
         }

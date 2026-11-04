@@ -4170,7 +4170,16 @@ auto lowered_expression(
             return std::nullopt;
         }
 
-        auto layout = context.lowering.records.find(*base_source_type);
+        auto resolved_base_source_type = resolved_source_type_alias_name(*base_source_type, context.lowering);
+        if (!resolved_base_source_type.has_value()) {
+            record_expression_lowering_failure(
+                failures,
+                ExpressionLoweringFailureReason::unsupported_expression,
+                expression.text
+            );
+            return std::nullopt;
+        }
+        auto layout = context.lowering.records.find(*resolved_base_source_type);
         if (layout == context.lowering.records.end()) {
             record_expression_lowering_failure(
                 failures,

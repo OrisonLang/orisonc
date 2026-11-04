@@ -3887,3 +3887,7 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-11-04: Index validation, element inference, and LLVM expression emission now expand cycle-safe local and imported
   alias chains. A renamed imported `Array<UInt32, 2>` is indexed in the consumer after a separate-object round trip,
   links, and preserves both elements at runtime. Other type-directed operations remain follow-up work. No syntax changed.
+- 2026-11-04: Ordinary and null-safe member lookup now expand cycle-safe local and imported aliases before record and
+  `Maybe` inspection. Nested imported alias targets use consumer-local import names, and separate producer/consumer
+  objects execute direct record projection and `Maybe<Record>` null-safe projection. LLVM parse diagnostics now include
+  the rejected generated line. Assignability remains nominal, and no syntax changed.

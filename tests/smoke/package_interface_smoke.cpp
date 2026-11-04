@@ -409,6 +409,45 @@ int main() {
     assert(imported_identifier->lowering_alias_target.has_value());
     assert(imported_identifier->lowering_alias_target->name == "UInt64");
 
+    auto maybe_record_interface = orison::semantics::parse_package_interface(
+        "orison-package-interface 1\n"
+        "package external.maybe_record\n"
+        "type record Detail 0\n"
+        "field Detail value UInt32 UInt32\n"
+        "type choice Maybe 1 T\n"
+        "variant Maybe Some 1 value T T\n"
+        "variant Maybe Empty 0\n"
+        "type alias PublicMaybeDetail 0\n"
+        "alias PublicMaybeDetail Maybe<Detail> external.maybe_record::Maybe<external.maybe_record::Detail>\n"
+    );
+    assert(!maybe_record_interface.has_error());
+    auto maybe_record_consumer = orison::syntax::ModuleSyntax {};
+    maybe_record_consumer.imports.push_back(orison::syntax::ImportSyntax {
+        .name = "Detail",
+        .alias = "ExternalDetailRecord",
+        .from_package = "external.maybe_record",
+    });
+    maybe_record_consumer.imports.push_back(orison::syntax::ImportSyntax {
+        .name = "PublicMaybeDetail",
+        .alias = "ExternalMaybeDetail",
+        .from_package = "external.maybe_record",
+    });
+    auto maybe_record_imports = orison::semantics::resolve_imported_type_declarations(
+        maybe_record_consumer,
+        {*maybe_record_interface.package_interface}
+    );
+    auto maybe_record_alias = std::ranges::find_if(
+        maybe_record_imports,
+        [](orison::semantics::ImportedTypeDeclarationMetadata const& declaration) {
+            return declaration.local_name == "ExternalMaybeDetail";
+        }
+    );
+    assert(maybe_record_alias != maybe_record_imports.end());
+    assert(maybe_record_alias->lowering_alias_target.has_value());
+    assert(maybe_record_alias->lowering_alias_target->name == "Maybe");
+    assert(maybe_record_alias->lowering_alias_target->generic_arguments.size() == 1);
+    assert(maybe_record_alias->lowering_alias_target->generic_arguments.front().name == "ExternalDetailRecord");
+
     auto imported_aggregates = orison::semantics::resolve_imported_aggregate_declarations(
         consumer,
         available_interfaces
