@@ -32,8 +32,10 @@ lower a requested specialization over a public type declared by a consumer packa
 source. The type layout is materialized only inside lowering under a compiler-reserved name. Ordinary producer source
 analysis remains limited to its declared imports, so specialization scheduling does not create a source dependency
 cycle or expose undeclared names. Materialization follows public record fields and choice payloads recursively within
-the type's package interface. Version-3 field and payload identities may direct that traversal into another explicitly
-available package interface without adding a source import to the generic producer.
+the type's package interface. Version-1 field and payload identities may direct that traversal into another explicitly
+available package interface without adding a source import to the generic producer. Public aliases expand through
+their canonical target identities during this traversal. All compiler-owned artifacts remain version 1 during
+pre-release development.
 
 ADR-0009 defines opt-in object caching for source packages in a build plan.
 
@@ -48,6 +50,7 @@ Consumer-local public records can serve as concrete arguments to source-built ge
 types absent from explicit package-interface inputs cannot be materialized by the producer. Nested same-package public
 records and choices retain their complete ABI layout in producer specializations, including public aggregate members
 whose canonical declarations come from another reachable package.
+Public aliases may name those aggregate members without changing the materialized ABI layout.
 
 ## Follow-up work
 

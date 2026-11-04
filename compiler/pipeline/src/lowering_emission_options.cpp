@@ -69,7 +69,8 @@ auto localize_specialization_layout_type(
     std::string_view producer_package,
     std::vector<semantics::PackageInterface> const& package_interfaces,
     std::vector<semantics::ImportedTypeDeclarationMetadata>& imported_types,
-    semantics::ImportedAggregateDeclarations& imported_aggregates
+    semantics::ImportedAggregateDeclarations& imported_aggregates,
+    std::vector<std::string> alias_path
 ) -> syntax::TypeSyntax {
     for (auto index = std::size_t {0}; index < type.generic_arguments.size(); ++index) {
         auto const argument_identity = index < identity.generic_arguments.size()
@@ -85,7 +86,8 @@ auto localize_specialization_layout_type(
             producer_package,
             package_interfaces,
             imported_types,
-            imported_aggregates
+            imported_aggregates,
+            alias_path
         );
     }
 
@@ -107,12 +109,35 @@ auto localize_specialization_layout_type(
     auto declaration = std::ranges::find_if(
         package_interface->exported_type_declarations,
         [&](semantics::PackageTypeDeclaration const& candidate) {
-            return candidate.name == declaration_name &&
-                (candidate.kind == semantics::PackageTypeDeclarationKind::record ||
-                 candidate.kind == semantics::PackageTypeDeclarationKind::choice);
+            return candidate.name == declaration_name;
         }
     );
     if (declaration == package_interface->exported_type_declarations.end()) {
+        return type;
+    }
+    if (declaration->kind == semantics::PackageTypeDeclarationKind::type_alias &&
+        declaration->aliased_type.has_value()) {
+        auto const alias_key = package_interface->package_name + "::" + declaration->name;
+        if (std::ranges::find(alias_path, alias_key) != alias_path.end()) {
+            return type;
+        }
+        alias_path.push_back(alias_key);
+        auto const target_identity = declaration->aliased_type_identity.value_or(
+            inferred_layout_type_identity(*declaration->aliased_type, *package_interface)
+        );
+        return localize_specialization_layout_type(
+            *declaration->aliased_type,
+            target_identity,
+            *package_interface,
+            producer_package,
+            package_interfaces,
+            imported_types,
+            imported_aggregates,
+            std::move(alias_path)
+        );
+    }
+    if (declaration->kind != semantics::PackageTypeDeclarationKind::record &&
+        declaration->kind != semantics::PackageTypeDeclarationKind::choice) {
         return type;
     }
 
@@ -218,7 +243,8 @@ void append_specialization_type_declaration(
                 producer_package,
                 package_interfaces,
                 imported_types,
-                imported_aggregates
+                imported_aggregates,
+                {}
             );
         }
         imported_aggregates.records.push_back(std::move(record));
@@ -250,7 +276,8 @@ void append_specialization_type_declaration(
                     producer_package,
                     package_interfaces,
                     imported_types,
-                    imported_aggregates
+                    imported_aggregates,
+                    {}
                 );
             }
         }

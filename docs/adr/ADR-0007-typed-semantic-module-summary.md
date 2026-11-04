@@ -62,17 +62,21 @@ call when the concrete signature uses supported lowered ABI types. Consumer lowe
 requests containing source package, exported declaration, and ordered concrete type arguments. Producer compilation
 accepts those requests and emits each matching public generic specialization once, without requiring a local source
 call to seed monomorphization. Specialization requests use a separate deterministic, versioned text artifact headed by
-`orison-specialization-requests 2`; they are not source syntax and are not serialized into package-interface artifacts.
-Version 2 stores each lowering type together with a recursive package-qualified type identity. Third-party aggregate
+`orison-specialization-requests 1`; they are not source syntax and are not serialized into package-interface artifacts.
+Version 1 stores each lowering type together with a recursive package-qualified type identity. Third-party aggregate
 types can therefore use different aliases in producer and consumer modules while selecting one specialization symbol.
 The generic producer uses an explicit source import when one exists. Otherwise, lowering may materialize a requested
 public aggregate under a compiler-reserved local name from an available package interface. This materialization is
 limited to specialization lowering and does not make the type visible to ordinary producer source analysis. Public
 record fields and choice payloads recursively materialize same-package public aggregate dependencies, with every copied
-type reference rewritten to its compiler-reserved local name. Package-interface format version 3 stores a recursive
+type reference rewritten to its compiler-reserved local name. Package-interface format version 1 stores a recursive
 package-qualified type identity beside each public record field and choice payload. Imported aliases therefore retain
 their source package and declaration while recursive materialization crosses into explicitly available third-party
-interfaces.
+interfaces. Public alias declarations retain the same identity beside their target. Specialization-only layout
+materialization expands alias chains before materializing the target record or choice, and ordinary imported aliases
+project the resolved aggregate layout under the consumer-local name. Alias cycles terminate without recursive
+materialization. All compiler-owned artifact formats remain version 1 before the first release; their schemas may
+change in place during this phase.
 The driver emits request artifacts with `--emit-specialization-requests` and accepts repeatable
 `--specialization-requests` inputs, allowing build orchestration to aggregate consumer requests for producer
 compilation. ADR-0008 defines explicit dependency scheduling and object selection through driver build plans.
@@ -89,4 +93,4 @@ Module-free synthetic lowering fixtures retain package-neutral generic method sy
 - Migrate the remaining report command/helper names away from descriptor-origin terminology only when the pinned CLI
   text can change intentionally.
 - Use the explicit build-plan orchestration defined by ADR-0008 for dependency scheduling and object selection.
-- Expand public type aliases encountered while materializing specialization-only aggregate layouts.
+- Lower alias-typed source and imported function parameters and return values.

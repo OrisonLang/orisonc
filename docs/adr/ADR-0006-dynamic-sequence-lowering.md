@@ -3923,16 +3923,16 @@ representation.
 - 2026-10-28 The compiler driver can emit a canonical package-interface artifact with
   `--emit-package-interface <source> -o <output>`. Emission requires successful semantic analysis, exports only public
   type declarations, and supports explicit dependency interfaces through the same leading options as compilation.
-- 2026-10-28 Package-interface format version 2 supersedes the initial name-and-arity format. It preserves generic
+- 2026-10-28 Package-interface format version 1 extends the initial name-and-arity schema. It preserves generic
   parameter names, alias targets, public record fields in constructor order, choice variants and payloads in tag order,
   and public free-function signatures with constraints and async/unsafe flags. Cross-package semantic consumption of
   the added structure remains follow-up work; imported type arity continues to consume the same typed declarations.
-- 2026-10-28 Semantic import resolution now projects version-2 public record fields and complete choice variants under
+- 2026-10-28 Semantic import resolution now projects version-1 public record fields and complete choice variants under
   each import's local alias. Imported generic record field access, choice construction, payload patterns, and
   exhaustiveness analysis reuse the local aggregate metadata paths. Imported record construction remains rejected:
-  version 2 omits private fields and cannot prove a complete constructor shape. Imported free-function resolution
+  version 1 omits private fields and cannot prove a complete constructor shape. Imported free-function resolution
   remains follow-up work.
-- 2026-10-29 Semantic import resolution now projects version-2 public free-function signatures under each import's
+- 2026-10-29 Semantic import resolution now projects version-1 public free-function signatures under each import's
   local alias. Generic parameter inference, argument validation, constraints, return inference, and async/unsafe call
   rules reuse the local callable analysis. Imported signature types are localized through explicit same-package type
   aliases. Metadata retains the source package, exported name, and local binding separately for later symbol lowering.

@@ -3788,10 +3788,10 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-10-28: `orisonc --emit-package-interface <source> -o <output>` now validates a source module and writes its
   canonical public type interface. The emitted artifact can immediately supply imported generic arity to another
   compiler invocation, completing the explicit producer-consumer path without package discovery.
-- 2026-10-28: Package-interface version 2 now records generic parameter names, alias targets, public record fields,
+- 2026-10-28: Package-interface version 1 now records generic parameter names, alias targets, public record fields,
   choice variants and payloads, and public free-function signatures. Field, variant, payload, and parameter ordering is
   preserved where it affects construction, tags, or calls; private fields and non-public functions are excluded.
-- 2026-10-28: Imported version-2 aggregate metadata now participates in semantic analysis through the import's local
+- 2026-10-28: Imported version-1 aggregate metadata now participates in semantic analysis through the import's local
   alias. Public generic record fields resolve with substituted types, private fields remain inaccessible, and imported
   choice constructors and exhaustive payload patterns use the existing choice analysis. Imported record constructors
   fail explicitly until an artifact can prove the complete constructor shape. No source syntax changed.
@@ -3855,7 +3855,7 @@ This file tracks which source-language frontend slices are reflected in the curr
   canonicalize aliases from the function's source package to producer declaration names. A consumer using
   `ExternalPair` now declares and requests `choose__Pair`, then links and executes the producer specialization. No
   source syntax changed.
-- 2026-11-02: Generic specialization request artifacts now use version 2 and pair lowering types with recursive
+- 2026-11-02: Generic specialization request artifacts use version 1 and pair lowering types with recursive
   package-qualified identities. A consumer and generic producer import `external.shared.Payload` under different aliases,
   emit one `external_shared_Payload` specialization symbol, link with the shared type producer, and execute. No source
   syntax changed.
@@ -3866,7 +3866,11 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-11-03: Specialization-only aggregate materialization now recursively closes over same-package public record
   fields and choice payloads. A consumer-owned `Payload` record containing a `State` choice carrying a `Detail` record
   passes through an external generic specialization, links, and preserves its runtime value. No source syntax changed.
-- 2026-11-03: Package-interface format version 3 now pairs public record-field and choice-payload types with recursive
+- 2026-11-03: Package-interface format version 1 pairs public record-field and choice-payload types with recursive
   package-qualified identities. A consumer-owned choice carries an aliased record from a third package through an
   external generic specialization; producer lowering follows explicit interfaces, links, and preserves the value at
   runtime. No source syntax changed.
+- 2026-11-03: All compiler-owned pre-release artifact formats are normalized to version 1. Package-interface alias
+  records now preserve canonical target identities, imported aliases project resolved aggregate layouts, and
+  specialization-only materialization expands cycle-safe alias chains. A three-package generic executable carries a
+  choice layout containing an alias-backed record payload. No source syntax changed.

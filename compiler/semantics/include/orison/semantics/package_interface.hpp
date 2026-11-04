@@ -31,6 +31,7 @@ struct PackageTypeDeclaration {
     std::size_t generic_arity = 0;
     std::vector<std::string> generic_parameters;
     std::optional<syntax::TypeSyntax> aliased_type;
+    std::optional<GenericSpecializationTypeIdentity> aliased_type_identity;
     std::vector<syntax::FieldSyntax> public_record_fields;
     std::vector<GenericSpecializationTypeIdentity> public_record_field_type_identities;
     std::vector<syntax::ChoiceVariantSyntax> choice_variants;

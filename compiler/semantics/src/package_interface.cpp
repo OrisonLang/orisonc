@@ -9,8 +9,8 @@
 namespace orison::semantics {
 namespace {
 
-constexpr auto package_interface_format_version = std::size_t {3};
-constexpr auto generic_specialization_request_format_version = std::size_t {2};
+constexpr auto package_interface_format_version = std::size_t {1};
+constexpr auto generic_specialization_request_format_version = std::size_t {1};
 
 auto declaration_kind_text(PackageTypeDeclarationKind kind) -> std::string_view {
     switch (kind) {
@@ -165,6 +165,63 @@ auto package_interface_type_identity(
     return identity;
 }
 
+struct ResolvedPackageAggregate {
+    PackageTypeDeclaration const* declaration = nullptr;
+};
+
+auto resolve_package_aggregate(
+    GenericSpecializationTypeIdentity const& identity,
+    PackageInterface const& containing_package_interface,
+    std::vector<PackageInterface> const& package_interfaces,
+    std::vector<std::string> alias_path = {}
+) -> ResolvedPackageAggregate {
+    auto const& package_name = identity.package_name.empty()
+        ? containing_package_interface.package_name
+        : identity.package_name;
+    auto package_interface = std::ranges::find_if(
+        package_interfaces,
+        [&](PackageInterface const& candidate) {
+            return candidate.package_name == package_name;
+        }
+    );
+    if (package_interface == package_interfaces.end()) {
+        return {};
+    }
+    auto declaration = std::ranges::find_if(
+        package_interface->exported_type_declarations,
+        [&](PackageTypeDeclaration const& candidate) {
+            return candidate.name == identity.declaration_name;
+        }
+    );
+    if (declaration == package_interface->exported_type_declarations.end()) {
+        return {};
+    }
+    if (declaration->kind == PackageTypeDeclarationKind::record ||
+        declaration->kind == PackageTypeDeclarationKind::choice) {
+        return ResolvedPackageAggregate {
+            .declaration = &*declaration,
+        };
+    }
+    if (declaration->kind != PackageTypeDeclarationKind::type_alias ||
+        !declaration->aliased_type.has_value()) {
+        return {};
+    }
+    auto const alias_key = package_interface->package_name + "::" + declaration->name;
+    if (std::ranges::find(alias_path, alias_key) != alias_path.end()) {
+        return {};
+    }
+    alias_path.push_back(alias_key);
+    auto const target_identity = declaration->aliased_type_identity.value_or(
+        default_type_identity(*declaration->aliased_type)
+    );
+    return resolve_package_aggregate(
+        target_identity,
+        *package_interface,
+        package_interfaces,
+        std::move(alias_path)
+    );
+}
+
 auto render_type_identity(GenericSpecializationTypeIdentity const& identity) -> std::string {
     auto rendered = identity.package_name.empty()
         ? identity.declaration_name
@@ -287,6 +344,10 @@ auto build_package_interface(syntax::ModuleSyntax const& module) -> PackageInter
                 .kind = PackageTypeDeclarationKind::type_alias,
                 .name = type_alias.name,
                 .aliased_type = type_alias.aliased_type,
+                .aliased_type_identity = package_interface_type_identity(
+                    type_alias.aliased_type,
+                    module
+                ),
             });
         }
     }
@@ -388,7 +449,12 @@ auto serialize_package_interface(PackageInterface const& package_interface) -> s
         }
         output << '\n';
         if (declaration.aliased_type.has_value()) {
-            output << "alias " << declaration.name << ' ' << render_type(*declaration.aliased_type) << '\n';
+            auto const identity = declaration.aliased_type_identity.value_or(
+                default_type_identity(*declaration.aliased_type)
+            );
+            output << "alias " << declaration.name << ' '
+                   << render_type(*declaration.aliased_type) << ' '
+                   << render_type_identity(identity) << '\n';
         }
         for (auto index = std::size_t {0}; index < declaration.public_record_fields.size(); ++index) {
             auto const& field = declaration.public_record_fields[index];
@@ -533,15 +599,19 @@ auto parse_package_interface(std::string_view text) -> PackageInterfaceParseResu
         if (record_kind == "alias") {
             auto owner_name = std::string {};
             auto type_text = std::string {};
-            if (!(declaration_line >> owner_name >> type_text) || declaration_line >> extra) {
+            auto identity_text = std::string {};
+            if (!(declaration_line >> owner_name >> type_text >> identity_text) || declaration_line >> extra) {
                 return parse_error("invalid package interface alias declaration at line " + std::to_string(line_number));
             }
             auto* owner = find_type_declaration(result, owner_name, PackageTypeDeclarationKind::type_alias);
             auto target = parse_type(type_text);
-            if (owner == nullptr || owner->aliased_type.has_value() || !target.has_value()) {
+            auto target_identity = parse_type_identity(identity_text);
+            if (owner == nullptr || owner->aliased_type.has_value() || !target.has_value() ||
+                !target_identity.has_value()) {
                 return parse_error("invalid package interface alias declaration at line " + std::to_string(line_number));
             }
             owner->aliased_type = std::move(*target);
+            owner->aliased_type_identity = std::move(*target_identity);
             continue;
         }
 
@@ -895,19 +965,34 @@ auto resolve_imported_aggregate_declarations(
             }
 
             auto const local_name = import.alias.empty() ? import.name : import.alias;
-            if (declaration->kind == PackageTypeDeclarationKind::record) {
+            auto resolved = declaration->kind == PackageTypeDeclarationKind::type_alias
+                ? resolve_package_aggregate(
+                      GenericSpecializationTypeIdentity {
+                          .package_name = package_interface.package_name,
+                          .declaration_name = declaration->name,
+                      },
+                      package_interface,
+                      package_interfaces
+                  )
+                : ResolvedPackageAggregate {
+                      .declaration = &*declaration,
+                  };
+            if (resolved.declaration == nullptr) {
+                break;
+            }
+            if (resolved.declaration->kind == PackageTypeDeclarationKind::record) {
                 imported_declarations.records.push_back(syntax::RecordSyntax {
                     .visibility = syntax::Visibility::public_visibility,
                     .name = local_name,
-                    .generic_parameters = declaration->generic_parameters,
-                    .fields = declaration->public_record_fields,
+                    .generic_parameters = resolved.declaration->generic_parameters,
+                    .fields = resolved.declaration->public_record_fields,
                 });
-            } else if (declaration->kind == PackageTypeDeclarationKind::choice) {
+            } else if (resolved.declaration->kind == PackageTypeDeclarationKind::choice) {
                 imported_declarations.choices.push_back(syntax::ChoiceSyntax {
                     .visibility = syntax::Visibility::public_visibility,
                     .name = local_name,
-                    .generic_parameters = declaration->generic_parameters,
-                    .variants = declaration->choice_variants,
+                    .generic_parameters = resolved.declaration->generic_parameters,
+                    .variants = resolved.declaration->choice_variants,
                 });
             }
             break;

@@ -195,10 +195,10 @@ auto main() -> int {
         );
         assert(
             contents ==
-            "orison-package-interface 3\n"
+            "orison-package-interface 1\n"
             "package external.types\n"
             "type alias Identifier 0\n"
-            "alias Identifier UInt64\n"
+            "alias Identifier UInt64 UInt64\n"
             "type record Pair 2 Left Right\n"
             "field Pair first Left Left\n"
             "field Pair second Right Right\n"
@@ -280,7 +280,7 @@ auto main() -> int {
         );
         assert(
             contents ==
-            "orison-specialization-requests 2\n"
+            "orison-specialization-requests 1\n"
             "request external.generics choose 1 UInt32 UInt32\n"
         );
     }
@@ -392,10 +392,7 @@ auto main() -> int {
         {
             "public record Detail",
             "    public value: UInt32",
-            "public function make_detail(value: UInt32) -> Detail",
-            "    Detail(value)",
-            "public function read_detail(value: Detail) -> UInt32",
-            "    value.value",
+            "public type PublicDetail = Detail",
         }
     );
     auto local_type_consumer_path = smoke_temp_root / "local type consumer.or";
@@ -405,22 +402,20 @@ auto main() -> int {
         {
             "import",
             "    choose as select from external.generics",
-            "    Detail as ExternalDetail from external.layout",
-            "    make_detail from external.layout",
-            "    read_detail from external.layout",
+            "    PublicDetail as ExternalDetail from external.layout",
             "public choice State",
             "    Ready(detail: ExternalDetail)",
             "    Empty",
             "public record Payload",
             "    public state: State",
-            "function make_payload(value: UInt32) -> Payload",
-            "    Payload(Ready(make_detail(value)))",
+            "function make_payload() -> Payload",
+            "    Payload(Empty)",
             "function read_payload(value: Payload) -> UInt32",
             "    switch value.state",
-            "        Ready(detail) => read_detail(detail)",
-            "        Empty => 0 as UInt32",
+            "        Ready(detail) => 1 as UInt32",
+            "        Empty => 40 as UInt32",
             "function main() -> UInt32",
-            "    read_payload(select(make_payload(40 as UInt32), make_payload(41 as UInt32))) - 40 as UInt32",
+            "    read_payload(select(make_payload(), make_payload())) - 40 as UInt32",
         }
     );
     auto local_type_build_plan_path = smoke_temp_root / "local_type_generic.obp";
@@ -577,7 +572,7 @@ auto main() -> int {
     auto invalid_specialization_requests_path = smoke_temp_root / "invalid.osr";
     {
         auto output = std::ofstream(invalid_specialization_requests_path);
-        output << "orison-specialization-requests 3\n";
+        output << "orison-specialization-requests 2\n";
     }
     auto invalid_specialization_requests_path_text = invalid_specialization_requests_path.string();
     std::array<char const*, 5> invalid_specialization_requests_argv {
@@ -597,7 +592,7 @@ auto main() -> int {
     assert(invalid_specialization_requests_result.stdout_text.empty());
     assert(
         invalid_specialization_requests_result.stderr_text.find(
-            "unsupported specialization request version '3'"
+            "unsupported specialization request version '2'"
         ) != std::string::npos
     );
 
