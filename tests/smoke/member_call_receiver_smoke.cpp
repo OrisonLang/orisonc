@@ -70,11 +70,14 @@ int main() {
     assert(orison::lowering::render_source_type_name(type) == "Box<UInt32>");
 
     auto state = orison::lowering::FunctionLoweringState {};
-    state.source_type_names["device"] = "Device";
+    state.source_type_names["device"] = "DeviceAlias";
+    state.source_type_names["maybe_device"] = "MaybeDeviceAlias";
     state.source_type_names["slot"] = "Slot";
     state.source_type_names["rack"] = "Rack";
 
     auto context = orison::lowering::LoweringContext {};
+    context.type_aliases.emplace("DeviceAlias", "Device");
+    context.type_aliases.emplace("MaybeDeviceAlias", "Maybe<DeviceAlias>");
     context.records.emplace("Device", orison::lowering::LoweredRecordLayout {
         .name = "Device",
         .llvm_type_name = "%record.Device",
@@ -122,6 +125,21 @@ int main() {
     assert(null_safe.result == orison::lowering::MemberCallReceiverInferenceResult::found);
     assert(null_safe.receiver_type_name == "Device");
     assert(null_safe.method_name == "reset");
+
+    auto null_safe_alias = orison::lowering::infer_member_call_receiver(
+        member_call(
+            orison::syntax::ExpressionKind::null_safe_member_access,
+            orison::syntax::ExpressionSyntax {
+                .kind = orison::syntax::ExpressionKind::name,
+                .text = "maybe_device",
+            }
+        ),
+        context,
+        state
+    );
+    assert(null_safe_alias.result == orison::lowering::MemberCallReceiverInferenceResult::found);
+    assert(null_safe_alias.receiver_type_name == "Maybe<Device>");
+    assert(null_safe_alias.method_name == "reset");
 
     auto member = orison::lowering::infer_member_call_receiver(
         member_call(orison::syntax::ExpressionKind::member_access, member_receiver()),

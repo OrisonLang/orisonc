@@ -2049,11 +2049,12 @@ private:
         }
 
         auto receiver_type_name = infer_expression_type_name(*callee_expression.left);
-        if (callee_expression.kind != syntax::ExpressionKind::null_safe_member_access) {
-            return receiver_type_name;
+        if (callee_expression.kind == syntax::ExpressionKind::null_safe_member_access) {
+            receiver_type_name = maybe_payload_type_name(receiver_type_name);
         }
 
-        return maybe_payload_type_name(receiver_type_name);
+        auto resolved_receiver_type_name = resolve_type_alias_target_name(receiver_type_name);
+        return resolved_receiver_type_name.value_or(std::string {});
     }
 
     auto merge_value_origins(ValueOriginKind left, ValueOriginKind right) const -> ValueOriginKind {

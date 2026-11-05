@@ -517,14 +517,20 @@ auto main() -> int {
             "    read_status(value)",
             "function read_external_counts(value: ExternalCounts) -> UInt32",
             "    value[0] + value[1]",
+            "extend UInt32",
+            "    function increment(this: shared This) -> UInt32",
+            "        this + 1 as UInt32",
+            "function read_external_method(value: ExternalCount) -> UInt32",
+            "    value.increment()",
             "function main() -> UInt32",
             "    round_trip(make_detail(42 as UInt32)) + "
             "read_external_status(make_status(7 as UInt32)) + "
             "(pass_count(5 as ExternalCount) as UInt32) + "
             "read_maybe_count(make_external_maybe_count(8 as UInt32)) + "
             "read_maybe_count(make_maybe_detail(9 as UInt32)?.value as ExternalMaybeCount) + "
+            "read_external_method(5 as ExternalCount) + "
             "read_external_counts(pass_counts([10 as UInt32, 20 as UInt32] as ExternalCounts)) - "
-            "101 as UInt32",
+            "107 as UInt32",
         }
     );
     auto alias_abi_build_plan_path = smoke_temp_root / "alias_abi.obp";

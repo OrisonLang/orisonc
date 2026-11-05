@@ -43,6 +43,36 @@ auto infer_member_call_receiver(
         };
     }
 
+    if (call_expression.left->kind == syntax::ExpressionKind::null_safe_member_access) {
+        receiver_type = resolved_source_type_alias_name(*receiver_type, context);
+        auto payload_type = receiver_type.has_value()
+            ? maybe_payload_source_type_name(*receiver_type)
+            : std::nullopt;
+        if (payload_type.has_value()) {
+            auto resolved_payload_type = resolved_source_type_alias_name(*payload_type, context);
+            if (!resolved_payload_type.has_value()) {
+                return MemberCallReceiverInference {
+                    .result = MemberCallReceiverInferenceResult::not_found,
+                    .method_name = call_expression.left->text,
+                };
+            }
+            receiver_type = "Maybe<" + *resolved_payload_type + ">";
+        } else if (!receiver_type.has_value()) {
+            return MemberCallReceiverInference {
+                .result = MemberCallReceiverInferenceResult::not_found,
+                .method_name = call_expression.left->text,
+            };
+        }
+    } else {
+        receiver_type = resolved_source_type_alias_name(*receiver_type, context);
+        if (!receiver_type.has_value()) {
+            return MemberCallReceiverInference {
+                .result = MemberCallReceiverInferenceResult::not_found,
+                .method_name = call_expression.left->text,
+            };
+        }
+    }
+
     return MemberCallReceiverInference {
         .result = MemberCallReceiverInferenceResult::found,
         .receiver_type_name = std::move(*receiver_type),

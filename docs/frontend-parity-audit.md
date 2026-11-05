@@ -3895,3 +3895,7 @@ This file tracks which source-language frontend slices are reflected in the curr
   nested `Maybe<Record>` aliases construct directly, and a renamed imported `Maybe<UInt32>` alias constructs and crosses
   a separate-object ABI. Existing underlying values remain nominally incompatible without explicit conversion. No
   syntax changed.
+- 2026-11-04: Ordinary and null-safe method calls now resolve cycle-safe receiver aliases before semantic selection and
+  LLVM call emission. Local record aliases call methods owned by the concrete record, while a renamed imported scalar
+  alias selects a local concrete extension through a separate-object build plan. Assignment remains nominal. No syntax
+  changed.

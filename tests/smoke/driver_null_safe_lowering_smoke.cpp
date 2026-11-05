@@ -921,6 +921,15 @@ auto main() -> int {
             "    switch rating",
             "        Some(value) => value",
             "        Empty => 0 as UInt32",
+            "function alias_method_score() -> UInt32",
+            "    let profile: ProfileAlias = Profile(13 as UInt32)",
+            "    profile.scaled(5 as UInt32)",
+            "function alias_null_safe_method_score() -> UInt32",
+            "    let profile: MaybeProfileAlias = Some(Profile(14 as UInt32))",
+            "    let scaled: Maybe<UInt32> = profile?.scaled(5 as UInt32)",
+            "    switch scaled",
+            "        Some(value) => value",
+            "        Empty => 0 as UInt32",
             "function final_empty_score() -> UInt32",
             "    let user: Maybe<User> = Empty",
             "    let rating: Maybe<UInt32> = user?.profile?.rating",
@@ -1057,7 +1066,7 @@ auto main() -> int {
             "    let absent_profile: Maybe<Profile> = Empty",
             "    let nested_absent_user: Maybe<User> = Some(User(absent_profile))",
             "    let nested_absent_rating: Maybe<UInt32> = nested_absent_user?.profile?.rating",
-            "    return final_present_score() + alias_member_score() + alias_null_safe_score() + return_present_score() + final_empty_score() + return_nested_absent_score() + final_record_payload_score() + return_record_payload_score() + final_member_call_score() + final_nested_member_call_score() + final_nested_absent_member_call_score() + final_record_member_call_score() + final_record_member_call_field_score() + final_empty_record_member_call_score() + final_array_member_call_score() + final_empty_array_member_call_score() + final_generic_record_member_call_field_score() + final_empty_generic_record_member_call_field_score() + if_member_call_score(true) + guard_member_call_score(true) + while_member_call_score() + return_empty_member_call_score() - 159 as UInt32",
+            "    return final_present_score() + alias_member_score() + alias_null_safe_score() + alias_method_score() + alias_null_safe_method_score() + return_present_score() + final_empty_score() + return_nested_absent_score() + final_record_payload_score() + return_record_payload_score() + final_member_call_score() + final_nested_member_call_score() + final_nested_absent_member_call_score() + final_record_member_call_score() + final_record_member_call_field_score() + final_empty_record_member_call_score() + final_array_member_call_score() + final_empty_array_member_call_score() + final_generic_record_member_call_field_score() + final_empty_generic_record_member_call_field_score() + if_member_call_score(true) + guard_member_call_score(true) + while_member_call_score() + return_empty_member_call_score() - 196 as UInt32",
         }
     );
     assert_run_success(run_program(app, run_null_safe_paths));
