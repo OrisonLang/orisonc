@@ -3891,3 +3891,7 @@ This file tracks which source-language frontend slices are reflected in the curr
   `Maybe` inspection. Nested imported alias targets use consumer-local import names, and separate producer/consumer
   objects execute direct record projection and `Maybe<Record>` null-safe projection. LLVM parse diagnostics now include
   the rejected generated line. Assignability remains nominal, and no syntax changed.
+- 2026-11-04: Alias-typed expected contexts now select resolved record and choice constructor layouts. Local record and
+  nested `Maybe<Record>` aliases construct directly, and a renamed imported `Maybe<UInt32>` alias constructs and crosses
+  a separate-object ABI. Existing underlying values remain nominally incompatible without explicit conversion. No
+  syntax changed.

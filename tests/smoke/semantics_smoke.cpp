@@ -10627,6 +10627,48 @@ void test_index_access_alias_types_success() {
     assert_fixture_success(path);
 }
 
+void test_alias_typed_constructor_context_success() {
+    auto path = std::filesystem::temp_directory_path() /
+        "orison_semantics_alias_typed_constructor_context_success.or";
+    write_concurrency_fixture(
+        path,
+        "demo.aliasconstructor",
+        {
+            "record Detail",
+            "    value: UInt32",
+            "type DetailAlias = Detail",
+            "choice Maybe<T>",
+            "    Some(value: T)",
+            "    Empty",
+            "type MaybeDetailAlias = Maybe<DetailAlias>",
+            "function make_detail(value: UInt32) -> DetailAlias",
+            "    Detail(value)",
+            "function make_maybe_detail(value: UInt32) -> MaybeDetailAlias",
+            "    Some(Detail(value))",
+        }
+    );
+
+    assert_fixture_success(path);
+}
+
+void test_alias_value_compatibility_remains_nominal_failure() {
+    auto path = std::filesystem::temp_directory_path() /
+        "orison_semantics_alias_value_compatibility_remains_nominal_failure.or";
+    write_concurrency_fixture(
+        path,
+        "demo.aliasconstructor",
+        {
+            "record Detail",
+            "    value: UInt32",
+            "type DetailAlias = Detail",
+            "function retain_nominal_identity(value: Detail) -> DetailAlias",
+            "    value",
+        }
+    );
+
+    assert_final_expression_type_mismatch_diagnostic(path, 6, "Detail", "DetailAlias");
+}
+
 void test_call_unsafe_function_outside_unsafe_context_failure() {
     auto path = std::filesystem::temp_directory_path() / "orison_semantics_call_unsafe_function_failure.or";
     write_concurrency_fixture(
@@ -15543,6 +15585,8 @@ int main() {
     test_index_access_noninteger_index_failure();
     test_index_access_integer_index_success();
     test_index_access_alias_types_success();
+    test_alias_typed_constructor_context_success();
+    test_alias_value_compatibility_remains_nominal_failure();
     test_call_unsafe_function_outside_unsafe_context_failure();
     test_call_unsafe_function_inside_unsafe_block_success();
     test_pointer_construction_outside_unsafe_context_failure();

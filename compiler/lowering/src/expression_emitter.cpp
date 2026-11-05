@@ -1699,9 +1699,15 @@ auto lower_record_constructor_expression(
         return std::nullopt;
     }
 
-    auto layout = expected_source_type_name.has_value()
-        ? context.lowering.records.find(std::string(*expected_source_type_name))
+    auto resolved_expected_source_type = expected_source_type_name.has_value()
+        ? resolved_source_type_alias_name(*expected_source_type_name, context.lowering)
+        : std::optional<std::string> {};
+    auto layout = resolved_expected_source_type.has_value()
+        ? context.lowering.records.find(*resolved_expected_source_type)
         : context.lowering.records.end();
+    if (layout == context.lowering.records.end() && expected_source_type_name.has_value()) {
+        layout = context.lowering.records.find(std::string(*expected_source_type_name));
+    }
     if (layout == context.lowering.records.end()) {
         layout = context.lowering.records.find(expression.left->text);
     }
@@ -1921,13 +1927,29 @@ auto choice_constructor_layout_for(
     LoweringContext const& context,
     std::optional<std::string_view> expected_source_type_name
 ) -> ChoiceConstructorLayoutLookup {
+    if (expected_source_type_name.has_value()) {
+        auto exact = context.choices.find(std::string(*expected_source_type_name));
+        if (exact != context.choices.end() && exact->second.llvm_type_name == expected_llvm_type &&
+            find_choice_variant(exact->second, variant_name) != nullptr) {
+            return ChoiceConstructorLayoutLookup {
+                .layout = &exact->second,
+            };
+        }
+    }
+    auto resolved_expected_source_type = expected_source_type_name.has_value()
+        ? resolved_source_type_alias_name(*expected_source_type_name, context)
+        : std::optional<std::string> {};
+    if (expected_source_type_name.has_value() && !resolved_expected_source_type.has_value()) {
+        return {};
+    }
     auto const* match = static_cast<LoweredChoiceLayout const*>(nullptr);
     for (auto const& [choice_name, layout] : context.choices) {
         (void)choice_name;
         if (layout.llvm_type_name != expected_llvm_type || find_choice_variant(layout, variant_name) == nullptr) {
             continue;
         }
-        if (expected_source_type_name.has_value() && layout.source_type_name != *expected_source_type_name) {
+        if (resolved_expected_source_type.has_value() &&
+            layout.source_type_name != *resolved_expected_source_type) {
             continue;
         }
         if (match != nullptr) {

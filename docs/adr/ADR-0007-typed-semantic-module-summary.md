@@ -92,6 +92,10 @@ Semantic member lookup expands local and imported alias chains before record and
 Imported alias targets localize nested package types to the consumer's explicit import names. Lowering applies the
 same cycle-safe resolution before record-layout lookup and throughout null-safe access planning. Alias identity remains
 nominal for assignment and conversion.
+An explicit alias-typed constructor context may select the resolved record or choice layout. This permits an underlying
+record constructor or choice variant to initialize the declared alias directly, including nested constructor payloads
+and renamed imported choice aliases. Values constructed outside that context still require explicit conversion before
+entering the alias type, so ordinary compatibility remains nominal.
 The driver emits request artifacts with `--emit-specialization-requests` and accepts repeatable
 `--specialization-requests` inputs, allowing build orchestration to aggregate consumer requests for producer
 compilation. ADR-0008 defines explicit dependency scheduling and object selection through driver build plans.

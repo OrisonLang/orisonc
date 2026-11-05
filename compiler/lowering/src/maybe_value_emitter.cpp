@@ -40,7 +40,11 @@ auto maybe_value_abi_for_source_type(
     std::string_view source_type_name,
     LoweringContext const& context
 ) -> std::optional<MaybeValueAbi> {
-    auto payload_source_type = maybe_payload_source_type_name(source_type_name);
+    auto resolved_source_type = resolved_source_type_alias_name(source_type_name, context);
+    if (!resolved_source_type.has_value()) {
+        return std::nullopt;
+    }
+    auto payload_source_type = maybe_payload_source_type_name(*resolved_source_type);
     if (!payload_source_type.has_value()) {
         return std::nullopt;
     }

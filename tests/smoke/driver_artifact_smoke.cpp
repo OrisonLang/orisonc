@@ -511,6 +511,8 @@ auto main() -> int {
             "    read_status from external.aliasabi",
             "function round_trip(value: ExternalDetail) -> UInt32",
             "    value.value",
+            "function make_external_maybe_count(value: UInt32) -> ExternalMaybeCount",
+            "    Some(value)",
             "function read_external_status(value: ExternalStatus) -> UInt32",
             "    read_status(value)",
             "function read_external_counts(value: ExternalCounts) -> UInt32",
@@ -519,7 +521,7 @@ auto main() -> int {
             "    round_trip(make_detail(42 as UInt32)) + "
             "read_external_status(make_status(7 as UInt32)) + "
             "(pass_count(5 as ExternalCount) as UInt32) + "
-            "read_maybe_count(make_maybe_count(8 as UInt32)) + "
+            "read_maybe_count(make_external_maybe_count(8 as UInt32)) + "
             "read_maybe_count(make_maybe_detail(9 as UInt32)?.value as ExternalMaybeCount) + "
             "read_external_counts(pass_counts([10 as UInt32, 20 as UInt32] as ExternalCounts)) - "
             "101 as UInt32",

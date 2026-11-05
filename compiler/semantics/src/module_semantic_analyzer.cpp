@@ -2410,16 +2410,22 @@ private:
             }
         }
 
-        auto const* expected_record =
-            expected_type.has_value() ? find_record_declaration_by_name(expected_type->name) : nullptr;
+        auto resolved_expected_type = expected_type.has_value()
+            ? resolve_type_alias_target(*expected_type)
+            : std::optional<syntax::TypeSyntax> {};
+        auto const* expected_record = resolved_expected_type.has_value()
+            ? find_record_declaration(*resolved_expected_type)
+            : nullptr;
+        auto expected_record_is_aliased = expected_type.has_value() && resolved_expected_type.has_value() &&
+            render_type_name(*expected_type) != render_type_name(*resolved_expected_type);
         auto record_inference_needs_expected_context =
             inferred_type_name.empty() ||
             (expected_record != nullptr && inferred_type.has_value() &&
              contains_generic_parameter(*inferred_type, expected_record->generic_parameters));
         auto constructor_matches_expected_record =
             expression.kind == syntax::ExpressionKind::call && expression.left &&
-            expression.left->kind == syntax::ExpressionKind::name && expected_type.has_value() &&
-            expression.left->text == expected_type->name;
+            expression.left->kind == syntax::ExpressionKind::name && resolved_expected_type.has_value() &&
+            expression.left->text == resolved_expected_type->name;
         auto has_existing_expression_diagnostic = std::any_of(
             diagnostics_.entries().begin(),
             diagnostics_.entries().end(),
@@ -2428,9 +2434,12 @@ private:
             }
         );
         if (!has_existing_expression_diagnostic && constructor_matches_expected_record &&
-            record_inference_needs_expected_context) {
-            auto record_result =
-                validate_matching_record_constructor_initializer(expression, *expected_type, context_description);
+            (record_inference_needs_expected_context || expected_record_is_aliased)) {
+            auto record_result = validate_matching_record_constructor_initializer(
+                expression,
+                *resolved_expected_type,
+                context_description
+            );
             if (record_result.has_value()) {
                 return *record_result;
             }
