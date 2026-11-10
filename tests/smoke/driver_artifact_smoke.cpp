@@ -456,6 +456,8 @@ auto main() -> int {
             "public type PublicStatus = StatusAlias",
             "public type CountAlias = UInt32",
             "public type PublicCount = CountAlias",
+            "public type PublicSigned = Int32",
+            "public type PublicFlag = Bool",
             "public choice Maybe<T>",
             "    Some(value: T)",
             "    Empty",
@@ -496,6 +498,8 @@ auto main() -> int {
             "    Detail as ExternalDetailRecord from external.aliasabi",
             "    PublicDetail as ExternalDetail from external.aliasabi",
             "    PublicCount as ExternalCount from external.aliasabi",
+            "    PublicSigned as ExternalSigned from external.aliasabi",
+            "    PublicFlag as ExternalFlag from external.aliasabi",
             "    PublicCounts as ExternalCounts from external.aliasabi",
             "    PublicMaybeCount as ExternalMaybeCount from external.aliasabi",
             "    PublicMaybeDetail as ExternalMaybeDetail from external.aliasabi",
@@ -522,6 +526,28 @@ auto main() -> int {
             "        this + 1 as UInt32",
             "function read_external_method(value: ExternalCount) -> UInt32",
             "    value.increment()",
+            "type LocalCount = ExternalCount",
+            "type LocalSigned = ExternalSigned",
+            "type LocalFlag = ExternalFlag",
+            "function arithmetic_aliases(value: LocalCount) -> LocalCount",
+            "    let added = value + (5 as LocalCount)",
+            "    let subtracted = added - (2 as LocalCount)",
+            "    let multiplied = subtracted * (3 as LocalCount)",
+            "    let divided = multiplied / (4 as LocalCount)",
+            "    divided % (7 as LocalCount)",
+            "function bitwise_aliases(value: LocalCount) -> LocalCount",
+            "    let inverted = bit_not value",
+            "    let masked = inverted bit_and (255 as LocalCount)",
+            "    let combined = masked bit_or (2 as LocalCount)",
+            "    let toggled = combined bit_xor (7 as LocalCount)",
+            "    let moved = toggled shift_left (1 as LocalCount)",
+            "    moved shift_right (2 as LocalCount)",
+            "function signed_alias(value: LocalSigned) -> LocalSigned",
+            "    -value",
+            "function comparison_alias(value: ExternalCount) -> Bool",
+            "    value >= (2 as ExternalCount) and value != (3 as ExternalCount)",
+            "function boolean_alias(value: LocalFlag) -> Bool",
+            "    not value or (value and (true as LocalFlag))",
             "function main() -> UInt32",
             "    round_trip(make_detail(42 as UInt32)) + "
             "read_external_status(make_status(7 as UInt32)) + "
@@ -529,8 +555,13 @@ auto main() -> int {
             "read_maybe_count(make_external_maybe_count(8 as UInt32)) + "
             "read_maybe_count(make_maybe_detail(9 as UInt32)?.value as ExternalMaybeCount) + "
             "read_external_method(5 as ExternalCount) + "
+            "(arithmetic_aliases(10 as LocalCount) as UInt32) + "
+            "(bitwise_aliases(10 as LocalCount) as UInt32) + "
+            "(signed_alias(4 as LocalSigned) == (-4 as LocalSigned) ? 1 as UInt32 : 0 as UInt32) + "
+            "(comparison_alias(2 as ExternalCount) ? 1 as UInt32 : 0 as UInt32) + "
+            "(boolean_alias(false as LocalFlag) ? 1 as UInt32 : 0 as UInt32) + "
             "read_external_counts(pass_counts([10 as UInt32, 20 as UInt32] as ExternalCounts)) - "
-            "107 as UInt32",
+            "232 as UInt32",
         }
     );
     auto alias_abi_build_plan_path = smoke_temp_root / "alias_abi.obp";

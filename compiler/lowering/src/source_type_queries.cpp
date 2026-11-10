@@ -5415,6 +5415,42 @@ auto source_type_name_for_expression(
         );
     }
 
+    if (expression.kind == syntax::ExpressionKind::unary && expression.left != nullptr) {
+        if (expression.text == "not") {
+            return std::string {"Bool"};
+        }
+        if (expression.text == "-" || expression.text == "bit_not") {
+            return source_type_name_for_expression(*expression.left, context, state);
+        }
+    }
+
+    if (expression.kind == syntax::ExpressionKind::binary && expression.left != nullptr &&
+        expression.right != nullptr) {
+        if (expression.text == "==" || expression.text == "!=" || expression.text == "<" ||
+            expression.text == "<=" || expression.text == ">" || expression.text == ">=" ||
+            expression.text == "and" || expression.text == "or") {
+            return std::string {"Bool"};
+        }
+        if (expression.text == "+" || expression.text == "-" || expression.text == "*" ||
+            expression.text == "/" || expression.text == "%" || expression.text == "bit_and" ||
+            expression.text == "bit_or" || expression.text == "bit_xor" ||
+            expression.text == "shift_left" || expression.text == "shift_right") {
+            auto left_source_type = source_type_name_for_expression(*expression.left, context, state);
+            auto right_source_type = source_type_name_for_expression(*expression.right, context, state);
+            if (left_source_type.has_value() && right_source_type.has_value()) {
+                auto left_type = lowered_type_for_source_type_name(*left_source_type, context);
+                auto right_type = lowered_type_for_source_type_name(*right_source_type, context);
+                if (!left_type.has_value() || !right_type.has_value() ||
+                    left_type->type != right_type->type ||
+                    left_type->signedness != right_type->signedness) {
+                    return std::nullopt;
+                }
+                return left_source_type;
+            }
+            return left_source_type.has_value() ? left_source_type : right_source_type;
+        }
+    }
+
     if (expression.kind == syntax::ExpressionKind::ternary && expression.right != nullptr &&
         expression.alternate != nullptr) {
         auto then_source_type = source_type_name_for_expression(*expression.right, context, state);

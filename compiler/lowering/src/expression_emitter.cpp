@@ -4431,13 +4431,10 @@ auto lowered_expression(
                 expression.text
             );
         }
-        syntax::TypeSyntax target_type {
-            .name = expression.text,
-        };
         if (auto integer = lowered_integer_literal(
                 *expression.left,
                 expected_llvm_type,
-                integer_signedness_for(target_type)
+                cast_type->signedness
             )) {
             return integer;
         }

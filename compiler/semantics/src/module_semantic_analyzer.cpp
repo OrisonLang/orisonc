@@ -423,20 +423,23 @@ private:
         std::string const& left_type_name,
         std::string const& right_type_name
     ) const -> std::string {
-        if (left_type_name.empty() || right_type_name.empty() ||
-            !is_integer_type_name(left_type_name) || !is_integer_type_name(right_type_name)) {
+        auto resolved_left_type_name = resolve_type_alias_target_name(left_type_name);
+        auto resolved_right_type_name = resolve_type_alias_target_name(right_type_name);
+        if (!resolved_left_type_name.has_value() || !resolved_right_type_name.has_value() ||
+            !is_integer_type_name(*resolved_left_type_name) ||
+            !is_integer_type_name(*resolved_right_type_name)) {
             return {};
         }
 
-        if (left_type_name == "Int64" && right_type_name != "Int64") {
+        if (*resolved_left_type_name == "Int64" && *resolved_right_type_name != "Int64") {
             return right_type_name;
         }
 
-        if (right_type_name == "Int64" && left_type_name != "Int64") {
+        if (*resolved_right_type_name == "Int64" && *resolved_left_type_name != "Int64") {
             return left_type_name;
         }
 
-        if (are_low_level_read_types_compatible(left_type_name, right_type_name)) {
+        if (are_low_level_read_types_compatible(*resolved_left_type_name, *resolved_right_type_name)) {
             return left_type_name;
         }
 
@@ -1857,11 +1860,18 @@ private:
             if (expression.text == "-"
                 || expression.text == "bit_not") {
                 auto operand_type_name = infer_expression_type_name(*expression.left);
-                return is_integer_type_name(operand_type_name) ? operand_type_name : std::string {};
+                auto resolved_operand_type_name = resolve_type_alias_target_name(operand_type_name);
+                return resolved_operand_type_name.has_value() &&
+                    is_integer_type_name(*resolved_operand_type_name)
+                    ? operand_type_name
+                    : std::string {};
             }
             if (expression.text == "not") {
                 auto operand_type_name = infer_expression_type_name(*expression.left);
-                return operand_type_name == "Bool" ? "Bool" : std::string {};
+                auto resolved_operand_type_name = resolve_type_alias_target_name(operand_type_name);
+                return resolved_operand_type_name.has_value() && *resolved_operand_type_name == "Bool"
+                    ? "Bool"
+                    : std::string {};
             }
             return {};
         case syntax::ExpressionKind::cast:
@@ -2017,7 +2027,11 @@ private:
             if (expression.text == "shift_left" || expression.text == "shift_right") {
                 auto left_type_name = infer_expression_type_name(*expression.left);
                 auto right_type_name = infer_expression_type_name(*expression.right);
-                return is_integer_type_name(left_type_name) && is_integer_type_name(right_type_name)
+                auto resolved_left_type_name = resolve_type_alias_target_name(left_type_name);
+                auto resolved_right_type_name = resolve_type_alias_target_name(right_type_name);
+                return resolved_left_type_name.has_value() && resolved_right_type_name.has_value() &&
+                    is_integer_type_name(*resolved_left_type_name) &&
+                    is_integer_type_name(*resolved_right_type_name)
                            ? left_type_name
                            : std::string {};
             }

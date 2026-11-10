@@ -3899,3 +3899,7 @@ This file tracks which source-language frontend slices are reflected in the curr
   LLVM call emission. Local record aliases call methods owned by the concrete record, while a renamed imported scalar
   alias selects a local concrete extension through a separate-object build plan. Assignment remains nominal. No syntax
   changed.
+- 2026-11-10: Scalar unary, arithmetic, comparison, logical, bitwise, and shift operations now expand cycle-safe local
+  and imported aliases for semantic inference and LLVM lowering. Integer results retain their source alias through
+  unannotated bindings, while comparison and logical results remain `Bool`. A separate-object executable covers
+  imported `UInt32`, `Int32`, and `Bool` aliases. No syntax changed.

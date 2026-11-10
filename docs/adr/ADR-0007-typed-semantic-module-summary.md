@@ -99,6 +99,9 @@ entering the alias type, so ordinary compatibility remains nominal.
 Semantic and lowering method lookup resolve the receiver through cycle-safe local and imported alias chains. Null-safe
 calls expand the outer alias, unwrap `Maybe`, then resolve the payload alias. The selected method and emitted symbol
 remain owned by the declared concrete receiver; alias identity remains unchanged for assignment and conversion.
+Scalar operator inference expands cycle-safe local and imported aliases before checking integer, signed, or boolean
+requirements. Value-producing integer operators retain the operand alias, including unannotated intermediate bindings;
+comparisons and logical operators produce `Bool`. LLVM lowering selects the resolved representation and signedness.
 The driver emits request artifacts with `--emit-specialization-requests` and accepts repeatable
 `--specialization-requests` inputs, allowing build orchestration to aggregate consumer requests for producer
 compilation. ADR-0008 defines explicit dependency scheduling and object selection through driver build plans.
