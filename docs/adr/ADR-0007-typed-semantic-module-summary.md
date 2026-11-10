@@ -102,6 +102,10 @@ remain owned by the declared concrete receiver; alias identity remains unchanged
 Scalar operator inference expands cycle-safe local and imported aliases before checking integer, signed, or boolean
 requirements. Value-producing integer operators retain the operand alias, including unannotated intermediate bindings;
 comparisons and logical operators produce `Bool`. LLVM lowering selects the resolved representation and signedness.
+Control-flow condition validation expands cycle-safe aliases and requires the resolved type to be `Bool` for `if`,
+`guard`, `while`, and trailing `repeat while` conditions. Scalar switch value-pattern compatibility and Boolean
+exhaustiveness use resolved aliases, while diagnostics retain source alias names. Switch literal casts lower through
+the resolved representation. Alias identity remains nominal outside these type-directed operations.
 The driver emits request artifacts with `--emit-specialization-requests` and accepts repeatable
 `--specialization-requests` inputs, allowing build orchestration to aggregate consumer requests for producer
 compilation. ADR-0008 defines explicit dependency scheduling and object selection through driver build plans.

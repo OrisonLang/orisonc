@@ -548,6 +548,35 @@ auto main() -> int {
             "    value >= (2 as ExternalCount) and value != (3 as ExternalCount)",
             "function boolean_alias(value: LocalFlag) -> Bool",
             "    not value or (value and (true as LocalFlag))",
+            "function if_alias(flag: LocalFlag) -> UInt32",
+            "    if flag",
+            "        return 1 as UInt32",
+            "    0 as UInt32",
+            "function guard_alias(flag: LocalFlag) -> UInt32",
+            "    guard flag else",
+            "        return 0 as UInt32",
+            "    1 as UInt32",
+            "function while_alias(flag: LocalFlag) -> UInt32",
+            "    var running = flag",
+            "    var result = 0 as UInt32",
+            "    while running",
+            "        result = 1 as UInt32",
+            "        running = false as LocalFlag",
+            "    result",
+            "function repeat_alias(flag: LocalFlag) -> UInt32",
+            "    var count = 0 as UInt32",
+            "    repeat",
+            "        count = count + 1 as UInt32",
+            "    while flag",
+            "    count",
+            "function bool_switch_alias(flag: LocalFlag) -> UInt32",
+            "    switch flag",
+            "        true => 1 as UInt32",
+            "        false => 0 as UInt32",
+            "function integer_switch_alias(value: LocalCount) -> UInt32",
+            "    switch value",
+            "        2 as LocalCount => 1 as UInt32",
+            "        default => 0 as UInt32",
             "function main() -> UInt32",
             "    round_trip(make_detail(42 as UInt32)) + "
             "read_external_status(make_status(7 as UInt32)) + "
@@ -560,8 +589,14 @@ auto main() -> int {
             "(signed_alias(4 as LocalSigned) == (-4 as LocalSigned) ? 1 as UInt32 : 0 as UInt32) + "
             "(comparison_alias(2 as ExternalCount) ? 1 as UInt32 : 0 as UInt32) + "
             "(boolean_alias(false as LocalFlag) ? 1 as UInt32 : 0 as UInt32) + "
+            "if_alias(true as LocalFlag) + "
+            "guard_alias(true as LocalFlag) + "
+            "while_alias(true as LocalFlag) + "
+            "repeat_alias(false as LocalFlag) + "
+            "bool_switch_alias(true as LocalFlag) + "
+            "integer_switch_alias(2 as LocalCount) + "
             "read_external_counts(pass_counts([10 as UInt32, 20 as UInt32] as ExternalCounts)) - "
-            "232 as UInt32",
+            "238 as UInt32",
         }
     );
     auto alias_abi_build_plan_path = smoke_temp_root / "alias_abi.obp";

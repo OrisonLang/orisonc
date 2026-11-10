@@ -2,6 +2,7 @@
 
 #include "orison/lowering/expression_emitter.hpp"
 #include "orison/lowering/llvm_names.hpp"
+#include "orison/lowering/source_type_queries.hpp"
 #include "orison/lowering/type_lowering.hpp"
 
 #include <string>
@@ -78,11 +79,8 @@ auto lower_switch_pattern(
         return std::nullopt;
     }
 
-    auto target_type = syntax::TypeSyntax {
-        .name = pattern.text,
-    };
-    auto cast_type = llvm_type_for(target_type);
-    if (!cast_type.has_value() || *cast_type != subject_type.type) {
+    auto cast_type = lowered_type_for_source_type_name(pattern.text, context);
+    if (!cast_type.has_value() || cast_type->type != subject_type.type) {
         return std::nullopt;
     }
     return lower_integer_literal(*pattern.left, subject_type.type, subject_type.signedness);

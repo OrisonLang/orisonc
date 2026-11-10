@@ -2199,8 +2199,10 @@ private:
             return normalized_integer_literal_text(pattern.text);
         }
 
+        auto resolved_cast_type_name = resolve_type_alias_target_name(pattern.text);
         if (pattern.kind == syntax::ExpressionKind::cast && pattern.left &&
-            pattern.left->kind == syntax::ExpressionKind::integer_literal && is_integer_type_name(pattern.text)) {
+            pattern.left->kind == syntax::ExpressionKind::integer_literal && resolved_cast_type_name.has_value() &&
+            is_integer_type_name(*resolved_cast_type_name)) {
             return normalized_integer_literal_text(pattern.left->text);
         }
 
@@ -2244,16 +2246,23 @@ private:
             return true;
         }
 
-        if (subject_type_name == pattern_type_name) {
+        auto resolved_subject_type_name = resolve_type_alias_target_name(subject_type_name);
+        auto resolved_pattern_type_name = resolve_type_alias_target_name(pattern_type_name);
+        if (!resolved_subject_type_name.has_value() || !resolved_pattern_type_name.has_value()) {
+            return false;
+        }
+
+        if (subject_type_name == pattern_type_name || *resolved_subject_type_name == *resolved_pattern_type_name) {
             return true;
         }
 
-        if (pattern.kind == syntax::ExpressionKind::integer_literal && is_integer_type_name(subject_type_name)) {
+        if (pattern.kind == syntax::ExpressionKind::integer_literal &&
+            is_integer_type_name(*resolved_subject_type_name)) {
             return true;
         }
 
-        if (is_integer_type_name(subject_type_name) && is_integer_type_name(pattern_type_name) &&
-            are_low_level_read_types_compatible(pattern_type_name, subject_type_name)) {
+        if (is_integer_type_name(*resolved_subject_type_name) && is_integer_type_name(*resolved_pattern_type_name) &&
+            are_low_level_read_types_compatible(*resolved_pattern_type_name, *resolved_subject_type_name)) {
             return true;
         }
 
@@ -6432,6 +6441,7 @@ private:
 
     void analyze_final_if_statement(syntax::StatementSyntax const& statement, bool in_async_function) {
         analyze_expression(statement.expression, in_async_function);
+        validate_boolean_condition(statement, "if");
 
         auto baseline_scope = snapshot_scope_stack();
         std::vector<ScopeSnapshot> branch_results;
@@ -6484,6 +6494,7 @@ private:
         SwitchChoiceCoverage choice_coverage;
         std::optional<syntax::TypeSyntax> switch_subject_type;
         auto switch_subject_type_name = infer_expression_type_name(statement.expression);
+        auto resolved_switch_subject_type_name = resolve_type_alias_target_name(switch_subject_type_name);
         if (!switch_subject_type_name.empty()) {
             switch_subject_type = parse_rendered_type_name(switch_subject_type_name);
             if (switch_subject_type.has_value()) {
@@ -6513,7 +6524,7 @@ private:
                     valid_pattern = false;
                 }
 
-                if (switch_patterns_valid && switch_subject_type_name == "Bool" && saw_true_value_pattern &&
+                if (switch_patterns_valid && resolved_switch_subject_type_name == "Bool" && saw_true_value_pattern &&
                     saw_false_value_pattern) {
                     diagnostics_.error(
                         switch_case_line(switch_case),
@@ -6643,7 +6654,7 @@ private:
         }
 
         if (switch_patterns_valid && !has_default_case && !saw_constructor_pattern &&
-            switch_subject_type_name == "Bool" && saw_true_value_pattern != saw_false_value_pattern) {
+            resolved_switch_subject_type_name == "Bool" && saw_true_value_pattern != saw_false_value_pattern) {
             diagnostics_.error(
                 statement.line,
                 std::string("switch is missing boolean value pattern '") + (saw_true_value_pattern ? "false" : "true") +
@@ -6702,6 +6713,24 @@ private:
                 ordinary_context_description
             );
         }
+    }
+
+    void validate_boolean_condition(
+        syntax::StatementSyntax const& statement,
+        std::string_view statement_name
+    ) {
+        auto condition_type_name = infer_expression_type_name(statement.expression);
+        if (condition_type_name.empty()) {
+            return;
+        }
+        auto resolved_condition_type_name = resolve_type_alias_target_name(condition_type_name);
+        if (!resolved_condition_type_name.has_value() || *resolved_condition_type_name == "Bool") {
+            return;
+        }
+        diagnostics_.error(
+            statement.expression.line,
+            std::string(statement_name) + " condition type '" + condition_type_name + "' must resolve to 'Bool'"
+        );
     }
 
     void analyze_statement(syntax::StatementSyntax const& statement, bool in_async_function) {
@@ -6888,6 +6917,7 @@ private:
         }
 
         if (statement.kind == syntax::StatementKind::if_statement) {
+            validate_boolean_condition(statement, "if");
             auto baseline_scope = snapshot_scope_stack();
             std::vector<ScopeSnapshot> branch_results;
 
@@ -6916,6 +6946,7 @@ private:
         }
 
         if (statement.kind == syntax::StatementKind::guard_statement) {
+            validate_boolean_condition(statement, "guard");
             auto baseline_scope = snapshot_scope_stack();
 
             restore_scope_stack(baseline_scope);
@@ -6940,6 +6971,7 @@ private:
         }
 
         if (statement.kind == syntax::StatementKind::while_statement) {
+            validate_boolean_condition(statement, "while");
             auto baseline_scope = snapshot_scope_stack();
 
             restore_scope_stack(baseline_scope);
@@ -6957,6 +6989,7 @@ private:
         }
 
         if (statement.kind == syntax::StatementKind::repeat_statement) {
+            validate_boolean_condition(statement, "repeat while");
             auto baseline_scope = snapshot_scope_stack();
 
             restore_scope_stack(baseline_scope);

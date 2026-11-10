@@ -3903,3 +3903,7 @@ This file tracks which source-language frontend slices are reflected in the curr
   and imported aliases for semantic inference and LLVM lowering. Integer results retain their source alias through
   unannotated bindings, while comparison and logical results remain `Bool`. A separate-object executable covers
   imported `UInt32`, `Int32`, and `Bool` aliases. No syntax changed.
+- 2026-11-10: `if`, `guard`, `while`, and trailing `repeat while` conditions now require a cycle-safe alias resolution
+  to `Bool`. Scalar switch value patterns and Boolean exhaustiveness also resolve local and imported aliases, including
+  alias-typed integer literal casts. Separate producer and consumer objects execute all condition forms and Bool/integer
+  switches, while negative fixtures preserve source alias names in diagnostics. No syntax changed.

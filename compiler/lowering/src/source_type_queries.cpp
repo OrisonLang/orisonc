@@ -183,7 +183,11 @@ auto pure_boolean_expression(
     }
     if (expression.kind == ExpressionKind::name) {
         auto source_type = state.source_type_names.find(expression.text);
-        return source_type != state.source_type_names.end() && source_type->second == "Bool";
+        if (source_type == state.source_type_names.end()) {
+            return false;
+        }
+        auto resolved_source_type = resolved_source_type_alias_name(source_type->second, context);
+        return resolved_source_type.has_value() && *resolved_source_type == "Bool";
     }
     if (expression.kind == ExpressionKind::member_access ||
         expression.kind == ExpressionKind::index_access) {
@@ -191,7 +195,11 @@ auto pure_boolean_expression(
             return false;
         }
         auto source_type = source_type_name_for_expression(expression, context, state);
-        return source_type.has_value() && *source_type == "Bool";
+        if (!source_type.has_value()) {
+            return false;
+        }
+        auto resolved_source_type = resolved_source_type_alias_name(*source_type, context);
+        return resolved_source_type.has_value() && *resolved_source_type == "Bool";
     }
     if (expression.kind == ExpressionKind::unary) {
         return expression.text == "not" && expression.left != nullptr &&

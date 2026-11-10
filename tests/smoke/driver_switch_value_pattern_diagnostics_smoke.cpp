@@ -31,6 +31,27 @@ void write_same_width_integer_value_pattern_fixture(std::filesystem::path const&
     output << "        default => 0\n";
 }
 
+void write_non_boolean_alias_condition_fixture(std::filesystem::path const& path) {
+    std::ofstream output(path);
+    output << "package demo.switches\n";
+    output << "type Count = UInt32\n";
+    output << "type LocalCount = Count\n";
+    output << "function classify(value: LocalCount) -> Int64\n";
+    output << "    if value\n";
+    output << "        return 1\n";
+    output << "    0\n";
+}
+
+void write_boolean_alias_text_pattern_fixture(std::filesystem::path const& path) {
+    std::ofstream output(path);
+    output << "package demo.switches\n";
+    output << "type Flag = Bool\n";
+    output << "function classify(flag: Flag) -> Int64\n";
+    output << "    switch flag\n";
+    output << "        \"ready\" => 1\n";
+    output << "        default => 0\n";
+}
+
 void write_duplicate_bool_value_pattern_fixture(std::filesystem::path const& path, bool include_default = true) {
     std::ofstream output(path);
     output << "package demo.switches\n";
@@ -141,6 +162,22 @@ auto main() -> int {
         std::filesystem::temp_directory_path() / "switch_value_pattern_same_width_success.or";
     write_same_width_integer_value_pattern_fixture(switch_value_pattern_same_width_success_path);
     assert_parse_success(run_parse(app, switch_value_pattern_same_width_success_path));
+
+    auto non_boolean_alias_condition_failure_path =
+        std::filesystem::temp_directory_path() / "non_boolean_alias_condition_failure.or";
+    write_non_boolean_alias_condition_fixture(non_boolean_alias_condition_failure_path);
+    assert_parse_failure_contains(
+        run_parse(app, non_boolean_alias_condition_failure_path),
+        "if condition type 'LocalCount' must resolve to 'Bool'"
+    );
+
+    auto boolean_alias_text_pattern_failure_path =
+        std::filesystem::temp_directory_path() / "boolean_alias_text_pattern_failure.or";
+    write_boolean_alias_text_pattern_fixture(boolean_alias_text_pattern_failure_path);
+    assert_parse_failure_contains(
+        run_parse(app, boolean_alias_text_pattern_failure_path),
+        "switch value pattern type 'Text' does not match switched expression type 'Flag'"
+    );
 
     auto switch_duplicate_boolean_value_failure_path =
         std::filesystem::temp_directory_path() / "switch_duplicate_boolean_value_failure.or";
