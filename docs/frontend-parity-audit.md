@@ -3907,3 +3907,7 @@ This file tracks which source-language frontend slices are reflected in the curr
   to `Bool`. Scalar switch value patterns and Boolean exhaustiveness also resolve local and imported aliases, including
   alias-typed integer literal casts. Separate producer and consumer objects execute all condition forms and Bool/integer
   switches, while negative fixtures preserve source alias names in diagnostics. No syntax changed.
+- 2026-11-10: Unsafe `Address`, `Pointer<T>`, pointee, integer-offset, and raw/volatile write checks now expand local and
+  imported aliases cycle-safely. LLVM lowering resolves aliased pointer and pointee representations for address
+  conversion, GEP, load, and store emission. A separate-object executable exercises all current low-level intrinsics;
+  negative coverage rejects mismatched writes, and existing nominal alias compatibility remains unchanged. No syntax changed.

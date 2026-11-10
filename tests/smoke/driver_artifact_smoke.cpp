@@ -458,6 +458,9 @@ auto main() -> int {
             "public type PublicCount = CountAlias",
             "public type PublicSigned = Int32",
             "public type PublicFlag = Bool",
+            "public type PublicAddress = Address",
+            "public type PublicWordPointer = Pointer<UInt32>",
+            "public type PublicOffset = UInt64",
             "public choice Maybe<T>",
             "    Some(value: T)",
             "    Empty",
@@ -500,6 +503,9 @@ auto main() -> int {
             "    PublicCount as ExternalCount from external.aliasabi",
             "    PublicSigned as ExternalSigned from external.aliasabi",
             "    PublicFlag as ExternalFlag from external.aliasabi",
+            "    PublicAddress as ExternalAddress from external.aliasabi",
+            "    PublicWordPointer as ExternalWordPointer from external.aliasabi",
+            "    PublicOffset as ExternalOffset from external.aliasabi",
             "    PublicCounts as ExternalCounts from external.aliasabi",
             "    PublicMaybeCount as ExternalMaybeCount from external.aliasabi",
             "    PublicMaybeDetail as ExternalMaybeDetail from external.aliasabi",
@@ -529,6 +535,11 @@ auto main() -> int {
             "type LocalCount = ExternalCount",
             "type LocalSigned = ExternalSigned",
             "type LocalFlag = ExternalFlag",
+            "type LocalAddress = ExternalAddress",
+            "type LocalWordPointer = ExternalWordPointer",
+            "type LocalOffset = ExternalOffset",
+            "record AliasCell",
+            "    public value: UInt32",
             "function arithmetic_aliases(value: LocalCount) -> LocalCount",
             "    let added = value + (5 as LocalCount)",
             "    let subtracted = added - (2 as LocalCount)",
@@ -577,7 +588,16 @@ auto main() -> int {
             "    switch value",
             "        2 as LocalCount => 1 as UInt32",
             "        default => 0 as UInt32",
-            "function main() -> UInt32",
+            "unsafe function low_level_aliases() -> UInt32",
+            "    var cell = AliasCell(1 as UInt32)",
+            "    let address: LocalAddress = address_of(cell.value) as LocalAddress",
+            "    let pointer: LocalWordPointer = Pointer(address)",
+            "    raw_write(pointer, 7 as LocalCount)",
+            "    let next: LocalWordPointer = raw_offset(pointer, 0 as LocalOffset)",
+            "    volatile_write(next, 9 as LocalCount)",
+            "    let loaded: LocalCount = volatile_read(next) as LocalCount",
+            "    (loaded + (raw_read(pointer) as LocalCount)) as UInt32",
+            "unsafe function main() -> UInt32",
             "    round_trip(make_detail(42 as UInt32)) + "
             "read_external_status(make_status(7 as UInt32)) + "
             "(pass_count(5 as ExternalCount) as UInt32) + "
@@ -595,8 +615,9 @@ auto main() -> int {
             "repeat_alias(false as LocalFlag) + "
             "bool_switch_alias(true as LocalFlag) + "
             "integer_switch_alias(2 as LocalCount) + "
+            "low_level_aliases() + "
             "read_external_counts(pass_counts([10 as UInt32, 20 as UInt32] as ExternalCounts)) - "
-            "238 as UInt32",
+            "256 as UInt32",
         }
     );
     auto alias_abi_build_plan_path = smoke_temp_root / "alias_abi.obp";

@@ -1109,21 +1109,6 @@ auto pointer_pointee_source_type_name(std::string_view type_name) -> std::option
     return std::string(type_name.substr(prefix.size(), type_name.size() - prefix.size() - 1));
 }
 
-auto lowered_type_for_source_type_name(std::string_view source_type_name) -> std::optional<LoweredType> {
-    auto type = syntax::TypeSyntax {
-        .name = std::string(source_type_name),
-    };
-    auto lowered = llvm_type_for(type);
-    if (!lowered.has_value() || *lowered == "void") {
-        return std::nullopt;
-    }
-
-    return LoweredType {
-        .type = std::string(*lowered),
-        .signedness = integer_signedness_for(type),
-    };
-}
-
 auto source_type_name_for_expression(
     syntax::ExpressionSyntax const& expression,
     EmissionContext const& context,
@@ -1142,9 +1127,13 @@ auto pointee_lowered_type_for_pointer_expression(
         return std::nullopt;
     }
 
-    auto pointee_source_type = pointer_pointee_source_type_name(*source_type);
+    auto resolved_source_type = resolved_source_type_alias_name(*source_type, context.lowering);
+    if (!resolved_source_type.has_value()) {
+        return std::nullopt;
+    }
+    auto pointee_source_type = pointer_pointee_source_type_name(*resolved_source_type);
     return pointee_source_type.has_value()
-        ? lowered_type_for_source_type_name(*pointee_source_type)
+        ? lowered_type_for_source_type_name(*pointee_source_type, context.lowering)
         : std::nullopt;
 }
 
@@ -1547,8 +1536,11 @@ auto lower_pointer_operand(
     }
 
     auto source_type = source_type_name_for_expression(expression, context, session.state);
+    auto resolved_source_type = source_type.has_value()
+        ? resolved_source_type_alias_name(*source_type, context.lowering)
+        : std::nullopt;
     if (inferred.has_value() && inferred->type == "i64" &&
-        source_type.has_value() && *source_type == "Address") {
+        resolved_source_type.has_value() && *resolved_source_type == "Address") {
         auto address = lowered_expression(
             expression,
             "i64",

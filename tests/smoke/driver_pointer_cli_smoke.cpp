@@ -111,6 +111,32 @@ auto main() -> int {
             "    raw_offset(base, 1)",
         }
     );
+    assert_cli_parse_success(
+        executable,
+        smoke_temp_root / "orison_cli_pointer_alias_low_level_success.or",
+        std::vector<std::string_view> {
+            "package demo.cli",
+            "type Word = UInt32",
+            "type WordPointer = Pointer<Word>",
+            "type Offset = UInt64",
+            "unsafe function update(pointer: WordPointer, offset: Offset, value: Word) -> Word",
+            "    let next: WordPointer = raw_offset(pointer, offset)",
+            "    raw_write(next, value)",
+            "    volatile_write(next, value)",
+            "    volatile_read(next)",
+        }
+    );
+    assert_cli_parse_failure(
+        executable,
+        smoke_temp_root / "orison_cli_pointer_alias_write_mismatch.or",
+        std::vector<std::string_view> {
+            "package demo.cli",
+            "type WordPointer = Pointer<UInt32>",
+            "unsafe function update(pointer: WordPointer) -> Unit",
+            "    raw_write(pointer, \"text\")",
+        },
+        "raw_write value type 'Text' does not match pointer element type 'UInt32'"
+    );
     assert_cli_parse_failure(
         executable,
         smoke_temp_root / "orison_cli_pointer_return_ternary_rawoffset_type.or",

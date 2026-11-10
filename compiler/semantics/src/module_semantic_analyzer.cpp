@@ -287,19 +287,24 @@ private:
     }
 
     auto is_pointer_type(syntax::TypeSyntax const& type) const -> bool {
-        return type.name == "Pointer";
+        auto resolved_type = resolve_type_alias_target(type);
+        return resolved_type.has_value() && resolved_type->name == "Pointer";
     }
 
     auto is_address_type(syntax::TypeSyntax const& type) const -> bool {
-        return type.name == "Address";
+        auto resolved_type = resolve_type_alias_target(type);
+        return resolved_type.has_value() && resolved_type->name == "Address";
     }
 
     auto is_pointer_type_name(std::string const& type_name) const -> bool {
-        return type_name == "Pointer" || type_name.rfind("Pointer<", 0) == 0;
+        auto resolved_type_name = resolve_type_alias_target_name(type_name);
+        return resolved_type_name.has_value() &&
+            (*resolved_type_name == "Pointer" || resolved_type_name->rfind("Pointer<", 0) == 0);
     }
 
     auto is_address_type_name(std::string const& type_name) const -> bool {
-        return type_name == "Address";
+        auto resolved_type_name = resolve_type_alias_target_name(type_name);
+        return resolved_type_name.has_value() && *resolved_type_name == "Address";
     }
 
     auto is_integer_type_name(std::string const& type_name) const -> bool {
@@ -360,30 +365,36 @@ private:
         std::string const& pointee_type_name,
         syntax::ExpressionSyntax const& value_expression
     ) const -> bool {
+        auto resolved_pointee_type_name = resolve_type_alias_target_name(pointee_type_name);
         return value_expression.kind == syntax::ExpressionKind::integer_literal &&
-               is_integer_type_name(pointee_type_name);
+               resolved_pointee_type_name.has_value() && is_integer_type_name(*resolved_pointee_type_name);
     }
 
     auto is_integer_cast_compatible_with_pointee(
         std::string const& pointee_type_name,
         syntax::ExpressionSyntax const& value_expression
     ) const -> bool {
+        auto resolved_pointee_type_name = resolve_type_alias_target_name(pointee_type_name);
+        auto resolved_cast_type_name = resolve_type_alias_target_name(value_expression.text);
         if (value_expression.kind != syntax::ExpressionKind::cast || !value_expression.left ||
-            !is_integer_type_name(pointee_type_name) || !is_integer_type_name(value_expression.text)) {
+            !resolved_pointee_type_name.has_value() || !resolved_cast_type_name.has_value() ||
+            !is_integer_type_name(*resolved_pointee_type_name) || !is_integer_type_name(*resolved_cast_type_name)) {
             return false;
         }
 
         auto source_type_name = infer_expression_type_name(*value_expression.left);
-        if (source_type_name.empty() || !is_integer_type_name(source_type_name)) {
+        auto resolved_source_type_name = resolve_type_alias_target_name(source_type_name);
+        if (source_type_name.empty() || !resolved_source_type_name.has_value() ||
+            !is_integer_type_name(*resolved_source_type_name)) {
             return false;
         }
 
-        if (value_expression.text == pointee_type_name) {
+        if (*resolved_cast_type_name == *resolved_pointee_type_name) {
             return true;
         }
 
-        auto cast_target_info = integer_type_info(value_expression.text);
-        auto pointee_info = integer_type_info(pointee_type_name);
+        auto cast_target_info = integer_type_info(*resolved_cast_type_name);
+        auto pointee_info = integer_type_info(*resolved_pointee_type_name);
         return cast_target_info.has_value() && pointee_info.has_value() && cast_target_info->is_fixed_width &&
                pointee_info->is_fixed_width && cast_target_info->bit_width == pointee_info->bit_width;
     }
@@ -397,7 +408,7 @@ private:
             return true;
         }
 
-        if (are_low_level_read_types_compatible(value_type_name, pointee_type_name)) {
+        if (are_resolved_low_level_read_types_compatible(value_type_name, pointee_type_name)) {
             return true;
         }
 
@@ -417,6 +428,16 @@ private:
         auto expected_info = integer_type_info(expected_type_name);
         return inferred_info.has_value() && expected_info.has_value() && inferred_info->is_fixed_width &&
                expected_info->is_fixed_width && inferred_info->bit_width == expected_info->bit_width;
+    }
+
+    auto are_resolved_low_level_read_types_compatible(
+        std::string const& inferred_type_name,
+        std::string const& expected_type_name
+    ) const -> bool {
+        auto resolved_inferred_type_name = resolve_type_alias_target_name(inferred_type_name);
+        auto resolved_expected_type_name = resolve_type_alias_target_name(expected_type_name);
+        return resolved_inferred_type_name.has_value() && resolved_expected_type_name.has_value() &&
+            are_low_level_read_types_compatible(*resolved_inferred_type_name, *resolved_expected_type_name);
     }
 
     auto merge_compatible_integer_type_names(
@@ -447,16 +468,19 @@ private:
     }
 
     auto pointer_pointee_type_name(std::string const& type_name) const -> std::string {
-        if (!is_pointer_type_name(type_name)) {
+        auto resolved_type_name = resolve_type_alias_target_name(type_name);
+        if (!resolved_type_name.has_value() ||
+            (*resolved_type_name != "Pointer" && resolved_type_name->rfind("Pointer<", 0) != 0)) {
             return {};
         }
 
         constexpr std::string_view prefix = "Pointer<";
-        if (type_name.rfind(prefix, 0) != 0 || type_name.size() <= prefix.size() || type_name.back() != '>') {
+        if (resolved_type_name->rfind(prefix, 0) != 0 || resolved_type_name->size() <= prefix.size() ||
+            resolved_type_name->back() != '>') {
             return {};
         }
 
-        return type_name.substr(prefix.size(), type_name.size() - prefix.size() - 1);
+        return resolved_type_name->substr(prefix.size(), resolved_type_name->size() - prefix.size() - 1);
     }
 
     auto first_generic_argument_type_name(std::string const& type_name) const -> std::string {
@@ -2384,7 +2408,7 @@ private:
 
         auto inferred_type_name = infer_expression_type_name(expression);
         if (!inferred_type_name.empty() &&
-            !are_low_level_read_types_compatible(inferred_type_name, expected_type_name)) {
+            !are_resolved_low_level_read_types_compatible(inferred_type_name, expected_type_name)) {
             diagnostics_.error(
                 line,
                 intrinsic_name + " result type '" + inferred_type_name + "' does not match " +
@@ -2705,7 +2729,7 @@ private:
             }
 
             if (!expected_pointee_type_name.empty() && !source_operand_type_name.empty() &&
-                !are_low_level_read_types_compatible(source_operand_type_name, expected_pointee_type_name)) {
+                !are_resolved_low_level_read_types_compatible(source_operand_type_name, expected_pointee_type_name)) {
                 diagnostics_.error(
                     expression.line,
                     "Pointer construction source type '" + source_operand_type_name +
@@ -2724,7 +2748,7 @@ private:
         }
 
         if (!expected_pointee_type_name.empty() && !source_operand_type_name.empty() &&
-            !are_low_level_read_types_compatible(source_operand_type_name, expected_pointee_type_name)) {
+            !are_resolved_low_level_read_types_compatible(source_operand_type_name, expected_pointee_type_name)) {
             diagnostics_.error(
                 expression.line,
                 "Pointer construction source type '" + source_operand_type_name +
@@ -2887,7 +2911,7 @@ private:
             expression.left->kind == syntax::ExpressionKind::name && expression.left->text == "raw_offset") {
             auto source_pointee_type_name = explicit_pointer_source_pointee_type_name(expression.arguments.front());
             if (!source_pointee_type_name.empty() &&
-                !are_low_level_read_types_compatible(source_pointee_type_name, expected_pointee_type_name)) {
+                !are_resolved_low_level_read_types_compatible(source_pointee_type_name, expected_pointee_type_name)) {
                 diagnostics_.error(
                     line,
                     "raw_offset source pointer element type '" + source_pointee_type_name +
@@ -2909,7 +2933,10 @@ private:
             if (!expected_pointee_type_name.empty()) {
                 auto inferred_pointee_type_name = pointer_pointee_type_name(inferred_type_name);
                 if (!inferred_pointee_type_name.empty() &&
-                    !are_low_level_read_types_compatible(inferred_pointee_type_name, expected_pointee_type_name)) {
+                    !are_resolved_low_level_read_types_compatible(
+                        inferred_pointee_type_name,
+                        expected_pointee_type_name
+                    )) {
                     diagnostics_.error(
                         line,
                         std::string(context_description) + " pointer element type '" + inferred_pointee_type_name +
@@ -3032,7 +3059,9 @@ private:
 
         if (intrinsic_name == "raw_offset" && expression.arguments.size() >= 2) {
             auto offset_type_name = infer_expression_type_name(expression.arguments[1]);
-            if (!offset_type_name.empty() && !is_integer_type_name(offset_type_name)) {
+            auto resolved_offset_type_name = resolve_type_alias_target_name(offset_type_name);
+            if (!offset_type_name.empty() &&
+                (!resolved_offset_type_name.has_value() || !is_integer_type_name(*resolved_offset_type_name))) {
                 diagnostics_.error(
                     expression.line,
                     "raw_offset currently requires an integer offset argument"
