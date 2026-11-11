@@ -3915,3 +3915,7 @@ This file tracks which source-language frontend slices are reflected in the curr
   validation. The foreign-call-only string-literal conversion recognizes alias chains ending at `Pointer<Byte>` and
   continues to reject aliases to other pointer element types. Imported alias execution covers fixed `printf` and
   `strcmp` declarations without changing ordinary nominal compatibility or language syntax.
+- 2026-11-11: Constant initializer validation now resolves local and imported aliases for integer, address, Boolean,
+  floating-point, text, fixed-array, record, and choice construction contexts. Alias-preserving compile-time operators
+  retain the alias, while an underlying typed constant still requires explicit conversion before entering a distinct
+  alias. This is frontend validation only; module-constant LLVM emission remains pending. No syntax changed.

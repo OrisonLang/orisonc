@@ -1,0 +1,32 @@
+package fixtures.constant.alias_initializers
+
+import
+    Word as ExternalWord from fixtures.constant.alias_types
+    Register as ExternalRegister from fixtures.constant.alias_types
+    Words as ExternalWords from fixtures.constant.alias_types
+    Flag as ExternalFlag from fixtures.constant.alias_types
+    Ratio as ExternalRatio from fixtures.constant.alias_types
+    Label as ExternalLabel from fixtures.constant.alias_types
+
+type LocalWord = ExternalWord
+
+record Header
+    value: LocalWord
+
+type HeaderAlias = Header
+
+choice OptionalWord
+    Some(value: LocalWord)
+    Empty
+
+type OptionalAlias = OptionalWord
+
+const LOW: LocalWord = 1
+const HIGH: LocalWord = LOW + 1
+const BASE: ExternalRegister = 0x4000_1000
+const VALUES: ExternalWords = [1, 2]
+const ENABLED: ExternalFlag = true
+const SCALE: ExternalRatio = 1.5
+const NAME: ExternalLabel = "Orison"
+const DEFAULT_HEADER: HeaderAlias = Header(3)
+const DEFAULT_WORD: OptionalAlias = Some(4)

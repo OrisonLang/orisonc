@@ -5505,8 +5505,13 @@ private:
         std::string const& initializer_type_name,
         std::string const& declared_type_name
     ) const -> bool {
+        auto resolved_declared_type_name = resolve_type_alias_target_name(declared_type_name);
+        if (!resolved_declared_type_name.has_value()) {
+            return false;
+        }
+
         if (initializer.kind == syntax::ExpressionKind::array_literal) {
-            auto declared_type = parse_rendered_type_name(declared_type_name);
+            auto declared_type = parse_rendered_type_name(*resolved_declared_type_name);
             if (!declared_type.has_value() || declared_type->name != "Array" ||
                 declared_type->generic_arguments.size() != 2) {
                 return false;
@@ -5536,7 +5541,22 @@ private:
         }
 
         if (initializer.kind == syntax::ExpressionKind::integer_literal &&
-            (is_integer_type_name(declared_type_name) || is_address_type_name(declared_type_name))) {
+            (is_integer_type_name(*resolved_declared_type_name) ||
+             is_address_type_name(*resolved_declared_type_name))) {
+            return true;
+        }
+        if (initializer.kind == syntax::ExpressionKind::float_literal &&
+            declared_type_name != *resolved_declared_type_name &&
+            initializer_type_name == *resolved_declared_type_name &&
+            is_float_type_name(*resolved_declared_type_name)) {
+            return true;
+        }
+        if (initializer.kind == syntax::ExpressionKind::boolean_literal &&
+            *resolved_declared_type_name == "Bool") {
+            return true;
+        }
+        if (initializer.kind == syntax::ExpressionKind::string_literal &&
+            *resolved_declared_type_name == "Text") {
             return true;
         }
 
@@ -5732,6 +5752,11 @@ private:
         syntax::ExpressionSyntax const& initializer,
         syntax::TypeSyntax const& declared_type
     ) -> bool {
+        auto resolved_declared_type = resolve_type_alias_target(declared_type);
+        if (!resolved_declared_type.has_value()) {
+            return false;
+        }
+
         auto constructor_name = std::string {};
         auto actual_arity = std::size_t {0};
         if (initializer.kind == syntax::ExpressionKind::name) {
@@ -5744,7 +5769,7 @@ private:
             return false;
         }
 
-        auto const* variant_signature = find_choice_variant_signature(constructor_name, declared_type);
+        auto const* variant_signature = find_choice_variant_signature(constructor_name, *resolved_declared_type);
         if (variant_signature == nullptr) {
             if (choice_variant_arities_.contains(constructor_name)) {
                 diagnostics_.error(
@@ -5754,7 +5779,7 @@ private:
                 );
                 return true;
             }
-            if (initializer.kind == syntax::ExpressionKind::call && is_choice_type(declared_type)) {
+            if (initializer.kind == syntax::ExpressionKind::call && is_choice_type(*resolved_declared_type)) {
                 diagnostics_.error(
                     initializer.line,
                     "choice constructor '" + constructor_name +
@@ -5781,7 +5806,7 @@ private:
         std::vector<std::size_t> conflicting_payload_indices;
         if (!match_generic_type_pattern(
                 variant_signature->choice_type,
-                declared_type,
+                *resolved_declared_type,
                 variant_signature->generic_parameters,
                 bindings
             )) {
@@ -5866,7 +5891,12 @@ private:
         syntax::TypeSyntax const& declared_type,
         std::string_view declared_context
     ) -> bool {
-        auto const* record = find_record_declaration(declared_type);
+        auto resolved_declared_type = resolve_type_alias_target(declared_type);
+        if (!resolved_declared_type.has_value()) {
+            return false;
+        }
+
+        auto const* record = find_record_declaration(*resolved_declared_type);
         if (record == nullptr) {
             return false;
         }
@@ -5902,7 +5932,7 @@ private:
         std::vector<std::size_t> conflicting_field_indices;
         if (!match_generic_type_pattern(
                 record_type_for_declaration(*record),
-                declared_type,
+                *resolved_declared_type,
                 record->generic_parameters,
                 bindings
             )) {
@@ -6043,9 +6073,11 @@ private:
         syntax::TypeSyntax const& declared_type,
         std::string_view declared_context
     ) -> std::optional<bool> {
+        auto resolved_declared_type = resolve_type_alias_target(declared_type);
         if (initializer.kind != syntax::ExpressionKind::call || !initializer.left ||
             initializer.left->kind != syntax::ExpressionKind::name ||
-            initializer.left->text != declared_type.name) {
+            !resolved_declared_type.has_value() ||
+            initializer.left->text != resolved_declared_type->name) {
             return std::nullopt;
         }
 
@@ -6119,13 +6151,15 @@ private:
         syntax::ExpressionSyntax const& initializer,
         syntax::TypeSyntax const& declared_type
     ) -> bool {
-        if (initializer.kind != syntax::ExpressionKind::array_literal || declared_type.name != "Array" ||
-            declared_type.generic_arguments.size() != 2) {
+        auto resolved_declared_type = resolve_type_alias_target(declared_type);
+        if (initializer.kind != syntax::ExpressionKind::array_literal ||
+            !resolved_declared_type.has_value() || resolved_declared_type->name != "Array" ||
+            resolved_declared_type->generic_arguments.size() != 2) {
             return false;
         }
 
-        auto const& declared_element_type = declared_type.generic_arguments.front();
-        auto const& declared_length_type = declared_type.generic_arguments[1];
+        auto const& declared_element_type = resolved_declared_type->generic_arguments.front();
+        auto const& declared_length_type = resolved_declared_type->generic_arguments[1];
         auto actual_length = initializer.arguments.size();
         if (declared_length_type.name != std::to_string(actual_length)) {
             diagnostics_.error(

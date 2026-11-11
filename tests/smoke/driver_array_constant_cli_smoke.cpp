@@ -178,6 +178,36 @@ auto main() -> int {
     assert(::setenv("TMPDIR", smoke_temp_root_text.c_str(), 1) == 0);
 
     auto executable = std::filesystem::current_path().parent_path() / "tools" / "orisonc" / "orisonc";
+    auto fixtures = std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures";
+
+    auto alias_types_path = fixtures / "constant_alias_types.or";
+    auto alias_interface_path = smoke_temp_root / "constant_alias_types.opi";
+    assert(
+        std::system(
+            (executable.string() + " --emit-package-interface " + alias_types_path.string() +
+             " -o " + alias_interface_path.string()).c_str()
+        ) == 0
+    );
+
+    auto alias_initializers_path = fixtures / "constant_alias_initializers.or";
+    assert(
+        std::system(
+            (executable.string() + " --package-interface " + alias_interface_path.string() +
+             " --emit-llvm " + alias_initializers_path.string()).c_str()
+        ) == 0
+    );
+
+    assert_cli_parse_failure(
+        executable,
+        smoke_temp_root / "constant_alias_nominal_mismatch.or",
+        std::vector<std::string_view> {
+            "package fixtures.constant.alias_nominal_mismatch",
+            "type Word = UInt32",
+            "const RAW: UInt32 = 7",
+            "const MASK: Word = RAW",
+        },
+        "constant initializer type 'UInt32' does not match declared constant type 'Word'"
+    );
 
     assert_cli_parse_failure(
         executable,

@@ -215,6 +215,11 @@ add_executable(orison_driver_array_constant_cli_smoke
     smoke/driver_array_constant_cli_smoke.cpp
 )
 
+target_compile_definitions(orison_driver_array_constant_cli_smoke
+    PRIVATE
+        ORISON_SOURCE_DIR="${CMAKE_SOURCE_DIR}"
+)
+
 target_compile_features(orison_driver_array_constant_cli_smoke PRIVATE cxx_std_23)
 
 add_test(

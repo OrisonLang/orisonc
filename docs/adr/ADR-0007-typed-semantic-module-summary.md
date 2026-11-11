@@ -113,6 +113,9 @@ when it enters a distinct alias type, and ordinary assignment and return compati
 Foreign-call validation expands local and imported aliases only to recognize the approved `Pointer<Byte>` string-literal
 conversion. Foreign signature lowering resolves aliases before LLVM ABI mapping and C adapter validation while retaining
 the declared source names for nominal argument checking. Other pointer element types do not receive string conversion.
+Constant initializer validation resolves local and imported aliases for scalar literals and array, record, or choice
+constructor contexts. Alias-preserving compile-time scalar operators can initialize the same alias. References to values
+of an underlying type remain nominal and require an explicit conversion before initializing a distinct alias.
 The driver emits request artifacts with `--emit-specialization-requests` and accepts repeatable
 `--specialization-requests` inputs, allowing build orchestration to aggregate consumer requests for producer
 compilation. ADR-0008 defines explicit dependency scheduling and object selection through driver build plans.

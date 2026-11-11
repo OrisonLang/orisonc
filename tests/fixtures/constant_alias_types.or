@@ -1,0 +1,8 @@
+package fixtures.constant.alias_types
+
+public type Word = UInt32
+public type Register = Address
+public type Words = Array<UInt32, 2>
+public type Flag = Bool
+public type Ratio = Float64
+public type Label = Text
