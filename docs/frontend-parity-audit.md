@@ -3926,3 +3926,7 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-11-11: Address-typed constants now accept the documented `Address + integer` expression shape. Validation
   preserves aliased address bases, rejects non-integer offsets, and lowering emits a storage-free LLVM constant `add`.
   General runtime address arithmetic and additional address operators remain outside this rule. No syntax changed.
+- 2026-11-11: Primitive module constants now evaluate to final scalar literals before LLVM emission. Integer and
+  floating arithmetic, comparisons, logical and unary operations, integer casts, and ternary selection compose across
+  forward references; `Float32` uses 32-bit rounding. Generated function IR contains no primitive constant-expression
+  instructions or global storage. Aggregate and imported constants remain open. No syntax changed.

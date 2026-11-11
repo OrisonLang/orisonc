@@ -211,12 +211,16 @@ auto main() -> int {
         std::istreambuf_iterator<char> {scalar_constants_ir_input},
         std::istreambuf_iterator<char> {},
     };
-    assert(
-        scalar_constants_ir.find("ret i64 add (i64 1073745920, i64 4)") !=
-        std::string::npos
-    );
+    assert(scalar_constants_ir.find("ret i64 1073745924") != std::string::npos);
     assert(scalar_constants_ir.find("ret double 1.5") != std::string::npos);
-    assert(scalar_constants_ir.find("ret i32 xor (i32 255, i32 255)") != std::string::npos);
+    assert(scalar_constants_ir.find("ret i64 255") != std::string::npos);
+    assert(scalar_constants_ir.find("ret i64 -1") != std::string::npos);
+    assert(scalar_constants_ir.find("ret i32 7") != std::string::npos);
+    assert(scalar_constants_ir.find("br i1 1") != std::string::npos);
+    assert(scalar_constants_ir.find("ret i32 0") != std::string::npos);
+    assert(scalar_constants_ir.find("icmp ") == std::string::npos);
+    assert(scalar_constants_ir.find("fcmp ") == std::string::npos);
+    assert(scalar_constants_ir.find("select ") == std::string::npos);
     assert(scalar_constants_ir.find("@DEVICE_BASE") == std::string::npos);
     assert(std::system((executable.string() + " run " + scalar_constants_path.string()).c_str()) == 0);
 

@@ -9,9 +9,12 @@
 #include "orison/lowering/type_lowering.hpp"
 
 #include <algorithm>
+#include <array>
+#include <bit>
 #include <charconv>
 #include <cctype>
 #include <cstdint>
+#include <limits>
 #include <memory>
 #include <optional>
 #include <string_view>
@@ -336,6 +339,213 @@ auto constant_binary_instruction(
     return std::nullopt;
 }
 
+auto constant_integer_bit_width(std::string_view type) -> std::optional<unsigned> {
+    if (!type.starts_with("i") || type.size() == 1) {
+        return std::nullopt;
+    }
+    auto width = unsigned {0};
+    auto digits = type.substr(1);
+    auto const result = std::from_chars(digits.data(), digits.data() + digits.size(), width);
+    if (result.ec != std::errc {} || result.ptr != digits.data() + digits.size()) {
+        return std::nullopt;
+    }
+    return width;
+}
+
+auto integer_width_mask(unsigned width) -> std::uint64_t {
+    return width >= 64
+        ? std::numeric_limits<std::uint64_t>::max()
+        : (std::uint64_t {1} << width) - 1;
+}
+
+auto parsed_integer_constant(std::string_view text, unsigned width) -> std::optional<std::uint64_t> {
+    auto negative = !text.empty() && text.front() == '-';
+    if (negative) {
+        text.remove_prefix(1);
+    }
+    auto value = std::uint64_t {0};
+    auto const parsed = std::from_chars(text.data(), text.data() + text.size(), value);
+    if (text.empty() || parsed.ec != std::errc {} || parsed.ptr != text.data() + text.size()) {
+        return std::nullopt;
+    }
+    value &= integer_width_mask(width);
+    return negative ? ((~value + 1) & integer_width_mask(width)) : value;
+}
+
+auto signed_integer_constant(std::uint64_t value, unsigned width) -> std::int64_t {
+    value &= integer_width_mask(width);
+    if (width >= 64) {
+        return std::bit_cast<std::int64_t>(value);
+    }
+    auto const sign_bit = std::uint64_t {1} << (width - 1);
+    return (value & sign_bit) == 0
+        ? static_cast<std::int64_t>(value)
+        : static_cast<std::int64_t>(value) - static_cast<std::int64_t>(std::uint64_t {1} << width);
+}
+
+auto formatted_integer_constant(
+    std::uint64_t value,
+    LoweredType const& type
+) -> std::optional<std::string> {
+    auto width = constant_integer_bit_width(type.type);
+    if (!width.has_value() || *width == 0 || *width > 64) {
+        return std::nullopt;
+    }
+    value &= integer_width_mask(*width);
+    return type.signedness == IntegerSignedness::signed_integer
+        ? std::to_string(signed_integer_constant(value, *width))
+        : std::to_string(value);
+}
+
+auto parsed_float_constant(std::string_view text, std::string_view type) -> std::optional<double> {
+    auto value = double {0};
+    auto const parsed = std::from_chars(text.data(), text.data() + text.size(), value);
+    if (text.empty() || parsed.ec != std::errc {} || parsed.ptr != text.data() + text.size()) {
+        return std::nullopt;
+    }
+    return type == "float" ? static_cast<double>(static_cast<float>(value)) : value;
+}
+
+auto formatted_float_constant(double value, std::string_view type) -> std::optional<std::string> {
+    if (type == "float") {
+        value = static_cast<double>(static_cast<float>(value));
+    }
+    auto buffer = std::array<char, 64> {};
+    auto const formatted = std::to_chars(
+        buffer.data(),
+        buffer.data() + buffer.size(),
+        value,
+        std::chars_format::general,
+        type == "float"
+            ? std::numeric_limits<float>::max_digits10
+            : std::numeric_limits<double>::max_digits10
+    );
+    if (formatted.ec != std::errc {}) {
+        return std::nullopt;
+    }
+    auto result = std::string {buffer.data(), formatted.ptr};
+    if (result.find_first_of(".eE") == std::string::npos) {
+        result += ".0";
+    }
+    return result;
+}
+
+auto scalar_constant_expression_type(
+    syntax::ExpressionSyntax const& expression,
+    std::unordered_map<std::string, syntax::ConstantSyntax const*> const& declarations,
+    LoweringContext const& context
+) -> std::optional<LoweredType> {
+    using syntax::ExpressionKind;
+    if (expression.kind == ExpressionKind::name) {
+        if (auto constant = context.constants.find(expression.text); constant != context.constants.end()) {
+            return LoweredType {
+                .type = constant->second.value.type,
+                .signedness = constant->second.value.signedness,
+            };
+        }
+        auto declaration = declarations.find(expression.text);
+        return declaration == declarations.end()
+            ? std::nullopt
+            : lowered_type_for_source_type_name(
+                render_source_type_name(declaration->second->type),
+                context
+            );
+    }
+    if (expression.kind == ExpressionKind::integer_literal) {
+        return lowered_type_for_source_type_name("Int64", context);
+    }
+    if (expression.kind == ExpressionKind::float_literal) {
+        return lowered_type_for_source_type_name("Float64", context);
+    }
+    if (expression.kind == ExpressionKind::boolean_literal) {
+        return lowered_type_for_source_type_name("Bool", context);
+    }
+    if (expression.kind == ExpressionKind::cast) {
+        return lowered_type_for_source_type_name(expression.text, context);
+    }
+    if (expression.kind == ExpressionKind::unary && expression.left != nullptr) {
+        return expression.text == "not"
+            ? lowered_type_for_source_type_name("Bool", context)
+            : scalar_constant_expression_type(*expression.left, declarations, context);
+    }
+    if (expression.kind == ExpressionKind::binary && expression.left != nullptr &&
+        expression.right != nullptr) {
+        if (expression.text == "==" || expression.text == "!=" || expression.text == "<" ||
+            expression.text == "<=" || expression.text == ">" || expression.text == ">=" ||
+            expression.text == "and" || expression.text == "or") {
+            return lowered_type_for_source_type_name("Bool", context);
+        }
+        auto left = scalar_constant_expression_type(*expression.left, declarations, context);
+        auto right = scalar_constant_expression_type(*expression.right, declarations, context);
+        if (expression.left->kind == ExpressionKind::integer_literal && right.has_value()) {
+            return right;
+        }
+        if (expression.right->kind == ExpressionKind::integer_literal && left.has_value()) {
+            return left;
+        }
+        return left.has_value() && right.has_value() && left->type == right->type &&
+                left->signedness == right->signedness
+            ? left
+            : std::nullopt;
+    }
+    if (expression.kind == ExpressionKind::ternary && expression.right != nullptr &&
+        expression.alternate != nullptr) {
+        auto consequence = scalar_constant_expression_type(*expression.right, declarations, context);
+        auto alternate = scalar_constant_expression_type(*expression.alternate, declarations, context);
+        if (expression.right->kind == ExpressionKind::integer_literal && alternate.has_value()) {
+            return alternate;
+        }
+        if (expression.alternate->kind == ExpressionKind::integer_literal && consequence.has_value()) {
+            return consequence;
+        }
+        return consequence.has_value() && alternate.has_value() &&
+                consequence->type == alternate->type &&
+                consequence->signedness == alternate->signedness
+            ? consequence
+            : std::nullopt;
+    }
+    return std::nullopt;
+}
+
+auto constant_comparison_instruction(
+    std::string_view operator_text,
+    LoweredType const& operand_type
+) -> std::optional<std::string> {
+    auto predicate = std::string_view {};
+    if (operator_text == "==") {
+        predicate = operand_type.type == "float" || operand_type.type == "double" ? "oeq" : "eq";
+    } else if (operator_text == "!=") {
+        predicate = operand_type.type == "float" || operand_type.type == "double" ? "one" : "ne";
+    } else if (operator_text == "<") {
+        predicate = operand_type.type == "float" || operand_type.type == "double"
+            ? "olt"
+            : (operand_type.signedness == IntegerSignedness::signed_integer ? "slt" : "ult");
+    } else if (operator_text == "<=") {
+        predicate = operand_type.type == "float" || operand_type.type == "double"
+            ? "ole"
+            : (operand_type.signedness == IntegerSignedness::signed_integer ? "sle" : "ule");
+    } else if (operator_text == ">") {
+        predicate = operand_type.type == "float" || operand_type.type == "double"
+            ? "ogt"
+            : (operand_type.signedness == IntegerSignedness::signed_integer ? "sgt" : "ugt");
+    } else if (operator_text == ">=") {
+        predicate = operand_type.type == "float" || operand_type.type == "double"
+            ? "oge"
+            : (operand_type.signedness == IntegerSignedness::signed_integer ? "sge" : "uge");
+    } else {
+        return std::nullopt;
+    }
+
+    auto const floating = operand_type.type == "float" || operand_type.type == "double";
+    if (!floating && !operand_type.type.starts_with("i")) {
+        return std::nullopt;
+    }
+    if (operand_type.type == "i1" && operator_text != "==" && operator_text != "!=") {
+        return std::nullopt;
+    }
+    return std::string {floating ? "fcmp " : "icmp "} + std::string {predicate};
+}
+
 auto lower_scalar_constant_expression(
     syntax::ExpressionSyntax const& expression,
     LoweredType const& expected_type,
@@ -430,13 +640,57 @@ auto lower_scalar_constant_expression(
             cast_type->signedness != expected_type.signedness) {
             return std::nullopt;
         }
-        return lower_scalar_constant_expression(
+        if (expression.left->kind == ExpressionKind::integer_literal) {
+            return lower_scalar_constant_expression(
+                *expression.left,
+                expected_type,
+                declarations,
+                context,
+                active_constants
+            );
+        }
+        auto source_type = scalar_constant_expression_type(*expression.left, declarations, context);
+        if (!source_type.has_value()) {
+            return std::nullopt;
+        }
+        auto operand = lower_scalar_constant_expression(
             *expression.left,
-            expected_type,
+            *source_type,
             declarations,
             context,
             active_constants
         );
+        if (!operand.has_value()) {
+            return std::nullopt;
+        }
+        if (source_type->type == expected_type.type) {
+            operand->signedness = expected_type.signedness;
+            return operand;
+        }
+        auto source_width = constant_integer_bit_width(source_type->type);
+        auto target_width = constant_integer_bit_width(expected_type.type);
+        if (!source_width.has_value() || !target_width.has_value()) {
+            return std::nullopt;
+        }
+        auto value = parsed_integer_constant(operand->value, *source_width);
+        if (!value.has_value()) {
+            return std::nullopt;
+        }
+        if (*target_width > *source_width &&
+            source_type->signedness == IntegerSignedness::signed_integer) {
+            *value = static_cast<std::uint64_t>(
+                signed_integer_constant(*value, *source_width)
+            );
+        }
+        auto formatted = formatted_integer_constant(*value, expected_type);
+        if (!formatted.has_value()) {
+            return std::nullopt;
+        }
+        return LoweredExpression {
+            .type = expected_type.type,
+            .value = std::move(*formatted),
+            .signedness = expected_type.signedness,
+        };
     }
     if (expression.kind == ExpressionKind::unary && expression.left != nullptr) {
         auto operand = lower_scalar_constant_expression(
@@ -450,29 +704,167 @@ auto lower_scalar_constant_expression(
             return std::nullopt;
         }
         if (expression.text == "not" && expected_type.type == "i1") {
-            operand->value = "xor (i1 " + operand->value + ", i1 1)";
+            auto value = parsed_integer_constant(operand->value, 1);
+            if (!value.has_value()) {
+                return std::nullopt;
+            }
+            operand->value = *value == 0 ? "1" : "0";
             return operand;
         }
         if (expression.text == "bit_not" && expected_type.type.starts_with("i")) {
-            operand->value = "xor (" + expected_type.type + " " + operand->value + ", " +
-                expected_type.type + " -1)";
+            auto width = constant_integer_bit_width(expected_type.type);
+            auto value = width.has_value()
+                ? parsed_integer_constant(operand->value, *width)
+                : std::nullopt;
+            auto formatted = value.has_value()
+                ? formatted_integer_constant(~*value, expected_type)
+                : std::nullopt;
+            if (!formatted.has_value()) {
+                return std::nullopt;
+            }
+            operand->value = std::move(*formatted);
             return operand;
         }
         if (expression.text == "-") {
-            auto zero = expected_type.type == "float" || expected_type.type == "double"
-                ? "0.0"
-                : "0";
-            auto instruction = expected_type.type == "float" || expected_type.type == "double"
-                ? "fsub"
-                : "sub";
-            operand->value = std::string {instruction} + " (" + expected_type.type + " " + zero +
-                ", " + expected_type.type + " " + operand->value + ")";
+            if (expected_type.type == "float" || expected_type.type == "double") {
+                auto value = parsed_float_constant(operand->value, expected_type.type);
+                auto formatted = value.has_value()
+                    ? formatted_float_constant(-*value, expected_type.type)
+                    : std::nullopt;
+                if (!formatted.has_value()) {
+                    return std::nullopt;
+                }
+                operand->value = std::move(*formatted);
+                return operand;
+            }
+            auto width = constant_integer_bit_width(expected_type.type);
+            auto value = width.has_value()
+                ? parsed_integer_constant(operand->value, *width)
+                : std::nullopt;
+            auto formatted = value.has_value()
+                ? formatted_integer_constant((~*value) + 1, expected_type)
+                : std::nullopt;
+            if (!formatted.has_value()) {
+                return std::nullopt;
+            }
+            operand->value = std::move(*formatted);
             return operand;
         }
         return std::nullopt;
     }
     if (expression.kind == ExpressionKind::binary && expression.left != nullptr &&
         expression.right != nullptr) {
+        if ((expression.text == "and" || expression.text == "or") && expected_type.type == "i1") {
+            auto left = lower_scalar_constant_expression(
+                *expression.left,
+                expected_type,
+                declarations,
+                context,
+                active_constants
+            );
+            auto right = lower_scalar_constant_expression(
+                *expression.right,
+                expected_type,
+                declarations,
+                context,
+                active_constants
+            );
+            if (!left.has_value() || !right.has_value()) {
+                return std::nullopt;
+            }
+            auto left_value = parsed_integer_constant(left->value, 1);
+            auto right_value = parsed_integer_constant(right->value, 1);
+            if (!left_value.has_value() || !right_value.has_value()) {
+                return std::nullopt;
+            }
+            auto result = expression.text == "and"
+                ? (*left_value != 0 && *right_value != 0)
+                : (*left_value != 0 || *right_value != 0);
+            return LoweredExpression {
+                .type = "i1",
+                .value = result ? "1" : "0",
+                .signedness = IntegerSignedness::not_integer,
+            };
+        }
+        if (expected_type.type == "i1") {
+            auto left_type = scalar_constant_expression_type(*expression.left, declarations, context);
+            auto right_type = scalar_constant_expression_type(*expression.right, declarations, context);
+            auto operand_type = expression.left->kind == ExpressionKind::integer_literal
+                ? right_type
+                : left_type;
+            if (!operand_type.has_value() ||
+                (right_type.has_value() && expression.right->kind != ExpressionKind::integer_literal &&
+                 (operand_type->type != right_type->type ||
+                  operand_type->signedness != right_type->signedness))) {
+                return std::nullopt;
+            }
+            auto instruction = constant_comparison_instruction(expression.text, *operand_type);
+            if (!instruction.has_value()) {
+                return std::nullopt;
+            }
+            auto left = lower_scalar_constant_expression(
+                *expression.left,
+                *operand_type,
+                declarations,
+                context,
+                active_constants
+            );
+            auto right = lower_scalar_constant_expression(
+                *expression.right,
+                *operand_type,
+                declarations,
+                context,
+                active_constants
+            );
+            if (!left.has_value() || !right.has_value()) {
+                return std::nullopt;
+            }
+            auto result = false;
+            if (operand_type->type == "float" || operand_type->type == "double") {
+                auto left_value = parsed_float_constant(left->value, operand_type->type);
+                auto right_value = parsed_float_constant(right->value, operand_type->type);
+                if (!left_value.has_value() || !right_value.has_value()) {
+                    return std::nullopt;
+                }
+                if (expression.text == "==") result = *left_value == *right_value;
+                else if (expression.text == "!=") result = *left_value != *right_value;
+                else if (expression.text == "<") result = *left_value < *right_value;
+                else if (expression.text == "<=") result = *left_value <= *right_value;
+                else if (expression.text == ">") result = *left_value > *right_value;
+                else if (expression.text == ">=") result = *left_value >= *right_value;
+            } else {
+                auto width = constant_integer_bit_width(operand_type->type);
+                auto left_value = width.has_value()
+                    ? parsed_integer_constant(left->value, *width)
+                    : std::nullopt;
+                auto right_value = width.has_value()
+                    ? parsed_integer_constant(right->value, *width)
+                    : std::nullopt;
+                if (!width.has_value() || !left_value.has_value() || !right_value.has_value()) {
+                    return std::nullopt;
+                }
+                if (expression.text == "==") result = *left_value == *right_value;
+                else if (expression.text == "!=") result = *left_value != *right_value;
+                else if (operand_type->signedness == IntegerSignedness::signed_integer) {
+                    auto left_signed = signed_integer_constant(*left_value, *width);
+                    auto right_signed = signed_integer_constant(*right_value, *width);
+                    if (expression.text == "<") result = left_signed < right_signed;
+                    else if (expression.text == "<=") result = left_signed <= right_signed;
+                    else if (expression.text == ">") result = left_signed > right_signed;
+                    else if (expression.text == ">=") result = left_signed >= right_signed;
+                } else {
+                    if (expression.text == "<") result = *left_value < *right_value;
+                    else if (expression.text == "<=") result = *left_value <= *right_value;
+                    else if (expression.text == ">") result = *left_value > *right_value;
+                    else if (expression.text == ">=") result = *left_value >= *right_value;
+                }
+            }
+            return LoweredExpression {
+                .type = "i1",
+                .value = result ? "1" : "0",
+                .signedness = IntegerSignedness::not_integer,
+            };
+        }
         auto instruction = constant_binary_instruction(expression.text, expected_type);
         if (!instruction.has_value()) {
             return std::nullopt;
@@ -494,12 +886,109 @@ auto lower_scalar_constant_expression(
         if (!left.has_value() || !right.has_value()) {
             return std::nullopt;
         }
+        if (expected_type.type == "float" || expected_type.type == "double") {
+            auto left_value = parsed_float_constant(left->value, expected_type.type);
+            auto right_value = parsed_float_constant(right->value, expected_type.type);
+            if (!left_value.has_value() || !right_value.has_value()) {
+                return std::nullopt;
+            }
+            auto value = double {0};
+            if (expression.text == "+") value = *left_value + *right_value;
+            else if (expression.text == "-") value = *left_value - *right_value;
+            else if (expression.text == "*") value = *left_value * *right_value;
+            else if (expression.text == "/" && *right_value != 0.0) value = *left_value / *right_value;
+            else return std::nullopt;
+            auto formatted = formatted_float_constant(value, expected_type.type);
+            return formatted.has_value()
+                ? std::optional<LoweredExpression> {LoweredExpression {
+                    .type = expected_type.type,
+                    .value = std::move(*formatted),
+                    .signedness = expected_type.signedness,
+                }}
+                : std::nullopt;
+        }
+        auto width = constant_integer_bit_width(expected_type.type);
+        auto left_value = width.has_value()
+            ? parsed_integer_constant(left->value, *width)
+            : std::nullopt;
+        auto right_value = width.has_value()
+            ? parsed_integer_constant(right->value, *width)
+            : std::nullopt;
+        if (!width.has_value() || !left_value.has_value() || !right_value.has_value()) {
+            return std::nullopt;
+        }
+        auto value = std::uint64_t {0};
+        if (expression.text == "+") value = *left_value + *right_value;
+        else if (expression.text == "-") value = *left_value - *right_value;
+        else if (expression.text == "*") value = *left_value * *right_value;
+        else if (expression.text == "bit_and") value = *left_value & *right_value;
+        else if (expression.text == "bit_or") value = *left_value | *right_value;
+        else if (expression.text == "bit_xor") value = *left_value ^ *right_value;
+        else if (expression.text == "shift_left" && *right_value < *width) {
+            value = *left_value << *right_value;
+        } else if (expression.text == "shift_right" && *right_value < *width) {
+            value = expected_type.signedness == IntegerSignedness::signed_integer
+                ? static_cast<std::uint64_t>(signed_integer_constant(*left_value, *width) >> *right_value)
+                : *left_value >> *right_value;
+        } else if ((expression.text == "/" || expression.text == "%") && *right_value != 0) {
+            if (expected_type.signedness == IntegerSignedness::signed_integer) {
+                auto left_signed = signed_integer_constant(*left_value, *width);
+                auto right_signed = signed_integer_constant(*right_value, *width);
+                auto minimum = signed_integer_constant(
+                    std::uint64_t {1} << (*width - 1),
+                    *width
+                );
+                if (right_signed == 0 ||
+                    (left_signed == minimum && right_signed == -1)) {
+                    return std::nullopt;
+                }
+                value = static_cast<std::uint64_t>(
+                    expression.text == "/" ? left_signed / right_signed : left_signed % right_signed
+                );
+            } else {
+                value = expression.text == "/"
+                    ? *left_value / *right_value
+                    : *left_value % *right_value;
+            }
+        } else {
+            return std::nullopt;
+        }
+        auto formatted = formatted_integer_constant(value, expected_type);
+        if (!formatted.has_value()) {
+            return std::nullopt;
+        }
         return LoweredExpression {
             .type = expected_type.type,
-            .value = std::string {*instruction} + " (" + expected_type.type + " " + left->value +
-                ", " + expected_type.type + " " + right->value + ")",
+            .value = std::move(*formatted),
             .signedness = expected_type.signedness,
         };
+    }
+    if (expression.kind == ExpressionKind::ternary && expression.left != nullptr &&
+        expression.right != nullptr && expression.alternate != nullptr) {
+        auto condition_type = LoweredType {
+            .type = "i1",
+            .signedness = IntegerSignedness::not_integer,
+        };
+        auto condition = lower_scalar_constant_expression(
+            *expression.left,
+            condition_type,
+            declarations,
+            context,
+            active_constants
+        );
+        auto condition_value = condition.has_value()
+            ? parsed_integer_constant(condition->value, 1)
+            : std::nullopt;
+        if (!condition_value.has_value()) {
+            return std::nullopt;
+        }
+        return lower_scalar_constant_expression(
+            *condition_value != 0 ? *expression.right : *expression.alternate,
+            expected_type,
+            declarations,
+            context,
+            active_constants
+        );
     }
     return std::nullopt;
 }
