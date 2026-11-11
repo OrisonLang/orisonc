@@ -2,7 +2,7 @@ package fixtures.scalar_constants_run
 
 type RegisterAddress = Address
 
-const DEVICE_DATA: RegisterAddress = DEVICE_BASE
+const DEVICE_DATA: RegisterAddress = DEVICE_BASE + 0x04
 const DEVICE_BASE: RegisterAddress = 0x4000_1000
 const EXIT_CODE: UInt32 = LOW_MASK bit_xor 255
 const LOW_MASK: UInt32 = 255

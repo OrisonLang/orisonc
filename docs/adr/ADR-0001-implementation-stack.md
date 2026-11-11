@@ -363,6 +363,9 @@ analysis, and lowering components.
   Integer, address, Boolean, and floating literals, scalar references, unary operations, and arithmetic or bitwise
   constant expressions require no runtime global storage. Aggregate constants and unsupported scalar expression forms
   remain outside this first lowering slice.
+  Address-typed constant validation accepts the documented `Address + integer` form, including aliased address bases
+  and forward constant references. The resulting LLVM constant expression remains storage-free. This rule does not
+  authorize general runtime address arithmetic or non-integer offsets.
 - Development builds may use the platform's monolithic shared LLVM target when component archives are unavailable;
   release packaging must use a static LLVM distribution to preserve statically linked tool executables.
 - Future ADRs should define the lowering pipeline, incremental compilation architecture, and runtime boundary.

@@ -3923,3 +3923,6 @@ This file tracks which source-language frontend slices are reflected in the curr
   dependency evaluation covers integer, address, Boolean, and floating literals plus scalar references and supported
   compile-time unary, arithmetic, bitwise, and shift expressions. Constants add no runtime global storage. Aggregate
   constants, imported constants, comparisons, and semantic address arithmetic remain open. No syntax changed.
+- 2026-11-11: Address-typed constants now accept the documented `Address + integer` expression shape. Validation
+  preserves aliased address bases, rejects non-integer offsets, and lowering emits a storage-free LLVM constant `add`.
+  General runtime address arithmetic and additional address operators remain outside this rule. No syntax changed.

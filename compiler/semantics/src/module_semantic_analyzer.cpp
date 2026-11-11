@@ -2875,6 +2875,29 @@ private:
         return false;
     }
 
+    auto constant_address_expression_type_name(
+        syntax::ExpressionSyntax const& expression
+    ) const -> std::string {
+        if (expression.kind == syntax::ExpressionKind::name) {
+            auto type_name = infer_expression_type_name(expression);
+            return is_address_type_name(type_name) ? type_name : std::string {};
+        }
+
+        if (expression.kind != syntax::ExpressionKind::binary || expression.text != "+" ||
+            !expression.left || !expression.right) {
+            return {};
+        }
+
+        auto left_type_name = constant_address_expression_type_name(*expression.left);
+        auto right_type_name = infer_expression_type_name(*expression.right);
+        auto resolved_right_type_name = resolve_type_alias_target_name(right_type_name);
+        if (left_type_name.empty() || !resolved_right_type_name.has_value() ||
+            !is_integer_type_name(*resolved_right_type_name)) {
+            return {};
+        }
+        return left_type_name;
+    }
+
     auto is_structurally_pointer_like_expression(syntax::ExpressionSyntax const& expression) const -> bool {
         if (expression.kind == syntax::ExpressionKind::name) {
             return true;
@@ -2960,23 +2983,38 @@ private:
     void validate_address_typed_expression(
         syntax::ExpressionSyntax const& expression,
         std::size_t line,
-        std::string_view context_description
+        std::string_view context_description,
+        bool allow_constant_arithmetic = false
     ) {
         if (expression.kind == syntax::ExpressionKind::ternary) {
             if (expression.right) {
                 auto diagnostic_count_before_right = diagnostics_.entries().size();
-                validate_address_typed_expression(*expression.right, line, context_description);
+                validate_address_typed_expression(
+                    *expression.right,
+                    line,
+                    context_description,
+                    allow_constant_arithmetic
+                );
                 if (diagnostics_.entries().size() != diagnostic_count_before_right) {
                     return;
                 }
             }
             if (expression.alternate) {
-                validate_address_typed_expression(*expression.alternate, line, context_description);
+                validate_address_typed_expression(
+                    *expression.alternate,
+                    line,
+                    context_description,
+                    allow_constant_arithmetic
+                );
             }
             return;
         }
 
         if (expression.kind == syntax::ExpressionKind::integer_literal) {
+            return;
+        }
+
+        if (allow_constant_arithmetic && !constant_address_expression_type_name(expression).empty()) {
             return;
         }
 
@@ -6273,7 +6311,8 @@ private:
                 validate_address_typed_expression(
                     constant.initializer,
                     constant.initializer.line,
-                    "address-typed constant initializer"
+                    "address-typed constant initializer",
+                    true
                 );
                 expected_pointer_type_name_ = saved_expected_pointer_type_name;
                 continue;

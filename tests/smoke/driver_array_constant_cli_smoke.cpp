@@ -211,11 +211,35 @@ auto main() -> int {
         std::istreambuf_iterator<char> {scalar_constants_ir_input},
         std::istreambuf_iterator<char> {},
     };
-    assert(scalar_constants_ir.find("ret i64 1073745920") != std::string::npos);
+    assert(
+        scalar_constants_ir.find("ret i64 add (i64 1073745920, i64 4)") !=
+        std::string::npos
+    );
     assert(scalar_constants_ir.find("ret double 1.5") != std::string::npos);
     assert(scalar_constants_ir.find("ret i32 xor (i32 255, i32 255)") != std::string::npos);
     assert(scalar_constants_ir.find("@DEVICE_BASE") == std::string::npos);
     assert(std::system((executable.string() + " run " + scalar_constants_path.string()).c_str()) == 0);
+
+    assert_cli_parse_failure(
+        executable,
+        smoke_temp_root / "constant_address_non_integer_offset.or",
+        std::vector<std::string_view> {
+            "package fixtures.constant.address_non_integer_offset",
+            "const DEVICE_BASE: Address = 0x4000_1000",
+            "const DEVICE_DATA: Address = DEVICE_BASE + true",
+        },
+        "address-typed constant initializer currently requires a structurally address-like expression"
+    );
+    assert_cli_parse_failure(
+        executable,
+        smoke_temp_root / "runtime_address_arithmetic.or",
+        std::vector<std::string_view> {
+            "package fixtures.runtime.address_arithmetic",
+            "function offset(base: Address) -> Address",
+            "    return base + 4",
+        },
+        "address-returning function currently requires a structurally address-like expression"
+    );
 
     assert_cli_parse_failure(
         executable,
