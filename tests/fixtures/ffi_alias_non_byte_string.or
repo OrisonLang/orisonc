@@ -1,0 +1,9 @@
+package fixtures.ffi.alias_non_byte_string
+
+type WordPointer = Pointer<UInt32>
+
+package foreign "c"
+    function print_line(text: WordPointer) -> Int32 as "puts"
+
+public function main() -> Int32
+    print_line("not bytes")

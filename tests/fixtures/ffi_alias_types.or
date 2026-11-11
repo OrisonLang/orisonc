@@ -1,0 +1,5 @@
+package fixtures.ffi.alias_types
+
+public type CFormat = Pointer<Byte>
+public type CResult = Int32
+public type CValue = UInt32

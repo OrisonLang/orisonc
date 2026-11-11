@@ -1076,7 +1076,9 @@ private:
             }
 
             auto parameter_type_name = render_type_name(parameter_type);
-            if (allow_string_pointer && parameter_type_name == "Pointer<Byte>" &&
+            auto resolved_parameter_type_name = resolve_type_alias_target_name(parameter_type_name);
+            if (allow_string_pointer && resolved_parameter_type_name.has_value() &&
+                *resolved_parameter_type_name == "Pointer<Byte>" &&
                 arguments[index].kind == syntax::ExpressionKind::string_literal) {
                 continue;
             }

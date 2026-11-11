@@ -3911,3 +3911,7 @@ This file tracks which source-language frontend slices are reflected in the curr
   imported aliases cycle-safely. LLVM lowering resolves aliased pointer and pointee representations for address
   conversion, GEP, load, and store emission. A separate-object executable exercises all current low-level intrinsics;
   negative coverage rejects mismatched writes, and existing nominal alias compatibility remains unchanged. No syntax changed.
+- 2026-11-10: C foreign signatures now resolve local and imported type aliases before LLVM ABI mapping and adapter
+  validation. The foreign-call-only string-literal conversion recognizes alias chains ending at `Pointer<Byte>` and
+  continues to reject aliases to other pointer element types. Imported alias execution covers fixed `printf` and
+  `strcmp` declarations without changing ordinary nominal compatibility or language syntax.

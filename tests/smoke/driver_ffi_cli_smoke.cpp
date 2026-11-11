@@ -59,6 +59,33 @@ auto main() -> int {
     auto aggregate_scalar_ffi_path = examples / "ffi_aggregate_scalar_parameters.or";
     assert_successful_command(executable.string() + " run " + aggregate_scalar_ffi_path.string() + " >/dev/null");
 
+    auto fixtures = std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures";
+    auto alias_types_path = fixtures / "ffi_alias_types.or";
+    auto alias_interface_path = smoke_temp_root / "ffi_alias_types.opi";
+    assert_successful_command(
+        executable.string() + " --emit-package-interface " + alias_types_path.string() +
+        " -o " + alias_interface_path.string()
+    );
+
+    auto alias_parameters_path = fixtures / "ffi_alias_parameters.or";
+    auto alias_output = read_command_output_with_exit_code(
+        executable.string() + " --package-interface " + alias_interface_path.string() +
+            " run " + alias_parameters_path.string(),
+        0
+    );
+    assert(alias_output == "alias=7\n");
+
+    auto non_byte_string_path = fixtures / "ffi_alias_non_byte_string.or";
+    auto non_byte_string_output = read_command_output_with_exit_code(
+        executable.string() + " --emit-llvm " + non_byte_string_path.string() + " 2>&1",
+        1
+    );
+    assert(
+        non_byte_string_output.find(
+            "function pointer argument 'text' currently requires a structurally pointer-like expression"
+        ) != std::string::npos
+    );
+
     std::filesystem::remove_all(smoke_temp_root);
     return 0;
 }

@@ -12,6 +12,8 @@ The first runnable foreign-function example passes a string literal to a C funct
 
 - A string literal used as a `Pointer<Byte>` argument to a `foreign "c"` call lowers to a private, immutable,
   null-terminated LLVM byte-array global.
+- Local and imported aliases that resolve cycle-safely to `Pointer<Byte>` receive the same foreign-call-only string
+  conversion. Aliases to other pointer element types remain rejected.
 - The call passes the global address as LLVM `ptr`.
 - This conversion is limited to C foreign-call arguments. Ordinary `Pointer<Byte>` parameters still require explicit
   pointer-like expressions.
@@ -35,6 +37,8 @@ The first runnable foreign-function example passes a string literal to a C funct
   component used by both ordinary function lowering and C ABI adapter validation.
 - Lowered function signatures are a shared structured model built once from syntax and then optionally adapted for a
   foreign ABI, avoiding parallel return-type, parameter-type, signedness, symbol, and adapter state construction.
+- Foreign signatures resolve local and imported aliases before LLVM type mapping and adapter validation while retaining
+  declared source names for nominal call checking and diagnostics.
 - Module-wide callable collection, ordered foreign declarations, ABI filtering, adapter application, and adapter
   diagnostics live in a dedicated lowering-context builder; LLVM emission adds only IR-specific string-global state.
 - String literal decoding, null termination, first-occurrence deduplication, module traversal, and LLVM byte encoding

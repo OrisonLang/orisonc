@@ -3643,8 +3643,14 @@ auto build_lowering_context(
                 continue;
             }
             auto const* adapter = find_c_abi_adapter(symbol_name);
-            auto signature =
-                lower_function_signature(function.return_type, function.parameters, std::move(symbol_name));
+            auto signature = lower_contextual_function_signature(
+                function.return_type,
+                function.parameters,
+                std::move(symbol_name),
+                record_names,
+                context.choices,
+                context.type_aliases
+            );
             if (adapter != nullptr) {
                 auto validation = apply_c_abi_adapter(signature, *adapter);
                 if (validation.error == CAbiAdapterValidationError::invalid_fixed_prefix) {

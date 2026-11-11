@@ -110,6 +110,9 @@ Unsafe low-level validation expands cycle-safe aliases when identifying `Address
 integer offsets, and raw or volatile write compatibility. Lowering resolves aliased pointer and pointee representations
 before emitting address conversion, loads, stores, and pointer offsets. A read result still needs an explicit conversion
 when it enters a distinct alias type, and ordinary assignment and return compatibility remain nominal.
+Foreign-call validation expands local and imported aliases only to recognize the approved `Pointer<Byte>` string-literal
+conversion. Foreign signature lowering resolves aliases before LLVM ABI mapping and C adapter validation while retaining
+the declared source names for nominal argument checking. Other pointer element types do not receive string conversion.
 The driver emits request artifacts with `--emit-specialization-requests` and accepts repeatable
 `--specialization-requests` inputs, allowing build orchestration to aggregate consumer requests for producer
 compilation. ADR-0008 defines explicit dependency scheduling and object selection through driver build plans.

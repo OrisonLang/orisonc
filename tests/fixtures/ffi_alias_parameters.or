@@ -1,0 +1,18 @@
+package fixtures.ffi.alias_parameters
+
+import
+    CFormat as ExternalFormat from fixtures.ffi.alias_types
+    CResult as ExternalResult from fixtures.ffi.alias_types
+    CValue as ExternalValue from fixtures.ffi.alias_types
+
+type Format = ExternalFormat
+type Result = ExternalResult
+type Value = ExternalValue
+
+package foreign "c"
+    function print_status(format: Format, value: Value) -> Result as "printf"
+    function compare(left: ExternalFormat, right: Format) -> Result as "strcmp"
+
+public function main() -> Int32
+    let printed = print_status("alias=%u\n", 7 as Value)
+    compare("Orison", "Orison") as Int32
