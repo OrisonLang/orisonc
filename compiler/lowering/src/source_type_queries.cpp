@@ -5311,6 +5311,10 @@ auto source_type_name_for_expression(
         if (source_type != state.source_type_names.end()) {
             return source_type->second;
         }
+        auto constant = context.constants.find(expression.text);
+        if (constant != context.constants.end()) {
+            return constant->second.source_type_name;
+        }
     }
 
     if (expression.kind == syntax::ExpressionKind::cast && !expression.text.empty()) {

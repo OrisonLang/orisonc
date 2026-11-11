@@ -1182,9 +1182,16 @@ auto inferred_expression_type(
             };
         }
         auto mutable_binding = state.mutable_bindings.find(expression.text);
-        return mutable_binding == state.mutable_bindings.end()
+        if (mutable_binding != state.mutable_bindings.end()) {
+            return mutable_binding->second.type;
+        }
+        auto constant = context.lowering.constants.find(expression.text);
+        return constant == context.lowering.constants.end()
             ? std::nullopt
-            : std::optional<LoweredType> {mutable_binding->second.type};
+            : std::optional<LoweredType> {LoweredType {
+                .type = constant->second.value.type,
+                .signedness = constant->second.value.signedness,
+            }};
     }
 
     if ((expression.kind == syntax::ExpressionKind::member_access ||
@@ -4019,8 +4026,33 @@ auto lowered_expression(
         if (binding == state.immutable_bindings.end()) {
             auto mutable_binding = state.mutable_bindings.find(expression.text);
             if (mutable_binding == state.mutable_bindings.end()) {
-                record_expression_lowering_failure(failures, ExpressionLoweringFailureReason::unknown_name, expression.text);
-                return std::nullopt;
+                auto constant = context.lowering.constants.find(expression.text);
+                if (constant == context.lowering.constants.end()) {
+                    record_expression_lowering_failure(
+                        failures,
+                        ExpressionLoweringFailureReason::unknown_name,
+                        expression.text
+                    );
+                    return std::nullopt;
+                }
+                if (constant->second.value.type != expected_llvm_type) {
+                    record_expression_lowering_failure(
+                        failures,
+                        ExpressionLoweringFailureReason::type_mismatch,
+                        expression.text + " has LLVM type " + constant->second.value.type +
+                            ", expected " + std::string(expected_llvm_type)
+                    );
+                    return std::nullopt;
+                }
+                if (constant->second.value.signedness != expected_signedness) {
+                    record_expression_lowering_failure(
+                        failures,
+                        ExpressionLoweringFailureReason::signedness_mismatch,
+                        expression.text
+                    );
+                    return std::nullopt;
+                }
+                return constant->second.value;
             }
             if (mutable_binding->second.type.type != expected_llvm_type) {
                 record_expression_lowering_failure(

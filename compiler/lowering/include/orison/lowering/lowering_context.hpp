@@ -2,6 +2,7 @@
 
 #include "orison/diagnostics/diagnostic_bag.hpp"
 #include "orison/lowering/function_signature.hpp"
+#include "orison/lowering/lowered_value.hpp"
 #include "orison/semantics/module_semantic_analyzer.hpp"
 #include "orison/syntax/module_parser.hpp"
 
@@ -66,9 +67,15 @@ struct LoweredChoiceLayout {
     std::vector<LoweredChoiceVariant> variants;
 };
 
+struct LoweredModuleConstant {
+    std::string source_type_name;
+    LoweredExpression value;
+};
+
 struct LoweringContext {
     std::string package_name;
     std::unordered_map<std::string, std::string> type_aliases;
+    std::unordered_map<std::string, LoweredModuleConstant> constants;
     std::unordered_map<std::string, LoweredFunctionSignature> functions;
     std::unordered_map<std::string, syntax::FunctionSyntax const*> source_functions;
     std::unordered_map<std::string, LoweredRecordLayout> records;

@@ -1,0 +1,21 @@
+package fixtures.scalar_constants_run
+
+type RegisterAddress = Address
+
+const DEVICE_DATA: RegisterAddress = DEVICE_BASE
+const DEVICE_BASE: RegisterAddress = 0x4000_1000
+const EXIT_CODE: UInt32 = LOW_MASK bit_xor 255
+const LOW_MASK: UInt32 = 255
+const ENABLED: Bool = true
+const SCALE: Float64 = 1.5
+
+function device_data() -> RegisterAddress
+    return DEVICE_DATA
+
+function scale() -> Float64
+    return SCALE
+
+public function main() -> Int32
+    if ENABLED
+        return EXIT_CODE as Int32
+    return 1

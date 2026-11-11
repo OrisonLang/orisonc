@@ -3919,3 +3919,7 @@ This file tracks which source-language frontend slices are reflected in the curr
   floating-point, text, fixed-array, record, and choice construction contexts. Alias-preserving compile-time operators
   retain the alias, while an underlying typed constant still requires explicit conversion before entering a distinct
   alias. This is frontend validation only; module-constant LLVM emission remains pending. No syntax changed.
+- 2026-11-11: LLVM lowering now substitutes local primitive module constants directly into function IR. Cycle-safe
+  dependency evaluation covers integer, address, Boolean, and floating literals plus scalar references and supported
+  compile-time unary, arithmetic, bitwise, and shift expressions. Constants add no runtime global storage. Aggregate
+  constants, imported constants, comparisons, and semantic address arithmetic remain open. No syntax changed.

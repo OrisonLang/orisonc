@@ -9,7 +9,9 @@
 #include "orison/lowering/type_lowering.hpp"
 
 #include <algorithm>
+#include <charconv>
 #include <cctype>
+#include <cstdint>
 #include <memory>
 #include <optional>
 #include <string_view>
@@ -257,6 +259,263 @@ auto parse_source_type_name(std::string_view type_name) -> syntax::TypeSyntax {
         parsed.generic_arguments.push_back(parse_source_type_name(argument));
     }
     return parsed;
+}
+
+auto normalized_scalar_literal(std::string_view text) -> std::string {
+    auto normalized = std::string {};
+    normalized.reserve(text.size());
+    for (auto character : text) {
+        if (character != '_') {
+            normalized.push_back(character);
+        }
+    }
+    return normalized;
+}
+
+auto normalized_integer_constant(std::string_view text) -> std::optional<std::string> {
+    auto normalized = normalized_scalar_literal(text);
+    auto base = 10;
+    auto digits = std::string_view {normalized};
+    if (digits.starts_with("0x") || digits.starts_with("0X")) {
+        base = 16;
+        digits.remove_prefix(2);
+    } else if (digits.starts_with("0b") || digits.starts_with("0B")) {
+        base = 2;
+        digits.remove_prefix(2);
+    }
+    if (digits.empty()) {
+        return std::nullopt;
+    }
+
+    auto value = std::uint64_t {0};
+    auto const result = std::from_chars(digits.data(), digits.data() + digits.size(), value, base);
+    if (result.ec != std::errc {} || result.ptr != digits.data() + digits.size()) {
+        return std::nullopt;
+    }
+    return std::to_string(value);
+}
+
+auto constant_binary_instruction(
+    std::string_view operator_text,
+    LoweredType const& type
+) -> std::optional<std::string_view> {
+    auto const floating = type.type == "float" || type.type == "double";
+    if (operator_text == "+") {
+        return floating ? "fadd" : "add";
+    }
+    if (operator_text == "-") {
+        return floating ? "fsub" : "sub";
+    }
+    if (operator_text == "*") {
+        return floating ? "fmul" : "mul";
+    }
+    if (operator_text == "/") {
+        if (floating) {
+            return "fdiv";
+        }
+        return type.signedness == IntegerSignedness::signed_integer ? "sdiv" : "udiv";
+    }
+    if (operator_text == "%" && !floating && type.signedness != IntegerSignedness::not_integer) {
+        return type.signedness == IntegerSignedness::signed_integer ? "srem" : "urem";
+    }
+    if (operator_text == "bit_and" && !floating) {
+        return "and";
+    }
+    if (operator_text == "bit_or" && !floating) {
+        return "or";
+    }
+    if (operator_text == "bit_xor" && !floating) {
+        return "xor";
+    }
+    if (operator_text == "shift_left" && !floating) {
+        return "shl";
+    }
+    if (operator_text == "shift_right" && !floating) {
+        return type.signedness == IntegerSignedness::signed_integer ? "ashr" : "lshr";
+    }
+    return std::nullopt;
+}
+
+auto lower_scalar_constant_expression(
+    syntax::ExpressionSyntax const& expression,
+    LoweredType const& expected_type,
+    std::unordered_map<std::string, syntax::ConstantSyntax const*> const& declarations,
+    LoweringContext& context,
+    std::unordered_set<std::string>& active_constants
+) -> std::optional<LoweredExpression>;
+
+auto lower_scalar_constant(
+    std::string const& name,
+    std::unordered_map<std::string, syntax::ConstantSyntax const*> const& declarations,
+    LoweringContext& context,
+    std::unordered_set<std::string>& active_constants
+) -> std::optional<LoweredModuleConstant> {
+    if (auto existing = context.constants.find(name); existing != context.constants.end()) {
+        return existing->second;
+    }
+    auto declaration = declarations.find(name);
+    if (declaration == declarations.end() || active_constants.contains(name)) {
+        return std::nullopt;
+    }
+    auto source_type_name = render_source_type_name(declaration->second->type);
+    auto lowered_type = lowered_type_for_source_type_name(source_type_name, context);
+    if (!lowered_type.has_value() || lowered_type->type == "void" || lowered_type->type == "ptr" ||
+        lowered_type->type.starts_with("%") || lowered_type->type.starts_with("[")) {
+        return std::nullopt;
+    }
+
+    active_constants.insert(name);
+    auto value = lower_scalar_constant_expression(
+        declaration->second->initializer,
+        *lowered_type,
+        declarations,
+        context,
+        active_constants
+    );
+    active_constants.erase(name);
+    if (!value.has_value()) {
+        return std::nullopt;
+    }
+    return LoweredModuleConstant {
+        .source_type_name = std::move(source_type_name),
+        .value = std::move(*value),
+    };
+}
+
+auto lower_scalar_constant_expression(
+    syntax::ExpressionSyntax const& expression,
+    LoweredType const& expected_type,
+    std::unordered_map<std::string, syntax::ConstantSyntax const*> const& declarations,
+    LoweringContext& context,
+    std::unordered_set<std::string>& active_constants
+) -> std::optional<LoweredExpression> {
+    using syntax::ExpressionKind;
+    if (expression.kind == ExpressionKind::integer_literal && expected_type.type.starts_with("i")) {
+        auto value = normalized_integer_constant(expression.text);
+        return value.has_value()
+            ? std::optional<LoweredExpression> {LoweredExpression {
+                .type = expected_type.type,
+                .value = std::move(*value),
+                .signedness = expected_type.signedness,
+            }}
+            : std::nullopt;
+    }
+    if (expression.kind == ExpressionKind::float_literal &&
+        (expected_type.type == "float" || expected_type.type == "double")) {
+        return LoweredExpression {
+            .type = expected_type.type,
+            .value = normalized_scalar_literal(expression.text),
+            .signedness = IntegerSignedness::not_integer,
+        };
+    }
+    if (expression.kind == ExpressionKind::boolean_literal && expected_type.type == "i1") {
+        return LoweredExpression {
+            .type = "i1",
+            .value = expression.text == "true" ? "1" : "0",
+            .signedness = IntegerSignedness::not_integer,
+        };
+    }
+    if (expression.kind == ExpressionKind::name) {
+        auto constant = lower_scalar_constant(expression.text, declarations, context, active_constants);
+        if (!constant.has_value() || constant->value.type != expected_type.type ||
+            constant->value.signedness != expected_type.signedness) {
+            return std::nullopt;
+        }
+        context.constants.emplace(expression.text, *constant);
+        return constant->value;
+    }
+    if (expression.kind == ExpressionKind::cast && expression.left != nullptr) {
+        auto cast_type = lowered_type_for_source_type_name(expression.text, context);
+        if (!cast_type.has_value() || cast_type->type != expected_type.type ||
+            cast_type->signedness != expected_type.signedness) {
+            return std::nullopt;
+        }
+        return lower_scalar_constant_expression(
+            *expression.left,
+            expected_type,
+            declarations,
+            context,
+            active_constants
+        );
+    }
+    if (expression.kind == ExpressionKind::unary && expression.left != nullptr) {
+        auto operand = lower_scalar_constant_expression(
+            *expression.left,
+            expected_type,
+            declarations,
+            context,
+            active_constants
+        );
+        if (!operand.has_value()) {
+            return std::nullopt;
+        }
+        if (expression.text == "not" && expected_type.type == "i1") {
+            operand->value = "xor (i1 " + operand->value + ", i1 1)";
+            return operand;
+        }
+        if (expression.text == "bit_not" && expected_type.type.starts_with("i")) {
+            operand->value = "xor (" + expected_type.type + " " + operand->value + ", " +
+                expected_type.type + " -1)";
+            return operand;
+        }
+        if (expression.text == "-") {
+            auto zero = expected_type.type == "float" || expected_type.type == "double"
+                ? "0.0"
+                : "0";
+            auto instruction = expected_type.type == "float" || expected_type.type == "double"
+                ? "fsub"
+                : "sub";
+            operand->value = std::string {instruction} + " (" + expected_type.type + " " + zero +
+                ", " + expected_type.type + " " + operand->value + ")";
+            return operand;
+        }
+        return std::nullopt;
+    }
+    if (expression.kind == ExpressionKind::binary && expression.left != nullptr &&
+        expression.right != nullptr) {
+        auto instruction = constant_binary_instruction(expression.text, expected_type);
+        if (!instruction.has_value()) {
+            return std::nullopt;
+        }
+        auto left = lower_scalar_constant_expression(
+            *expression.left,
+            expected_type,
+            declarations,
+            context,
+            active_constants
+        );
+        auto right = lower_scalar_constant_expression(
+            *expression.right,
+            expected_type,
+            declarations,
+            context,
+            active_constants
+        );
+        if (!left.has_value() || !right.has_value()) {
+            return std::nullopt;
+        }
+        return LoweredExpression {
+            .type = expected_type.type,
+            .value = std::string {*instruction} + " (" + expected_type.type + " " + left->value +
+                ", " + expected_type.type + " " + right->value + ")",
+            .signedness = expected_type.signedness,
+        };
+    }
+    return std::nullopt;
+}
+
+void collect_scalar_constants(syntax::ModuleSyntax const& module, LoweringContext& context) {
+    auto declarations = std::unordered_map<std::string, syntax::ConstantSyntax const*> {};
+    for (auto const& constant : module.constants) {
+        declarations.emplace(constant.name, &constant);
+    }
+    auto active_constants = std::unordered_set<std::string> {};
+    for (auto const& constant : module.constants) {
+        auto lowered = lower_scalar_constant(constant.name, declarations, context, active_constants);
+        if (lowered.has_value()) {
+            context.constants.emplace(constant.name, std::move(*lowered));
+        }
+    }
 }
 
 auto iterable_element_source_type_name(std::string_view source_type_name) -> std::optional<std::string> {
@@ -3379,6 +3638,7 @@ auto build_lowering_context(
         module, imported_records, instantiated_types, generic_records, record_names, context
     );
     project_local_aggregate_alias_layouts(module, context);
+    collect_scalar_constants(module, context);
 
     for (auto const& function : module.functions) {
         auto symbol_name = function.name;

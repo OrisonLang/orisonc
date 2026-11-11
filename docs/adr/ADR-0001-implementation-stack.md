@@ -359,6 +359,10 @@ analysis, and lowering components.
   decides when successful spawn lowering has reached the queuing point.
   Drop cleanup authorization option application now lives with concurrency drop cleanup planning; statement lowering
   no longer knows the allowlist-vs-semantic-authorization declaration mapping.
+  Primitive module constants lower into a context-owned typed constant table and substitute directly into function IR.
+  Integer, address, Boolean, and floating literals, scalar references, unary operations, and arithmetic or bitwise
+  constant expressions require no runtime global storage. Aggregate constants and unsupported scalar expression forms
+  remain outside this first lowering slice.
 - Development builds may use the platform's monolithic shared LLVM target when component archives are unavailable;
   release packaging must use a static LLVM distribution to preserve statically linked tool executables.
 - Future ADRs should define the lowering pipeline, incremental compilation architecture, and runtime boundary.
