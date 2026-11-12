@@ -4,6 +4,10 @@ record Point
     x: UInt32
     y: UInt32
 
+record WidePayload
+    marker: UInt8
+    value: UInt32
+
 choice IOError
     Closed
     EndOfInput
@@ -20,6 +24,11 @@ choice Box<T>
     Value(value: T)
     EmptyBox
 
+choice Encoded
+    Small(value: UInt16)
+    Wide(value: WidePayload)
+    EmptyEncoded
+
 type StatusAlias = Status
 
 const END: IOError = EndOfInput
@@ -30,6 +39,8 @@ const ALIASED: StatusAlias = Ready(8)
 const PAIR: PairStatus = Pair(2, 3)
 const BOXED: Box<Point> = Value(Point(4, 5))
 const STATUSES: Array<Status, 2> = [EMPTY_STATUS, READY]
+const SMALL_ENCODED: Encoded = Small(0x1234)
+const WIDE_ENCODED: Encoded = Wide(WidePayload(0x12, 0x12345678))
 
 function end_value() -> IOError
     return END
@@ -63,7 +74,19 @@ function array_code() -> UInt32
         Ready(code) => code
         Empty => 0 as UInt32
 
+function small_code() -> UInt16
+    switch SMALL_ENCODED
+        Small(value) => value
+        Wide(value) => value.marker as UInt16
+        EmptyEncoded => 0 as UInt16
+
+function wide_code() -> UInt32
+    switch WIDE_ENCODED
+        Small(value) => value as UInt32
+        Wide(value) => value.value
+        EmptyEncoded => 0 as UInt32
+
 public function main() -> Int32
-    if ready_code() == 7 and pair_sum() == 5 and boxed_x() == 4 and array_code() == 7
+    if ready_code() == 7 and pair_sum() == 5 and boxed_x() == 4 and array_code() == 7 and small_code() == 0x1234 and wide_code() == 0x12345678
         return 0
     return 1

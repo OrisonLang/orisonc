@@ -3945,3 +3945,7 @@ This file tracks which source-language frontend slices are reflected in the curr
   exhaustiveness without a source redeclaration. `Some(value)` and `Empty` module constants lower into immutable
   `{ i1, payload }` LLVM literals and recursively compose with aliases, records, and fixed arrays without runtime
   globals. No syntax changed.
+- 2026-11-12: Choice module constants with distinct variant payload types now lower into immutable erased byte-array
+  payloads. Encoding follows target byte order and ABI field offsets, preserves aggregate padding as zero, and
+  zero-fills unused trailing storage. Scalar and padded-record payloads round-trip through ordinary switch lowering
+  without runtime globals. Imported constants remain open. No syntax changed.

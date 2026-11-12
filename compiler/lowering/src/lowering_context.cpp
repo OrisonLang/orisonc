@@ -546,6 +546,249 @@ auto constant_comparison_instruction(
     return std::string {floating ? "fcmp " : "icmp "} + std::string {predicate};
 }
 
+auto trimmed_constant_text(std::string_view text) -> std::string_view {
+    while (!text.empty() && std::isspace(static_cast<unsigned char>(text.front()))) {
+        text.remove_prefix(1);
+    }
+    while (!text.empty() && std::isspace(static_cast<unsigned char>(text.back()))) {
+        text.remove_suffix(1);
+    }
+    return text;
+}
+
+auto split_constant_members(std::string_view text) -> std::optional<std::vector<std::string_view>> {
+    auto members = std::vector<std::string_view> {};
+    auto depth = std::size_t {0};
+    auto start = std::size_t {0};
+    for (auto index = std::size_t {0}; index < text.size(); ++index) {
+        auto const character = text[index];
+        if (character == '{' || character == '[' || character == '(') {
+            ++depth;
+            continue;
+        }
+        if (character == '}' || character == ']' || character == ')') {
+            if (depth == 0) {
+                return std::nullopt;
+            }
+            --depth;
+            continue;
+        }
+        if (character != ',' || depth != 0) {
+            continue;
+        }
+        auto member = trimmed_constant_text(text.substr(start, index - start));
+        if (member.empty()) {
+            return std::nullopt;
+        }
+        members.push_back(member);
+        start = index + 1;
+    }
+    if (depth != 0) {
+        return std::nullopt;
+    }
+    auto member = trimmed_constant_text(text.substr(start));
+    if (!member.empty()) {
+        members.push_back(member);
+    } else if (!text.empty()) {
+        return std::nullopt;
+    }
+    return members;
+}
+
+auto aggregate_constant_members(
+    std::string_view value,
+    char open,
+    char close
+) -> std::optional<std::vector<std::string_view>> {
+    value = trimmed_constant_text(value);
+    if (value.size() < 2 || value.front() != open || value.back() != close) {
+        return std::nullopt;
+    }
+    return split_constant_members(value.substr(1, value.size() - 2));
+}
+
+auto typed_constant_value(
+    std::string_view member,
+    std::string_view llvm_type
+) -> std::optional<std::string_view> {
+    member = trimmed_constant_text(member);
+    if (!member.starts_with(llvm_type)) {
+        return std::nullopt;
+    }
+    member.remove_prefix(llvm_type.size());
+    if (member.empty() || !std::isspace(static_cast<unsigned char>(member.front()))) {
+        return std::nullopt;
+    }
+    return trimmed_constant_text(member);
+}
+
+auto record_layout_by_llvm_type(
+    std::string_view llvm_type,
+    LoweringContext const& context
+) -> LoweredRecordLayout const* {
+    for (auto const& [name, record] : context.records) {
+        (void)name;
+        if (record.llvm_type_name == llvm_type) {
+            return &record;
+        }
+    }
+    return nullptr;
+}
+
+auto literal_struct_field_types(std::string_view llvm_type) -> std::optional<std::vector<std::string>> {
+    auto members = aggregate_constant_members(llvm_type, '{', '}');
+    if (!members.has_value()) {
+        return std::nullopt;
+    }
+    auto fields = std::vector<std::string> {};
+    fields.reserve(members->size());
+    for (auto member : *members) {
+        fields.emplace_back(member);
+    }
+    return fields;
+}
+
+void write_constant_integer_bytes(
+    std::uint64_t value,
+    std::vector<std::uint8_t>& bytes,
+    TargetByteOrder byte_order
+) {
+    for (auto index = std::size_t {0}; index < bytes.size(); ++index) {
+        auto const shift_index = byte_order == TargetByteOrder::little_endian
+            ? index
+            : bytes.size() - index - 1;
+        bytes[index] = static_cast<std::uint8_t>(value >> (shift_index * 8));
+    }
+}
+
+auto encode_lowered_constant_bytes(
+    std::string_view llvm_type,
+    std::string_view value,
+    LoweringContext const& context,
+    TargetLayout const& target_layout
+) -> std::optional<std::vector<std::uint8_t>> {
+    auto type_layout = lowered_type_layout_bytes(llvm_type, context, target_layout);
+    if (!type_layout.has_value()) {
+        return std::nullopt;
+    }
+    if (value == "zeroinitializer") {
+        return std::vector<std::uint8_t>(type_layout->size_bytes, 0);
+    }
+
+    if (auto width = constant_integer_bit_width(llvm_type); width.has_value()) {
+        auto parsed = parsed_integer_constant(value, *width);
+        if (!parsed.has_value() || *width > 64) {
+            return std::nullopt;
+        }
+        auto bytes = std::vector<std::uint8_t>(type_layout->size_bytes, 0);
+        write_constant_integer_bytes(*parsed, bytes, target_layout.byte_order);
+        return bytes;
+    }
+    if (llvm_type == "float") {
+        auto parsed = parsed_float_constant(value, llvm_type);
+        if (!parsed.has_value()) {
+            return std::nullopt;
+        }
+        auto bits = std::bit_cast<std::uint32_t>(static_cast<float>(*parsed));
+        auto bytes = std::vector<std::uint8_t>(sizeof(bits), 0);
+        write_constant_integer_bytes(bits, bytes, target_layout.byte_order);
+        return bytes;
+    }
+    if (llvm_type == "double") {
+        auto parsed = parsed_float_constant(value, llvm_type);
+        if (!parsed.has_value()) {
+            return std::nullopt;
+        }
+        auto bits = std::bit_cast<std::uint64_t>(*parsed);
+        auto bytes = std::vector<std::uint8_t>(sizeof(bits), 0);
+        write_constant_integer_bytes(bits, bytes, target_layout.byte_order);
+        return bytes;
+    }
+
+    if (auto array_type = parse_llvm_array_type(llvm_type); array_type.has_value()) {
+        auto members = aggregate_constant_members(value, '[', ']');
+        auto element_layout = lowered_type_layout_bytes(
+            array_type->element_type,
+            context,
+            target_layout
+        );
+        if (!members.has_value() || members->size() != array_type->length ||
+            !element_layout.has_value()) {
+            return std::nullopt;
+        }
+        auto bytes = std::vector<std::uint8_t>(type_layout->size_bytes, 0);
+        for (auto index = std::size_t {0}; index < members->size(); ++index) {
+            auto element_value = typed_constant_value((*members)[index], array_type->element_type);
+            auto encoded = element_value.has_value()
+                ? encode_lowered_constant_bytes(
+                    array_type->element_type,
+                    *element_value,
+                    context,
+                    target_layout
+                )
+                : std::nullopt;
+            auto offset = index * element_layout->size_bytes;
+            if (!encoded.has_value() || offset + encoded->size() > bytes.size()) {
+                return std::nullopt;
+            }
+            std::ranges::copy(*encoded, bytes.begin() + static_cast<std::ptrdiff_t>(offset));
+        }
+        return bytes;
+    }
+
+    auto field_types = std::vector<std::string> {};
+    if (auto const* record = record_layout_by_llvm_type(llvm_type, context); record != nullptr) {
+        field_types.reserve(record->fields.size());
+        for (auto const& field : record->fields) {
+            field_types.push_back(field.llvm_type);
+        }
+    } else {
+        auto literal_fields = literal_struct_field_types(llvm_type);
+        if (!literal_fields.has_value()) {
+            return std::nullopt;
+        }
+        field_types = std::move(*literal_fields);
+    }
+
+    auto members = aggregate_constant_members(value, '{', '}');
+    auto field_views = std::vector<std::string_view> {};
+    field_views.reserve(field_types.size());
+    for (auto const& field_type : field_types) {
+        field_views.push_back(field_type);
+    }
+    auto struct_layout = lowered_struct_layout_bytes(field_views, context, target_layout);
+    if (!members.has_value() || members->size() != field_types.size() ||
+        !struct_layout.has_value()) {
+        return std::nullopt;
+    }
+    auto bytes = std::vector<std::uint8_t>(struct_layout->size_bytes, 0);
+    for (auto index = std::size_t {0}; index < field_types.size(); ++index) {
+        auto field_value = typed_constant_value((*members)[index], field_types[index]);
+        auto encoded = field_value.has_value()
+            ? encode_lowered_constant_bytes(field_types[index], *field_value, context, target_layout)
+            : std::nullopt;
+        auto const offset = struct_layout->field_offsets[index];
+        if (!encoded.has_value() || offset + encoded->size() > bytes.size()) {
+            return std::nullopt;
+        }
+        std::ranges::copy(*encoded, bytes.begin() + static_cast<std::ptrdiff_t>(offset));
+    }
+    return bytes;
+}
+
+auto render_byte_array_constant(std::vector<std::uint8_t> const& bytes) -> std::string {
+    auto value = std::string {"["};
+    for (auto index = std::size_t {0}; index < bytes.size(); ++index) {
+        if (index != 0) {
+            value += ", ";
+        }
+        value += "i8 ";
+        value += std::to_string(bytes[index]);
+    }
+    value += "]";
+    return value;
+}
+
 auto lower_scalar_constant_expression(
     syntax::ExpressionSyntax const& expression,
     LoweredType const& expected_type,
@@ -1139,9 +1382,6 @@ auto lower_module_constant_expression(
         );
         auto payload_value = std::string {"zeroinitializer"};
         if (!variant->payloads.empty()) {
-            if (variant->lowered_payload_type != payload_field_type) {
-                return std::nullopt;
-            }
             if (variant->payloads.size() == 1) {
                 auto const& payload = variant->payloads.front();
                 auto payload_type = lowered_type_for_source_type_name(payload.source_type_name, context);
@@ -1190,6 +1430,22 @@ auto lower_module_constant_expression(
                     payload_value += lowered_payload->value;
                 }
                 payload_value += " }";
+            }
+            if (variant->lowered_payload_type != payload_field_type) {
+                auto payload_bytes = encode_lowered_constant_bytes(
+                    variant->lowered_payload_type,
+                    payload_value,
+                    context,
+                    native_target_layout()
+                );
+                auto storage_type = parse_llvm_array_type(payload_field_type);
+                if (!payload_bytes.has_value() || !storage_type.has_value() ||
+                    storage_type->element_type != "i8" ||
+                    payload_bytes->size() > storage_type->length) {
+                    return std::nullopt;
+                }
+                payload_bytes->resize(storage_type->length, 0);
+                payload_value = render_byte_array_constant(*payload_bytes);
             }
         }
         return LoweredExpression {

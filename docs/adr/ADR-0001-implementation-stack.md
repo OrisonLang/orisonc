@@ -377,8 +377,8 @@ analysis, and lowering components.
   contain record values. Whole-record references, returns, and field projections remain storage-free.
   Choice module constants lower into immutable tag or direct `{ tag, payload }` literals. Payload-free, single-payload,
   multi-payload, aliased, and concrete generic choices recursively compose with supported constant values when every
-  variant uses the direct payload ABI. Choices requiring erased byte-array payload storage and imported constants remain
-  open.
+  variant uses the direct payload ABI. Choices with distinct payload types use target-order immutable byte-array
+  literals with ABI-defined aggregate padding and zero-filled trailing storage. Imported constants remain open.
   Built-in `Maybe<T>` metadata is available to semantic constant and switch-pattern analysis without a source
   redeclaration. `Some(value)` and `Empty` module constants lower into immutable `{ i1, payload }` literals and compose
   recursively with aliases, records, and fixed arrays without runtime global storage.

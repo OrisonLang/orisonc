@@ -3,17 +3,13 @@
 #include "orison/lowering/lowering_context.hpp"
 
 #include <algorithm>
+#include <bit>
 #include <charconv>
 #include <string_view>
 #include <vector>
 
 namespace orison::lowering {
 namespace {
-
-struct SizeAndAlignment {
-    std::size_t size_bytes = 0;
-    std::size_t alignment_bytes = 1;
-};
 
 auto align_to(std::size_t value, std::size_t alignment) -> std::size_t {
     if (alignment <= 1) {
@@ -34,7 +30,7 @@ auto parse_decimal_size(std::string_view text) -> std::optional<std::size_t> {
     return value;
 }
 
-auto integer_type_size(std::string_view llvm_type) -> std::optional<SizeAndAlignment> {
+auto integer_type_size(std::string_view llvm_type) -> std::optional<LoweredTypeLayout> {
     if (llvm_type.size() < 2 || llvm_type.front() != 'i') {
         return std::nullopt;
     }
@@ -45,7 +41,7 @@ auto integer_type_size(std::string_view llvm_type) -> std::optional<SizeAndAlign
     }
 
     auto size = (*bits + 7) / 8;
-    return SizeAndAlignment {
+    return LoweredTypeLayout {
         .size_bytes = size,
         .alignment_bytes = std::max<std::size_t>(1, size),
     };
@@ -138,71 +134,82 @@ auto record_layout_for(
     return nullptr;
 }
 
-auto lowered_type_layout(
+auto calculate_type_layout(
     std::string_view llvm_type,
     TargetLayout const& layout,
     LoweringContext const* context,
     std::vector<std::string_view>& active_records
-) -> std::optional<SizeAndAlignment>;
+) -> std::optional<LoweredTypeLayout>;
 
-auto lowered_struct_layout(
+auto calculate_struct_layout(
     std::vector<std::string_view> const& field_types,
     TargetLayout const& layout,
     LoweringContext const* context,
     std::vector<std::string_view>& active_records
-) -> std::optional<SizeAndAlignment> {
+) -> std::optional<LoweredStructLayout> {
     auto offset = std::size_t {0};
     auto struct_alignment = std::size_t {1};
+    auto field_offsets = std::vector<std::size_t> {};
+    field_offsets.reserve(field_types.size());
 
     for (auto field_type : field_types) {
-        auto field_layout = lowered_type_layout(field_type, layout, context, active_records);
+        auto field_layout = calculate_type_layout(field_type, layout, context, active_records);
         if (!field_layout.has_value()) {
             return std::nullopt;
         }
         offset = align_to(offset, field_layout->alignment_bytes);
+        field_offsets.push_back(offset);
         offset += field_layout->size_bytes;
         struct_alignment = std::max(struct_alignment, field_layout->alignment_bytes);
     }
 
-    return SizeAndAlignment {
+    return LoweredStructLayout {
         .size_bytes = align_to(offset, struct_alignment),
         .alignment_bytes = struct_alignment,
+        .field_offsets = std::move(field_offsets),
     };
 }
 
-auto lowered_type_layout(
+auto calculate_type_layout(
     std::string_view llvm_type,
     TargetLayout const& layout,
     LoweringContext const* context,
     std::vector<std::string_view>& active_records
-) -> std::optional<SizeAndAlignment> {
+) -> std::optional<LoweredTypeLayout> {
     if (auto integer = integer_type_size(llvm_type); integer.has_value()) {
         return integer;
     }
     if (llvm_type == "ptr") {
-        return SizeAndAlignment {
+        return LoweredTypeLayout {
             .size_bytes = layout.pointer_size_bytes,
             .alignment_bytes = layout.pointer_alignment_bytes,
         };
     }
     if (llvm_type == "float") {
-        return SizeAndAlignment {.size_bytes = 4, .alignment_bytes = 4};
+        return LoweredTypeLayout {.size_bytes = 4, .alignment_bytes = 4};
     }
     if (llvm_type == "double") {
-        return SizeAndAlignment {.size_bytes = 8, .alignment_bytes = 8};
+        return LoweredTypeLayout {.size_bytes = 8, .alignment_bytes = 8};
     }
     if (auto array = parse_array_type(llvm_type); array.has_value()) {
-        auto element = lowered_type_layout(array->second, layout, context, active_records);
+        auto element = calculate_type_layout(array->second, layout, context, active_records);
         if (!element.has_value()) {
             return std::nullopt;
         }
-        return SizeAndAlignment {
+        return LoweredTypeLayout {
             .size_bytes = element->size_bytes * array->first,
             .alignment_bytes = element->alignment_bytes,
         };
     }
     if (auto literal_struct = parse_literal_struct_type(llvm_type); literal_struct.has_value()) {
-        return lowered_struct_layout(*literal_struct, layout, context, active_records);
+        auto struct_layout = calculate_struct_layout(*literal_struct, layout, context, active_records);
+        if (!struct_layout.has_value()) {
+            return std::nullopt;
+        }
+        return LoweredTypeLayout {
+            .size_bytes = struct_layout->size_bytes,
+            .alignment_bytes = struct_layout->alignment_bytes,
+        };
     }
     if (auto const* record = record_layout_for(llvm_type, context); record != nullptr) {
         if (std::find(active_records.begin(), active_records.end(), llvm_type) != active_records.end()) {
@@ -214,9 +221,15 @@ auto lowered_type_layout(
         for (auto const& field : record->fields) {
             field_types.push_back(field.llvm_type);
         }
-        auto record_layout = lowered_struct_layout(field_types, layout, context, active_records);
+        auto record_layout = calculate_struct_layout(field_types, layout, context, active_records);
         active_records.pop_back();
-        return record_layout;
+        if (!record_layout.has_value()) {
+            return std::nullopt;
+        }
+        return LoweredTypeLayout {
+            .size_bytes = record_layout->size_bytes,
+            .alignment_bytes = record_layout->alignment_bytes,
+        };
     }
     return std::nullopt;
 }
@@ -224,15 +237,52 @@ auto lowered_type_layout(
 }  // namespace
 
 auto native_target_layout() -> TargetLayout {
-    return TargetLayout {};
+    auto layout = TargetLayout {};
+    if constexpr (std::endian::native == std::endian::big) {
+        layout.byte_order = TargetByteOrder::big_endian;
+    }
+    return layout;
+}
+
+auto lowered_type_layout_bytes(
+    std::string_view llvm_type,
+    TargetLayout const& layout
+) -> std::optional<LoweredTypeLayout> {
+    auto active_records = std::vector<std::string_view> {};
+    return calculate_type_layout(llvm_type, layout, nullptr, active_records);
+}
+
+auto lowered_type_layout_bytes(
+    std::string_view llvm_type,
+    LoweringContext const& context,
+    TargetLayout const& layout
+) -> std::optional<LoweredTypeLayout> {
+    auto active_records = std::vector<std::string_view> {};
+    return calculate_type_layout(llvm_type, layout, &context, active_records);
+}
+
+auto lowered_struct_layout_bytes(
+    std::vector<std::string_view> const& field_types,
+    TargetLayout const& layout
+) -> std::optional<LoweredStructLayout> {
+    auto active_records = std::vector<std::string_view> {};
+    return calculate_struct_layout(field_types, layout, nullptr, active_records);
+}
+
+auto lowered_struct_layout_bytes(
+    std::vector<std::string_view> const& field_types,
+    LoweringContext const& context,
+    TargetLayout const& layout
+) -> std::optional<LoweredStructLayout> {
+    auto active_records = std::vector<std::string_view> {};
+    return calculate_struct_layout(field_types, layout, &context, active_records);
 }
 
 auto lowered_type_size_bytes(
     std::string_view llvm_type,
     TargetLayout const& layout
 ) -> std::optional<std::size_t> {
-    auto active_records = std::vector<std::string_view> {};
-    auto type_layout = lowered_type_layout(llvm_type, layout, nullptr, active_records);
+    auto type_layout = lowered_type_layout_bytes(llvm_type, layout);
     if (!type_layout.has_value()) {
         return std::nullopt;
     }
@@ -244,8 +294,7 @@ auto lowered_type_size_bytes(
     LoweringContext const& context,
     TargetLayout const& layout
 ) -> std::optional<std::size_t> {
-    auto active_records = std::vector<std::string_view> {};
-    auto type_layout = lowered_type_layout(llvm_type, layout, &context, active_records);
+    auto type_layout = lowered_type_layout_bytes(llvm_type, context, layout);
     if (!type_layout.has_value()) {
         return std::nullopt;
     }
@@ -256,8 +305,7 @@ auto lowered_struct_size_bytes(
     std::vector<std::string_view> const& field_types,
     TargetLayout const& layout
 ) -> std::optional<std::size_t> {
-    auto active_records = std::vector<std::string_view> {};
-    auto struct_layout = lowered_struct_layout(field_types, layout, nullptr, active_records);
+    auto struct_layout = lowered_struct_layout_bytes(field_types, layout);
     if (!struct_layout.has_value()) {
         return std::nullopt;
     }
@@ -269,8 +317,7 @@ auto lowered_struct_size_bytes(
     LoweringContext const& context,
     TargetLayout const& layout
 ) -> std::optional<std::size_t> {
-    auto active_records = std::vector<std::string_view> {};
-    auto struct_layout = lowered_struct_layout(field_types, layout, &context, active_records);
+    auto struct_layout = lowered_struct_layout_bytes(field_types, context, layout);
     if (!struct_layout.has_value()) {
         return std::nullopt;
     }

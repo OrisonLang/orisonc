@@ -67,6 +67,12 @@ int main() {
     assert(padded_struct_size.has_value());
     assert(*padded_struct_size == 16);
 
+    auto padded_struct_layout = orison::lowering::lowered_struct_layout_bytes({"i8", "i64"});
+    assert(padded_struct_layout.has_value());
+    assert(padded_struct_layout->size_bytes == 16);
+    assert(padded_struct_layout->alignment_bytes == 8);
+    assert(padded_struct_layout->field_offsets == std::vector<std::size_t>({0, 8}));
+
     auto view_descriptor_size =
         orison::lowering::lowered_type_size_bytes(orison::lowering::view_descriptor_llvm_type());
     assert(view_descriptor_size.has_value());

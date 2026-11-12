@@ -1,4 +1,5 @@
 #include <array>
+#include <bit>
 #include <cassert>
 #include <cstdio>
 #include <cstdlib>
@@ -309,10 +310,20 @@ auto main() -> int {
         choice_constants_ir.find("ret { i32, i32 } { i32 0, i32 8 }") !=
         std::string::npos
     );
+    auto small_encoded_bytes = std::endian::native == std::endian::little
+        ? "[8 x i8] [i8 52, i8 18, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0]"
+        : "[8 x i8] [i8 18, i8 52, i8 0, i8 0, i8 0, i8 0, i8 0, i8 0]";
+    auto wide_encoded_bytes = std::endian::native == std::endian::little
+        ? "[8 x i8] [i8 18, i8 0, i8 0, i8 0, i8 120, i8 86, i8 52, i8 18]"
+        : "[8 x i8] [i8 18, i8 0, i8 0, i8 0, i8 18, i8 52, i8 86, i8 120]";
+    assert(choice_constants_ir.find(small_encoded_bytes) != std::string::npos);
+    assert(choice_constants_ir.find(wide_encoded_bytes) != std::string::npos);
     assert(choice_constants_ir.find("@READY") == std::string::npos);
     assert(choice_constants_ir.find("@PAIR") == std::string::npos);
     assert(choice_constants_ir.find("@BOXED") == std::string::npos);
     assert(choice_constants_ir.find("@STATUSES") == std::string::npos);
+    assert(choice_constants_ir.find("@SMALL_ENCODED") == std::string::npos);
+    assert(choice_constants_ir.find("@WIDE_ENCODED") == std::string::npos);
     assert(
         std::system((executable.string() + " run " + choice_constants_path.string()).c_str()) == 0
     );
