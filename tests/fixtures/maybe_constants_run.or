@@ -1,0 +1,48 @@
+package fixtures.maybe_constants_run
+
+record Point
+    x: UInt32
+    y: UInt32
+
+record Holder
+    value: Maybe<UInt32>
+
+type MaybePoint = Maybe<Point>
+
+const SOME_COPY: Maybe<UInt32> = SOME_VALUE
+const SOME_VALUE: Maybe<UInt32> = Some(7)
+const NO_VALUE: Maybe<UInt32> = Empty
+const POINT_VALUE: MaybePoint = Some(Point(4, 5))
+const VALUES: Array<Maybe<UInt32>, 2> = [NO_VALUE, SOME_VALUE]
+const HOLDER: Holder = Holder(SOME_VALUE)
+
+function some_value() -> Maybe<UInt32>
+    return SOME_COPY
+
+function no_value() -> Maybe<UInt32>
+    return NO_VALUE
+
+function some_code() -> UInt32
+    switch SOME_COPY
+        Some(value) => value
+        Empty => 0 as UInt32
+
+function point_x() -> UInt32
+    switch POINT_VALUE
+        Some(point) => point.x
+        Empty => 0 as UInt32
+
+function array_code() -> UInt32
+    switch VALUES[1]
+        Some(value) => value
+        Empty => 0 as UInt32
+
+function holder_code() -> UInt32
+    switch HOLDER.value
+        Some(value) => value
+        Empty => 0 as UInt32
+
+public function main() -> Int32
+    if some_code() == 7 and point_x() == 4 and array_code() == 7 and holder_code() == 7
+        return 0
+    return 1

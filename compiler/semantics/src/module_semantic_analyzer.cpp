@@ -3809,6 +3809,35 @@ private:
         for (auto const& choice : options_.imported_choice_declarations) {
             collect_choice(choice);
         }
+        auto has_declared_maybe = std::ranges::any_of(
+            module_.choices,
+            [](syntax::ChoiceSyntax const& choice) { return choice.name == "Maybe"; }
+        ) || std::ranges::any_of(
+            options_.imported_choice_declarations,
+            [](syntax::ChoiceSyntax const& choice) { return choice.name == "Maybe"; }
+        );
+        if (!has_declared_maybe) {
+            auto maybe_type = syntax::TypeSyntax {
+                .name = "Maybe",
+                .generic_arguments = {syntax::TypeSyntax {.name = "T"}},
+            };
+            choice_variant_arities_["Some"] = 1;
+            choice_variant_arities_["Empty"] = 0;
+            choice_variant_signatures_.push_back(ChoiceVariantSignature {
+                .choice_type = maybe_type,
+                .generic_parameters = {"T"},
+                .variant_name = "Some",
+                .payloads = {syntax::NamedTypeSyntax {
+                    .name = "value",
+                    .type = syntax::TypeSyntax {.name = "T"},
+                }},
+            });
+            choice_variant_signatures_.push_back(ChoiceVariantSignature {
+                .choice_type = std::move(maybe_type),
+                .generic_parameters = {"T"},
+                .variant_name = "Empty",
+            });
+        }
     }
 
     auto summarize_parameters(std::vector<syntax::ParameterSyntax> const& parameters) const

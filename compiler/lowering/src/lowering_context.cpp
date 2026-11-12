@@ -1200,6 +1200,47 @@ auto lower_module_constant_expression(
         };
     }
 
+    auto maybe_payload_source_type = resolved_source_type_name.has_value()
+        ? maybe_payload_source_type_name(*resolved_source_type_name)
+        : std::nullopt;
+    if (maybe_payload_source_type.has_value()) {
+        auto payload_type = lowered_type_for_source_type_name(*maybe_payload_source_type, context);
+        auto maybe_llvm_type = payload_type.has_value()
+            ? "{ i1, " + payload_type->type + " }"
+            : std::string {};
+        if (!payload_type.has_value() || maybe_llvm_type != expected_type.type) {
+            return std::nullopt;
+        }
+        if (expression.kind == syntax::ExpressionKind::name && expression.text == "Empty") {
+            return LoweredExpression {
+                .type = expected_type.type,
+                .value = "{ i1 0, " + payload_type->type + " zeroinitializer }",
+                .signedness = expected_type.signedness,
+            };
+        }
+        if (expression.kind != syntax::ExpressionKind::call || expression.left == nullptr ||
+            expression.left->kind != syntax::ExpressionKind::name ||
+            expression.left->text != "Some" || expression.arguments.size() != 1) {
+            return std::nullopt;
+        }
+        auto payload = lower_module_constant_expression(
+            expression.arguments.front(),
+            *payload_type,
+            *maybe_payload_source_type,
+            declarations,
+            context,
+            active_constants
+        );
+        if (!payload.has_value()) {
+            return std::nullopt;
+        }
+        return LoweredExpression {
+            .type = expected_type.type,
+            .value = "{ i1 1, " + payload->type + " " + payload->value + " }",
+            .signedness = expected_type.signedness,
+        };
+    }
+
     auto array_type = parse_llvm_array_type(expected_type.type);
     if (!array_type.has_value()) {
         return lower_scalar_constant_expression(

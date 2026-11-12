@@ -317,6 +317,36 @@ auto main() -> int {
         std::system((executable.string() + " run " + choice_constants_path.string()).c_str()) == 0
     );
 
+    auto maybe_constants_path = fixtures / "maybe_constants_run.or";
+    auto maybe_constants_ir_path = smoke_temp_root / "maybe_constants.ll";
+    assert(
+        std::system(
+            (executable.string() + " --emit-llvm " + maybe_constants_path.string() +
+             " > " + maybe_constants_ir_path.string()).c_str()
+        ) == 0
+    );
+    auto maybe_constants_ir_input = std::ifstream {maybe_constants_ir_path};
+    auto maybe_constants_ir = std::string {
+        std::istreambuf_iterator<char> {maybe_constants_ir_input},
+        std::istreambuf_iterator<char> {},
+    };
+    assert(
+        maybe_constants_ir.find("ret { i1, i32 } { i1 1, i32 7 }") !=
+        std::string::npos
+    );
+    assert(
+        maybe_constants_ir.find("ret { i1, i32 } { i1 0, i32 zeroinitializer }") !=
+        std::string::npos
+    );
+    assert(maybe_constants_ir.find("@SOME_VALUE") == std::string::npos);
+    assert(maybe_constants_ir.find("@NO_VALUE") == std::string::npos);
+    assert(maybe_constants_ir.find("@POINT_VALUE") == std::string::npos);
+    assert(maybe_constants_ir.find("@VALUES") == std::string::npos);
+    assert(maybe_constants_ir.find("@HOLDER") == std::string::npos);
+    assert(
+        std::system((executable.string() + " run " + maybe_constants_path.string()).c_str()) == 0
+    );
+
     assert_cli_parse_failure(
         executable,
         smoke_temp_root / "constant_address_non_integer_offset.or",

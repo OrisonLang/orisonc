@@ -3941,3 +3941,7 @@ This file tracks which source-language frontend slices are reflected in the curr
   Payload-free, single-payload, multi-payload, aliased, and concrete generic choices recursively compose with supported
   constant values and arrays when every variant uses the direct payload ABI. Erased byte-array payload storage and
   imported constants remain open. No syntax changed.
+- 2026-11-12: Built-in `Maybe<T>` choice metadata now participates in constant validation, switch-pattern typing, and
+  exhaustiveness without a source redeclaration. `Some(value)` and `Empty` module constants lower into immutable
+  `{ i1, payload }` LLVM literals and recursively compose with aliases, records, and fixed arrays without runtime
+  globals. No syntax changed.

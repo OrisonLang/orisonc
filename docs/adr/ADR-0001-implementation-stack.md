@@ -379,6 +379,9 @@ analysis, and lowering components.
   multi-payload, aliased, and concrete generic choices recursively compose with supported constant values when every
   variant uses the direct payload ABI. Choices requiring erased byte-array payload storage and imported constants remain
   open.
+  Built-in `Maybe<T>` metadata is available to semantic constant and switch-pattern analysis without a source
+  redeclaration. `Some(value)` and `Empty` module constants lower into immutable `{ i1, payload }` literals and compose
+  recursively with aliases, records, and fixed arrays without runtime global storage.
 - Development builds may use the platform's monolithic shared LLVM target when component archives are unavailable;
   release packaging must use a static LLVM distribution to preserve statically linked tool executables.
 - Future ADRs should define the lowering pipeline, incremental compilation architecture, and runtime boundary.
