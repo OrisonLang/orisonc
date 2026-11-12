@@ -3930,3 +3930,6 @@ This file tracks which source-language frontend slices are reflected in the curr
   floating arithmetic, comparisons, logical and unary operations, integer casts, and ternary selection compose across
   forward references; `Float32` uses 32-bit rounding. Generated function IR contains no primitive constant-expression
   instructions or global storage. Aggregate and imported constants remain open. No syntax changed.
+- 2026-11-11: Fixed-array module constants now lower recursively into immutable LLVM aggregate literals. Supported
+  scalar constant expressions, whole-array references, nested arrays, function returns, and constant indexing emit
+  without runtime global storage. Record, choice, and imported constants remain open. No syntax changed.

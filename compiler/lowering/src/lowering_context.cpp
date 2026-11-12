@@ -554,7 +554,16 @@ auto lower_scalar_constant_expression(
     std::unordered_set<std::string>& active_constants
 ) -> std::optional<LoweredExpression>;
 
-auto lower_scalar_constant(
+auto lower_module_constant_expression(
+    syntax::ExpressionSyntax const& expression,
+    LoweredType const& expected_type,
+    std::string_view expected_source_type_name,
+    std::unordered_map<std::string, syntax::ConstantSyntax const*> const& declarations,
+    LoweringContext& context,
+    std::unordered_set<std::string>& active_constants
+) -> std::optional<LoweredExpression>;
+
+auto lower_module_constant(
     std::string const& name,
     std::unordered_map<std::string, syntax::ConstantSyntax const*> const& declarations,
     LoweringContext& context,
@@ -570,14 +579,15 @@ auto lower_scalar_constant(
     auto source_type_name = render_source_type_name(declaration->second->type);
     auto lowered_type = lowered_type_for_source_type_name(source_type_name, context);
     if (!lowered_type.has_value() || lowered_type->type == "void" || lowered_type->type == "ptr" ||
-        lowered_type->type.starts_with("%") || lowered_type->type.starts_with("[")) {
+        lowered_type->type.starts_with("%")) {
         return std::nullopt;
     }
 
     active_constants.insert(name);
-    auto value = lower_scalar_constant_expression(
+    auto value = lower_module_constant_expression(
         declaration->second->initializer,
         *lowered_type,
+        source_type_name,
         declarations,
         context,
         active_constants
@@ -626,7 +636,7 @@ auto lower_scalar_constant_expression(
         };
     }
     if (expression.kind == ExpressionKind::name) {
-        auto constant = lower_scalar_constant(expression.text, declarations, context, active_constants);
+        auto constant = lower_module_constant(expression.text, declarations, context, active_constants);
         if (!constant.has_value() || constant->value.type != expected_type.type ||
             constant->value.signedness != expected_type.signedness) {
             return std::nullopt;
@@ -993,14 +1003,102 @@ auto lower_scalar_constant_expression(
     return std::nullopt;
 }
 
-void collect_scalar_constants(syntax::ModuleSyntax const& module, LoweringContext& context) {
+auto lower_module_constant_expression(
+    syntax::ExpressionSyntax const& expression,
+    LoweredType const& expected_type,
+    std::string_view expected_source_type_name,
+    std::unordered_map<std::string, syntax::ConstantSyntax const*> const& declarations,
+    LoweringContext& context,
+    std::unordered_set<std::string>& active_constants
+) -> std::optional<LoweredExpression> {
+    if (expression.kind == syntax::ExpressionKind::name) {
+        auto constant = lower_module_constant(
+            expression.text,
+            declarations,
+            context,
+            active_constants
+        );
+        if (!constant.has_value() || constant->value.type != expected_type.type ||
+            constant->value.signedness != expected_type.signedness) {
+            return std::nullopt;
+        }
+        context.constants.emplace(expression.text, *constant);
+        return constant->value;
+    }
+
+    auto array_type = parse_llvm_array_type(expected_type.type);
+    if (!array_type.has_value()) {
+        return lower_scalar_constant_expression(
+            expression,
+            expected_type,
+            declarations,
+            context,
+            active_constants
+        );
+    }
+    if (expression.kind != syntax::ExpressionKind::array_literal ||
+        expression.arguments.size() != array_type->length) {
+        return std::nullopt;
+    }
+    if (array_type->length == 0) {
+        return LoweredExpression {
+            .type = expected_type.type,
+            .value = "zeroinitializer",
+            .signedness = IntegerSignedness::not_integer,
+        };
+    }
+
+    auto resolved_source_type_name = resolved_source_type_alias_name(
+        expected_source_type_name,
+        context
+    );
+    auto element_source_type_name = resolved_source_type_name.has_value()
+        ? array_element_source_type_name(*resolved_source_type_name)
+        : std::nullopt;
+    if (!element_source_type_name.has_value()) {
+        return std::nullopt;
+    }
+    auto element_type = lowered_type_for_source_type_name(*element_source_type_name, context);
+    if (!element_type.has_value() || element_type->type != array_type->element_type) {
+        return std::nullopt;
+    }
+
+    auto value = std::string {"["};
+    for (auto index = std::size_t {0}; index < expression.arguments.size(); ++index) {
+        auto element = lower_module_constant_expression(
+            expression.arguments[index],
+            *element_type,
+            *element_source_type_name,
+            declarations,
+            context,
+            active_constants
+        );
+        if (!element.has_value()) {
+            return std::nullopt;
+        }
+        if (index != 0) {
+            value += ", ";
+        }
+        value += element->type;
+        value += " ";
+        value += element->value;
+    }
+    value += "]";
+    return LoweredExpression {
+        .type = expected_type.type,
+        .value = std::move(value),
+        .signedness = IntegerSignedness::not_integer,
+    };
+}
+
+void collect_module_constants(syntax::ModuleSyntax const& module, LoweringContext& context) {
     auto declarations = std::unordered_map<std::string, syntax::ConstantSyntax const*> {};
     for (auto const& constant : module.constants) {
         declarations.emplace(constant.name, &constant);
     }
     auto active_constants = std::unordered_set<std::string> {};
     for (auto const& constant : module.constants) {
-        auto lowered = lower_scalar_constant(constant.name, declarations, context, active_constants);
+        auto lowered = lower_module_constant(constant.name, declarations, context, active_constants);
         if (lowered.has_value()) {
             context.constants.emplace(constant.name, std::move(*lowered));
         }
@@ -4127,7 +4225,7 @@ auto build_lowering_context(
         module, imported_records, instantiated_types, generic_records, record_names, context
     );
     project_local_aggregate_alias_layouts(module, context);
-    collect_scalar_constants(module, context);
+    collect_module_constants(module, context);
 
     for (auto const& function : module.functions) {
         auto symbol_name = function.name;

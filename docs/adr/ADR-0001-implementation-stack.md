@@ -369,6 +369,9 @@ analysis, and lowering components.
   Primitive constant evaluation folds supported integer and floating arithmetic, comparisons, logical operations,
   unary operations, integer casts, and ternary selection before LLVM emission. `Float32` evaluation rounds at its
   lowered precision. Function IR consumes final scalar literals rather than backend-specific constant expressions.
+  Fixed-array module constants lower recursively into immutable LLVM aggregate literals. Elements may use supported
+  primitive constant expressions or references to local constants; whole-array references and nested fixed arrays
+  remain storage-free and reuse ordinary aggregate value lowering. Record, choice, and imported constants remain open.
 - Development builds may use the platform's monolithic shared LLVM target when component archives are unavailable;
   release packaging must use a static LLVM distribution to preserve statically linked tool executables.
 - Future ADRs should define the lowering pipeline, incremental compilation architecture, and runtime boundary.

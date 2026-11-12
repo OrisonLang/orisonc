@@ -224,6 +224,36 @@ auto main() -> int {
     assert(scalar_constants_ir.find("@DEVICE_BASE") == std::string::npos);
     assert(std::system((executable.string() + " run " + scalar_constants_path.string()).c_str()) == 0);
 
+    auto fixed_array_constants_path = fixtures / "fixed_array_constants_run.or";
+    auto fixed_array_constants_ir_path = smoke_temp_root / "fixed_array_constants.ll";
+    assert(
+        std::system(
+            (executable.string() + " --emit-llvm " + fixed_array_constants_path.string() +
+             " > " + fixed_array_constants_ir_path.string()).c_str()
+        ) == 0
+    );
+    auto fixed_array_constants_ir_input = std::ifstream {fixed_array_constants_ir_path};
+    auto fixed_array_constants_ir = std::string {
+        std::istreambuf_iterator<char> {fixed_array_constants_ir_input},
+        std::istreambuf_iterator<char> {},
+    };
+    assert(
+        fixed_array_constants_ir.find("ret [2 x i32] [i32 1, i32 2]") !=
+        std::string::npos
+    );
+    assert(
+        fixed_array_constants_ir.find("ret [2 x i32] [i32 5, i32 6]") !=
+        std::string::npos
+    );
+    assert(fixed_array_constants_ir.find("@ROW") == std::string::npos);
+    assert(fixed_array_constants_ir.find("@ROW_COPY") == std::string::npos);
+    assert(fixed_array_constants_ir.find("@MATRIX") == std::string::npos);
+    assert(
+        std::system(
+            (executable.string() + " run " + fixed_array_constants_path.string()).c_str()
+        ) == 0
+    );
+
     assert_cli_parse_failure(
         executable,
         smoke_temp_root / "constant_address_non_integer_offset.or",

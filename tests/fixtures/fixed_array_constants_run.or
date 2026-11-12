@@ -1,0 +1,23 @@
+package fixtures.fixed_array_constants_run
+
+type Words = Array<UInt32, 2>
+
+const BASE: UInt32 = 1
+const ROW_COPY: Array<UInt32, 2> = ROW
+const ROW: Array<UInt32, 2> = [BASE, BASE + 1]
+const ALIASED: Words = [5, 6]
+const MATRIX: Array<Array<UInt32, 2>, 2> = [ROW, [3, 4]]
+
+function row_copy() -> Array<UInt32, 2>
+    return ROW_COPY
+
+function aliased() -> Words
+    return ALIASED
+
+function matrix_value() -> UInt32
+    return MATRIX[1][0]
+
+public function main() -> Int32
+    if ROW_COPY[1] == 2 and matrix_value() == 3
+        return 0
+    return 1
