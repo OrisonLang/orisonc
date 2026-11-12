@@ -372,6 +372,10 @@ analysis, and lowering components.
   Fixed-array module constants lower recursively into immutable LLVM aggregate literals. Elements may use supported
   primitive constant expressions or references to local constants; whole-array references and nested fixed arrays
   remain storage-free and reuse ordinary aggregate value lowering. Record, choice, and imported constants remain open.
+  Record module constants also lower recursively into immutable named-struct literals. Ordinary, aliased, nested, and
+  concrete generic records may contain supported primitive, fixed-array, or record constant values; fixed arrays may
+  contain record values. Whole-record references, returns, and field projections remain storage-free. Choice and
+  imported constants remain open.
 - Development builds may use the platform's monolithic shared LLVM target when component archives are unavailable;
   release packaging must use a static LLVM distribution to preserve statically linked tool executables.
 - Future ADRs should define the lowering pipeline, incremental compilation architecture, and runtime boundary.

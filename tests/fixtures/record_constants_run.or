@@ -1,0 +1,44 @@
+package fixtures.record_constants_run
+
+record Point
+    x: UInt32
+    y: UInt32
+
+record Shape
+    origin: Point
+    samples: Array<UInt32, 2>
+
+record Box<T>
+    value: T
+
+type PointAlias = Point
+
+const POINT_COPY: Point = ORIGIN
+const ORIGIN: Point = Point(1, 2)
+const ALIASED: PointAlias = Point(5, 6)
+const SHAPE: Shape = Shape(ORIGIN, [3, 4])
+const POINTS: Array<Point, 2> = [ORIGIN, Point(10, 11)]
+const BOXED: Box<UInt32> = Box(9)
+
+function point_copy() -> Point
+    return POINT_COPY
+
+function aliased() -> PointAlias
+    return ALIASED
+
+function sample() -> UInt32
+    return SHAPE.samples[1]
+
+function origin_x() -> UInt32
+    return SHAPE.origin.x
+
+function boxed_value() -> UInt32
+    return BOXED.value
+
+function point_array_y() -> UInt32
+    return POINTS[1].y
+
+public function main() -> Int32
+    if sample() == 4 and origin_x() == 1 and boxed_value() == 9 and point_array_y() == 11
+        return 0
+    return 1

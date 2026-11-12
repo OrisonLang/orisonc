@@ -254,6 +254,35 @@ auto main() -> int {
         ) == 0
     );
 
+    auto record_constants_path = fixtures / "record_constants_run.or";
+    auto record_constants_ir_path = smoke_temp_root / "record_constants.ll";
+    assert(
+        std::system(
+            (executable.string() + " --emit-llvm " + record_constants_path.string() +
+             " > " + record_constants_ir_path.string()).c_str()
+        ) == 0
+    );
+    auto record_constants_ir_input = std::ifstream {record_constants_ir_path};
+    auto record_constants_ir = std::string {
+        std::istreambuf_iterator<char> {record_constants_ir_input},
+        std::istreambuf_iterator<char> {},
+    };
+    assert(
+        record_constants_ir.find("ret %record.Point { i32 1, i32 2 }") !=
+        std::string::npos
+    );
+    assert(
+        record_constants_ir.find("ret %record.Point { i32 5, i32 6 }") !=
+        std::string::npos
+    );
+    assert(record_constants_ir.find("@ORIGIN") == std::string::npos);
+    assert(record_constants_ir.find("@SHAPE") == std::string::npos);
+    assert(record_constants_ir.find("@POINTS") == std::string::npos);
+    assert(record_constants_ir.find("@BOXED") == std::string::npos);
+    assert(
+        std::system((executable.string() + " run " + record_constants_path.string()).c_str()) == 0
+    );
+
     assert_cli_parse_failure(
         executable,
         smoke_temp_root / "constant_address_non_integer_offset.or",

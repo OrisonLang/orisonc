@@ -578,8 +578,7 @@ auto lower_module_constant(
     }
     auto source_type_name = render_source_type_name(declaration->second->type);
     auto lowered_type = lowered_type_for_source_type_name(source_type_name, context);
-    if (!lowered_type.has_value() || lowered_type->type == "void" || lowered_type->type == "ptr" ||
-        lowered_type->type.starts_with("%")) {
+    if (!lowered_type.has_value() || lowered_type->type == "void" || lowered_type->type == "ptr") {
         return std::nullopt;
     }
 
@@ -1026,6 +1025,66 @@ auto lower_module_constant_expression(
         return constant->value;
     }
 
+    auto resolved_source_type_name = resolved_source_type_alias_name(
+        expected_source_type_name,
+        context
+    );
+    auto record = resolved_source_type_name.has_value()
+        ? context.records.find(*resolved_source_type_name)
+        : context.records.end();
+    if (record == context.records.end()) {
+        record = context.records.find(std::string {expected_source_type_name});
+    }
+    if (record != context.records.end()) {
+        if (expression.kind != syntax::ExpressionKind::call || expression.left == nullptr ||
+            expression.left->kind != syntax::ExpressionKind::name ||
+            (record->second.name != expression.left->text &&
+             !record->second.name.starts_with(expression.left->text + "<")) ||
+            record->second.llvm_type_name != expected_type.type ||
+            record->second.fields.size() != expression.arguments.size()) {
+            return std::nullopt;
+        }
+        if (record->second.fields.empty()) {
+            return LoweredExpression {
+                .type = expected_type.type,
+                .value = "zeroinitializer",
+                .signedness = IntegerSignedness::not_integer,
+            };
+        }
+
+        auto value = std::string {"{ "};
+        for (auto index = std::size_t {0}; index < record->second.fields.size(); ++index) {
+            auto const& field = record->second.fields[index];
+            auto field_type = lowered_type_for_source_type_name(field.source_type_name, context);
+            if (!field_type.has_value() || field_type->type != field.llvm_type) {
+                return std::nullopt;
+            }
+            auto lowered_field = lower_module_constant_expression(
+                expression.arguments[index],
+                *field_type,
+                field.source_type_name,
+                declarations,
+                context,
+                active_constants
+            );
+            if (!lowered_field.has_value()) {
+                return std::nullopt;
+            }
+            if (index != 0) {
+                value += ", ";
+            }
+            value += lowered_field->type;
+            value += " ";
+            value += lowered_field->value;
+        }
+        value += " }";
+        return LoweredExpression {
+            .type = expected_type.type,
+            .value = std::move(value),
+            .signedness = IntegerSignedness::not_integer,
+        };
+    }
+
     auto array_type = parse_llvm_array_type(expected_type.type);
     if (!array_type.has_value()) {
         return lower_scalar_constant_expression(
@@ -1048,10 +1107,6 @@ auto lower_module_constant_expression(
         };
     }
 
-    auto resolved_source_type_name = resolved_source_type_alias_name(
-        expected_source_type_name,
-        context
-    );
     auto element_source_type_name = resolved_source_type_name.has_value()
         ? array_element_source_type_name(*resolved_source_type_name)
         : std::nullopt;

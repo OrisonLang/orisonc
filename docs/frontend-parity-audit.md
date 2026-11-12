@@ -3933,3 +3933,7 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-11-11: Fixed-array module constants now lower recursively into immutable LLVM aggregate literals. Supported
   scalar constant expressions, whole-array references, nested arrays, function returns, and constant indexing emit
   without runtime global storage. Record, choice, and imported constants remain open. No syntax changed.
+- 2026-11-11: Record module constants now lower recursively into immutable LLVM named-struct literals. Ordinary,
+  aliased, nested, and concrete generic records compose with supported primitive and fixed-array constant fields, and
+  fixed arrays may contain records. Whole-record references, returns, and field projections emit without runtime
+  globals. Choice and imported constants remain open. No syntax changed.
