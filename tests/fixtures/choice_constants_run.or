@@ -1,0 +1,69 @@
+package fixtures.choice_constants_run
+
+record Point
+    x: UInt32
+    y: UInt32
+
+choice IOError
+    Closed
+    EndOfInput
+
+choice Status
+    Ready(code: UInt32)
+    Empty
+
+choice PairStatus
+    Pair(left: UInt32, right: UInt32)
+    EmptyPair
+
+choice Box<T>
+    Value(value: T)
+    EmptyBox
+
+type StatusAlias = Status
+
+const END: IOError = EndOfInput
+const READY_COPY: Status = READY
+const READY: Status = Ready(7)
+const EMPTY_STATUS: Status = Empty
+const ALIASED: StatusAlias = Ready(8)
+const PAIR: PairStatus = Pair(2, 3)
+const BOXED: Box<Point> = Value(Point(4, 5))
+const STATUSES: Array<Status, 2> = [EMPTY_STATUS, READY]
+
+function end_value() -> IOError
+    return END
+
+function ready_value() -> Status
+    return READY_COPY
+
+function empty_value() -> Status
+    return EMPTY_STATUS
+
+function aliased_value() -> StatusAlias
+    return ALIASED
+
+function ready_code() -> UInt32
+    switch READY_COPY
+        Ready(code) => code
+        Empty => 0 as UInt32
+
+function pair_sum() -> UInt32
+    switch PAIR
+        Pair(left, right) => left + right
+        EmptyPair => 0 as UInt32
+
+function boxed_x() -> UInt32
+    switch BOXED
+        Value(point) => point.x
+        EmptyBox => 0 as UInt32
+
+function array_code() -> UInt32
+    switch STATUSES[1]
+        Ready(code) => code
+        Empty => 0 as UInt32
+
+public function main() -> Int32
+    if ready_code() == 7 and pair_sum() == 5 and boxed_x() == 4 and array_code() == 7
+        return 0
+    return 1

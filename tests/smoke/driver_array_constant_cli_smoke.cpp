@@ -283,6 +283,40 @@ auto main() -> int {
         std::system((executable.string() + " run " + record_constants_path.string()).c_str()) == 0
     );
 
+    auto choice_constants_path = fixtures / "choice_constants_run.or";
+    auto choice_constants_ir_path = smoke_temp_root / "choice_constants.ll";
+    assert(
+        std::system(
+            (executable.string() + " --emit-llvm " + choice_constants_path.string() +
+             " > " + choice_constants_ir_path.string()).c_str()
+        ) == 0
+    );
+    auto choice_constants_ir_input = std::ifstream {choice_constants_ir_path};
+    auto choice_constants_ir = std::string {
+        std::istreambuf_iterator<char> {choice_constants_ir_input},
+        std::istreambuf_iterator<char> {},
+    };
+    assert(choice_constants_ir.find("ret i32 1") != std::string::npos);
+    assert(
+        choice_constants_ir.find("ret { i32, i32 } { i32 0, i32 7 }") !=
+        std::string::npos
+    );
+    assert(
+        choice_constants_ir.find("ret { i32, i32 } { i32 1, i32 zeroinitializer }") !=
+        std::string::npos
+    );
+    assert(
+        choice_constants_ir.find("ret { i32, i32 } { i32 0, i32 8 }") !=
+        std::string::npos
+    );
+    assert(choice_constants_ir.find("@READY") == std::string::npos);
+    assert(choice_constants_ir.find("@PAIR") == std::string::npos);
+    assert(choice_constants_ir.find("@BOXED") == std::string::npos);
+    assert(choice_constants_ir.find("@STATUSES") == std::string::npos);
+    assert(
+        std::system((executable.string() + " run " + choice_constants_path.string()).c_str()) == 0
+    );
+
     assert_cli_parse_failure(
         executable,
         smoke_temp_root / "constant_address_non_integer_offset.or",

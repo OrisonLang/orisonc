@@ -1010,7 +1010,8 @@ auto lower_module_constant_expression(
     LoweringContext& context,
     std::unordered_set<std::string>& active_constants
 ) -> std::optional<LoweredExpression> {
-    if (expression.kind == syntax::ExpressionKind::name) {
+    if (expression.kind == syntax::ExpressionKind::name &&
+        (declarations.contains(expression.text) || context.constants.contains(expression.text))) {
         auto constant = lower_module_constant(
             expression.text,
             declarations,
@@ -1082,6 +1083,120 @@ auto lower_module_constant_expression(
             .type = expected_type.type,
             .value = std::move(value),
             .signedness = IntegerSignedness::not_integer,
+        };
+    }
+
+    auto choice = resolved_source_type_name.has_value()
+        ? context.choices.find(*resolved_source_type_name)
+        : context.choices.end();
+    if (choice == context.choices.end()) {
+        choice = context.choices.find(std::string {expected_source_type_name});
+    }
+    if (choice != context.choices.end() && choice->second.llvm_type_name == expected_type.type) {
+        auto constructor_name = static_cast<std::string const*>(nullptr);
+        auto arguments = static_cast<std::vector<syntax::ExpressionSyntax> const*>(nullptr);
+        if (expression.kind == syntax::ExpressionKind::name) {
+            constructor_name = &expression.text;
+        } else if (expression.kind == syntax::ExpressionKind::call && expression.left != nullptr &&
+                   expression.left->kind == syntax::ExpressionKind::name) {
+            constructor_name = &expression.left->text;
+            arguments = &expression.arguments;
+        }
+        if (constructor_name == nullptr) {
+            return std::nullopt;
+        }
+
+        auto variant = std::find_if(
+            choice->second.variants.begin(),
+            choice->second.variants.end(),
+            [&](LoweredChoiceVariant const& candidate) {
+                return candidate.name == *constructor_name;
+            }
+        );
+        auto argument_count = arguments == nullptr ? std::size_t {0} : arguments->size();
+        if (variant == choice->second.variants.end() ||
+            variant->payloads.size() != argument_count) {
+            return std::nullopt;
+        }
+        if (choice->second.llvm_type_name == "i32") {
+            return variant->payloads.empty()
+                ? std::optional<LoweredExpression> {LoweredExpression {
+                    .type = expected_type.type,
+                    .value = std::to_string(variant->tag),
+                    .signedness = expected_type.signedness,
+                }}
+                : std::nullopt;
+        }
+
+        constexpr auto payload_prefix = std::string_view {"{ i32, "};
+        auto const& choice_type = choice->second.llvm_type_name;
+        if (!choice_type.starts_with(payload_prefix) || !choice_type.ends_with(" }")) {
+            return std::nullopt;
+        }
+        auto payload_field_type = choice_type.substr(
+            payload_prefix.size(),
+            choice_type.size() - payload_prefix.size() - 2
+        );
+        auto payload_value = std::string {"zeroinitializer"};
+        if (!variant->payloads.empty()) {
+            if (variant->lowered_payload_type != payload_field_type) {
+                return std::nullopt;
+            }
+            if (variant->payloads.size() == 1) {
+                auto const& payload = variant->payloads.front();
+                auto payload_type = lowered_type_for_source_type_name(payload.source_type_name, context);
+                if (!payload_type.has_value() || payload_type->type != payload.llvm_type) {
+                    return std::nullopt;
+                }
+                auto lowered_payload = lower_module_constant_expression(
+                    arguments->front(),
+                    *payload_type,
+                    payload.source_type_name,
+                    declarations,
+                    context,
+                    active_constants
+                );
+                if (!lowered_payload.has_value()) {
+                    return std::nullopt;
+                }
+                payload_value = std::move(lowered_payload->value);
+            } else {
+                payload_value = "{ ";
+                for (auto index = std::size_t {0}; index < variant->payloads.size(); ++index) {
+                    auto const& payload = variant->payloads[index];
+                    auto payload_type = lowered_type_for_source_type_name(
+                        payload.source_type_name,
+                        context
+                    );
+                    if (!payload_type.has_value() || payload_type->type != payload.llvm_type) {
+                        return std::nullopt;
+                    }
+                    auto lowered_payload = lower_module_constant_expression(
+                        (*arguments)[index],
+                        *payload_type,
+                        payload.source_type_name,
+                        declarations,
+                        context,
+                        active_constants
+                    );
+                    if (!lowered_payload.has_value()) {
+                        return std::nullopt;
+                    }
+                    if (index != 0) {
+                        payload_value += ", ";
+                    }
+                    payload_value += lowered_payload->type;
+                    payload_value += " ";
+                    payload_value += lowered_payload->value;
+                }
+                payload_value += " }";
+            }
+        }
+        return LoweredExpression {
+            .type = expected_type.type,
+            .value = "{ i32 " + std::to_string(variant->tag) + ", " +
+                payload_field_type + " " + payload_value + " }",
+            .signedness = expected_type.signedness,
         };
     }
 

@@ -374,8 +374,11 @@ analysis, and lowering components.
   remain storage-free and reuse ordinary aggregate value lowering. Record, choice, and imported constants remain open.
   Record module constants also lower recursively into immutable named-struct literals. Ordinary, aliased, nested, and
   concrete generic records may contain supported primitive, fixed-array, or record constant values; fixed arrays may
-  contain record values. Whole-record references, returns, and field projections remain storage-free. Choice and
-  imported constants remain open.
+  contain record values. Whole-record references, returns, and field projections remain storage-free.
+  Choice module constants lower into immutable tag or direct `{ tag, payload }` literals. Payload-free, single-payload,
+  multi-payload, aliased, and concrete generic choices recursively compose with supported constant values when every
+  variant uses the direct payload ABI. Choices requiring erased byte-array payload storage and imported constants remain
+  open.
 - Development builds may use the platform's monolithic shared LLVM target when component archives are unavailable;
   release packaging must use a static LLVM distribution to preserve statically linked tool executables.
 - Future ADRs should define the lowering pipeline, incremental compilation architecture, and runtime boundary.

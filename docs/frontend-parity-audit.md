@@ -3937,3 +3937,7 @@ This file tracks which source-language frontend slices are reflected in the curr
   aliased, nested, and concrete generic records compose with supported primitive and fixed-array constant fields, and
   fixed arrays may contain records. Whole-record references, returns, and field projections emit without runtime
   globals. Choice and imported constants remain open. No syntax changed.
+- 2026-11-12: Choice module constants now lower into immutable tag or direct `{ tag, payload }` LLVM literals.
+  Payload-free, single-payload, multi-payload, aliased, and concrete generic choices recursively compose with supported
+  constant values and arrays when every variant uses the direct payload ABI. Erased byte-array payload storage and
+  imported constants remain open. No syntax changed.
