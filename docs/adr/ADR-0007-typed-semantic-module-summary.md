@@ -116,6 +116,9 @@ the declared source names for nominal argument checking. Other pointer element t
 Constant initializer validation resolves local and imported aliases for scalar literals and array, record, or choice
 constructor contexts. Alias-preserving compile-time scalar operators can initialize the same alias. References to values
 of an underlying type remain nominal and require an explicit conversion before initializing a distinct alias.
+The root initializer of a `Pointer<T>` constant may use the protected generic constructor form `Pointer<T>(Address)`.
+The explicit constructor element type must match the declared pointer element type. Pointer construction elsewhere
+retains its unsafe-context requirement, and nested runtime construction remains invalid in constant aggregates.
 The driver emits request artifacts with `--emit-specialization-requests` and accepts repeatable
 `--specialization-requests` inputs, allowing build orchestration to aggregate consumer requests for producer
 compilation. ADR-0008 defines explicit dependency scheduling and object selection through driver build plans.

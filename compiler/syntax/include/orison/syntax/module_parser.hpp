@@ -101,6 +101,7 @@ struct ExpressionSyntax {
     ExpressionKind kind = ExpressionKind::name;
     std::size_t line = 0;
     std::string text;
+    std::vector<TypeSyntax> generic_arguments;
     std::vector<ExpressionSyntax> arguments;
     std::vector<std::unique_ptr<StatementSyntax>> nested_statements;
     std::unique_ptr<ExpressionSyntax> left;

@@ -1992,6 +1992,9 @@ private:
                 return "Address";
             }
             if (expression.left->text == "Pointer") {
+                if (expression.left->generic_arguments.size() == 1) {
+                    return "Pointer<" + render_type_name(expression.left->generic_arguments.front()) + ">";
+                }
                 if (!expected_pointer_type_name_.empty()) {
                     return expected_pointer_type_name_;
                 }
@@ -2358,6 +2361,9 @@ private:
 
     auto recover_explicit_pointer_type_name(syntax::ExpressionSyntax const& expression) const -> std::string {
         if (is_pointer_constructor_call(expression) && !expression.arguments.empty()) {
+            if (expression.left->generic_arguments.size() == 1) {
+                return "Pointer<" + render_type_name(expression.left->generic_arguments.front()) + ">";
+            }
             auto source_type_name = address_of_operand_type_name(expression.arguments.front());
             if (!source_type_name.empty()) {
                 return "Pointer<" + source_type_name + ">";
@@ -2720,6 +2726,28 @@ private:
         }
 
         auto expected_pointee_type_name = pointer_pointee_type_name(expected_pointer_type_name_);
+        if (expression.left->generic_arguments.size() > 1) {
+            diagnostics_.error(
+                expression.line,
+                "Pointer construction currently accepts at most one type argument"
+            );
+            return;
+        }
+        if (expression.left->generic_arguments.size() == 1) {
+            auto explicit_pointee_type_name = render_type_name(expression.left->generic_arguments.front());
+            if (!expected_pointee_type_name.empty() &&
+                !are_resolved_low_level_read_types_compatible(
+                    explicit_pointee_type_name,
+                    expected_pointee_type_name
+                )) {
+                diagnostics_.error(
+                    expression.line,
+                    "Pointer construction element type '" + explicit_pointee_type_name +
+                        "' does not match expected pointer element type '" + expected_pointee_type_name + "'"
+                );
+                return;
+            }
+        }
         auto source_operand_type_name = address_of_operand_type_name(expression.arguments.front());
         auto source_type_name = infer_expression_type_name(expression.arguments.front());
         if (!source_type_name.empty()) {
@@ -5757,7 +5785,10 @@ private:
         }
     }
 
-    auto validate_constant_initializer_runtime_restrictions(syntax::ExpressionSyntax const& expression) -> bool {
+    auto validate_constant_initializer_runtime_restrictions(
+        syntax::ExpressionSyntax const& expression,
+        bool allow_root_pointer_construction
+    ) -> bool {
         auto validator = [&](syntax::ExpressionSyntax const& current) {
             if (current.kind == syntax::ExpressionKind::task || current.kind == syntax::ExpressionKind::thread) {
                 diagnostics_.error(
@@ -5782,7 +5813,8 @@ private:
                 return true;
             }
 
-            if (is_pointer_constructor_call(current)) {
+            if (is_pointer_constructor_call(current) &&
+                (!allow_root_pointer_construction || &current != &expression)) {
                 diagnostics_.error(current.line, "constant initializer cannot use Pointer construction");
                 return true;
             }
@@ -6310,11 +6342,27 @@ private:
         for (auto const& constant : module_.constants) {
             auto declared_type_name = render_type_name(constant.type);
             auto saved_expected_pointer_type_name = expected_pointer_type_name_;
-            if (is_pointer_type(constant.type)) {
+            auto pointer_typed_constant = is_pointer_type(constant.type);
+            auto pointer_constant_constructor =
+                pointer_typed_constant && is_pointer_constructor_call(constant.initializer);
+            if (pointer_typed_constant) {
                 expected_pointer_type_name_ = declared_type_name;
             }
 
-            if (validate_constant_initializer_runtime_restrictions(constant.initializer)) {
+            if (validate_constant_initializer_runtime_restrictions(
+                    constant.initializer,
+                    pointer_constant_constructor
+                )) {
+                expected_pointer_type_name_ = saved_expected_pointer_type_name;
+                continue;
+            }
+
+            if (pointer_constant_constructor) {
+                validate_pointer_constructor_operands(constant.initializer);
+                for (auto const& argument : constant.initializer.arguments) {
+                    analyze_expression(argument, false);
+                }
+                validate_constant_initializer_references(constant.initializer);
                 expected_pointer_type_name_ = saved_expected_pointer_type_name;
                 continue;
             }
@@ -6342,7 +6390,7 @@ private:
                 constant.initializer.line,
                 "constant"
             );
-            if (is_pointer_type(constant.type) && !read_result_type_mismatch) {
+            if (pointer_typed_constant && !read_result_type_mismatch) {
                 validate_pointer_typed_expression(
                     constant.initializer,
                     constant.initializer.line,

@@ -821,7 +821,7 @@ auto lower_module_constant(
     }
     auto source_type_name = render_source_type_name(declaration->second->type);
     auto lowered_type = lowered_type_for_source_type_name(source_type_name, context);
-    if (!lowered_type.has_value() || lowered_type->type == "void" || lowered_type->type == "ptr") {
+    if (!lowered_type.has_value() || lowered_type->type == "void") {
         return std::nullopt;
     }
 
@@ -1269,6 +1269,31 @@ auto lower_module_constant_expression(
         return constant->value;
     }
 
+    if (expected_type.type == "ptr" && expression.kind == syntax::ExpressionKind::call &&
+        expression.left != nullptr && expression.left->kind == syntax::ExpressionKind::name &&
+        expression.left->text == "Pointer" && expression.arguments.size() == 1) {
+        auto address_type = LoweredType {
+            .type = "i64",
+            .signedness = IntegerSignedness::not_integer,
+        };
+        auto address = lower_module_constant_expression(
+            expression.arguments.front(),
+            address_type,
+            "Address",
+            declarations,
+            context,
+            active_constants
+        );
+        if (!address.has_value()) {
+            return std::nullopt;
+        }
+        return LoweredExpression {
+            .type = "ptr",
+            .value = "inttoptr (i64 " + address->value + " to ptr)",
+            .signedness = IntegerSignedness::not_integer,
+        };
+    }
+
     auto resolved_source_type_name = resolved_source_type_alias_name(
         expected_source_type_name,
         context
@@ -1687,6 +1712,7 @@ auto clone_expression(syntax::ExpressionSyntax const& expression) -> syntax::Exp
         .kind = expression.kind,
         .line = expression.line,
         .text = expression.text,
+        .generic_arguments = expression.generic_arguments,
     };
     cloned.arguments.reserve(expression.arguments.size());
     for (auto const& argument : expression.arguments) {

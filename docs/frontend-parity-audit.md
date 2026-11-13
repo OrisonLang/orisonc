@@ -3953,3 +3953,7 @@ This file tracks which source-language frontend slices are reflected in the curr
   backend-neutral type and initializer metadata, expand producer-private constant dependencies, and localize imported
   constructor names. Consumers reuse semantic validation and constant lowering, producing storage-free IR without a
   producer runtime global. Serialized `.opi` compile, link, and execution coverage passes. No syntax changed.
+- 2026-11-13: Protected generic constructor expressions now retain type arguments in the AST and package interfaces.
+  A root `Pointer<T>(Address)` initializer for a `Pointer<T>` constant validates its explicit element type and lowers
+  to a storage-free LLVM `inttoptr` expression. Pointer returns and `address_of` field paths cover the tour's MMIO
+  register-block pattern. Nested pointer construction in other constant aggregates remains rejected. No syntax changed.

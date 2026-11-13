@@ -87,7 +87,20 @@ auto render_type(syntax::TypeSyntax const& type) -> std::string {
 auto render_constant_expression(syntax::ExpressionSyntax const& expression) -> std::string {
     using syntax::ExpressionKind;
     switch (expression.kind) {
-    case ExpressionKind::name:
+    case ExpressionKind::name: {
+        auto rendered = expression.text;
+        if (!expression.generic_arguments.empty()) {
+            rendered += "<";
+            for (auto index = std::size_t {0}; index < expression.generic_arguments.size(); ++index) {
+                if (index != 0) {
+                    rendered += ", ";
+                }
+                rendered += render_type(expression.generic_arguments[index]);
+            }
+            rendered += ">";
+        }
+        return rendered;
+    }
     case ExpressionKind::integer_literal:
     case ExpressionKind::float_literal:
     case ExpressionKind::string_literal:
@@ -166,6 +179,7 @@ auto clone_constant_expression(syntax::ExpressionSyntax const& expression) -> sy
         .kind = expression.kind,
         .line = expression.line,
         .text = expression.text,
+        .generic_arguments = expression.generic_arguments,
     };
     for (auto const& argument : expression.arguments) {
         cloned.arguments.push_back(clone_constant_expression(argument));
@@ -206,6 +220,7 @@ auto expand_constant_expression(
         .kind = expression.kind,
         .line = expression.line,
         .text = expression.text,
+        .generic_arguments = expression.generic_arguments,
     };
     for (auto const& argument : expression.arguments) {
         expanded.arguments.push_back(expand_constant_expression(argument, constants, active_constants));
@@ -572,6 +587,9 @@ void localize_imported_constant_expression(
     syntax::ModuleSyntax const& module,
     std::string_view package_name
 ) {
+    for (auto& generic_argument : expression.generic_arguments) {
+        generic_argument = localize_imported_type(generic_argument, module, package_name);
+    }
     if (expression.kind == syntax::ExpressionKind::call && expression.left != nullptr &&
         expression.left->kind == syntax::ExpressionKind::name) {
         auto imported_type = std::ranges::find_if(

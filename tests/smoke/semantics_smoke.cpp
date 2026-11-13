@@ -10548,18 +10548,37 @@ void test_choice_constant_initializer_payload_type_failure() {
     assert_choice_constructor_payload_mismatch_diagnostic(path, 5, "Bool", "UInt32");
 }
 
-void test_constant_initializer_pointer_construction_failure() {
-    auto path = std::filesystem::temp_directory_path() / "orison_semantics_constant_pointer_construction_failure.or";
+void test_constant_initializer_pointer_construction_success() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_constant_pointer_construction_success.or";
     write_concurrency_fixture(
         path,
         "demo.consts",
         {
             "const UART_STATUS: Address = 0x4000_1000",
-            "const STATUS: Pointer<UInt32> = Pointer(UART_STATUS)",
+            "const STATUS: Pointer<UInt32> = Pointer<UInt32>(UART_STATUS)",
         }
     );
 
-    assert_constant_initializer_runtime_construct_diagnostic(path, 3, "Pointer construction");
+    assert_fixture_success(path);
+}
+
+void test_constant_initializer_pointer_construction_element_type_failure() {
+    auto path = std::filesystem::temp_directory_path() /
+        "orison_semantics_constant_pointer_construction_element_type_failure.or";
+    write_concurrency_fixture(
+        path,
+        "demo.consts",
+        {
+            "const UART_STATUS: Address = 0x4000_1000",
+            "const STATUS: Pointer<UInt32> = Pointer<Byte>(UART_STATUS)",
+        }
+    );
+
+    assert_fixture_single_diagnostic(
+        path,
+        3,
+        "Pointer construction element type 'Byte' does not match expected pointer element type 'UInt32'"
+    );
 }
 
 void test_nested_address_of_and_raw_offset_success() {
@@ -15580,7 +15599,8 @@ int main() {
     test_choice_constant_initializer_arity_failure();
     test_zero_payload_choice_constant_initializer_arity_failure();
     test_choice_constant_initializer_payload_type_failure();
-    test_constant_initializer_pointer_construction_failure();
+    test_constant_initializer_pointer_construction_success();
+    test_constant_initializer_pointer_construction_element_type_failure();
     test_nested_address_of_and_raw_offset_success();
     test_index_access_noninteger_index_failure();
     test_index_access_integer_index_success();

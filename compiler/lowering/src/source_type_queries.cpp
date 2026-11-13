@@ -437,6 +437,7 @@ auto clone_expression(syntax::ExpressionSyntax const& expression) -> syntax::Exp
         .kind = expression.kind,
         .line = expression.line,
         .text = expression.text,
+        .generic_arguments = expression.generic_arguments,
     };
     cloned.arguments.reserve(expression.arguments.size());
     for (auto const& argument : expression.arguments) {

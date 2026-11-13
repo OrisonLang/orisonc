@@ -125,6 +125,35 @@ int main() {
         .type = {.name = "UInt32"},
         .initializer = std::move(answer_initializer),
     });
+    producer.constants.push_back(orison::syntax::ConstantSyntax {
+        .name = "REGISTER_ADDRESS",
+        .type = {.name = "Address"},
+        .initializer = {
+            .kind = orison::syntax::ExpressionKind::integer_literal,
+            .text = "0x4000_1000",
+        },
+    });
+    auto pointer_initializer = orison::syntax::ExpressionSyntax {
+        .kind = orison::syntax::ExpressionKind::call,
+        .left = std::make_unique<orison::syntax::ExpressionSyntax>(orison::syntax::ExpressionSyntax {
+            .kind = orison::syntax::ExpressionKind::name,
+            .text = "Pointer",
+            .generic_arguments = {{.name = "UInt32"}},
+        }),
+    };
+    pointer_initializer.arguments.push_back(orison::syntax::ExpressionSyntax {
+        .kind = orison::syntax::ExpressionKind::name,
+        .text = "REGISTER_ADDRESS",
+    });
+    producer.constants.push_back(orison::syntax::ConstantSyntax {
+        .visibility = orison::syntax::Visibility::public_visibility,
+        .name = "STATUS_POINTER",
+        .type = {
+            .name = "Pointer",
+            .generic_arguments = {{.name = "UInt32"}},
+        },
+        .initializer = std::move(pointer_initializer),
+    });
 
     auto package_interface = orison::semantics::build_package_interface(producer);
     assert(package_interface.package_name == "external.types");
@@ -171,9 +200,14 @@ int main() {
     assert(find_export("InternalRecord") == package_interface.exported_type_declarations.end());
     assert(package_interface.exported_functions.size() == 1);
     assert(package_interface.exported_functions.front().name == "transform");
-    assert(package_interface.exported_constants.size() == 1);
+    assert(package_interface.exported_constants.size() == 2);
     assert(package_interface.exported_constants.front().name == "ANSWER");
     assert(package_interface.exported_constants.front().initializer_text == "(40 + 2)");
+    assert(package_interface.exported_constants[1].name == "STATUS_POINTER");
+    assert(
+        package_interface.exported_constants[1].initializer_text ==
+        "Pointer<UInt32>(0x4000_1000)"
+    );
 
     auto serialized = orison::semantics::serialize_package_interface(package_interface);
     assert(
@@ -192,6 +226,7 @@ int main() {
         "type alias SharedDetail 0\n"
         "alias SharedDetail ExternalDetail external.shared::Detail\n"
         "constant ANSWER UInt32 UInt32 (40 + 2)\n"
+        "constant STATUS_POINTER Pointer<UInt32> Pointer<UInt32> Pointer<UInt32>(0x4000_1000)\n"
         "function transform 1 Value 1 values shared.View<Value> Result<Value> async unsafe 1 Value 2 Reader Shareable\n"
     );
     auto parsed = orison::semantics::parse_package_interface(serialized);
@@ -202,7 +237,7 @@ int main() {
     assert(parsed.package_interface->exported_functions.front().is_async);
     assert(parsed.package_interface->exported_functions.front().is_unsafe);
     assert(parsed.package_interface->exported_functions.front().where_constraints.size() == 1);
-    assert(parsed.package_interface->exported_constants.size() == 1);
+    assert(parsed.package_interface->exported_constants.size() == 2);
     auto imported_constant = orison::semantics::ImportedConstantDeclaration {
         .package_name = "external.types",
         .declaration_name = "ANSWER",
@@ -214,6 +249,18 @@ int main() {
     assert(materialized_constant.has_value());
     assert(materialized_constant->name == "ExternalAnswer");
     assert(materialized_constant->initializer.kind == orison::syntax::ExpressionKind::binary);
+    auto imported_pointer = orison::semantics::ImportedConstantDeclaration {
+        .package_name = "external.types",
+        .declaration_name = "STATUS_POINTER",
+        .local_name = "ExternalStatusPointer",
+        .type = parsed.package_interface->exported_constants[1].type,
+        .initializer_text = parsed.package_interface->exported_constants[1].initializer_text,
+    };
+    auto materialized_pointer = orison::semantics::materialize_imported_constant(imported_pointer);
+    assert(materialized_pointer.has_value());
+    assert(materialized_pointer->initializer.left->text == "Pointer");
+    assert(materialized_pointer->initializer.left->generic_arguments.size() == 1);
+    assert(materialized_pointer->initializer.left->generic_arguments.front().name == "UInt32");
 
     auto empty = orison::semantics::parse_package_interface("");
     assert(empty.has_error());

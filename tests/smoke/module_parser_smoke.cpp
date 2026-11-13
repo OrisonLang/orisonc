@@ -604,6 +604,7 @@ void test_constant_success() {
         output << "package demo.consts\n";
         output << "public const UART0_BASE: Address = 0x4000_1000\n";
         output << "const UART0_DATA: Address = UART0_BASE + 0x00\n";
+        output << "const UART0: Pointer<UInt32> = Pointer<UInt32>(UART0_BASE)\n";
     }
 
     auto source_file = orison::source::SourceFile::read(path);
@@ -613,7 +614,7 @@ void test_constant_success() {
     auto result = parser.parse(*source_file);
 
     assert(!result.diagnostics.has_errors());
-    assert(result.module.constants.size() == 2);
+    assert(result.module.constants.size() == 3);
     assert(result.module.constants[0].visibility == orison::syntax::Visibility::public_visibility);
     assert(result.module.constants[0].name == "UART0_BASE");
     assert(result.module.constants[0].type.name == "Address");
@@ -623,6 +624,10 @@ void test_constant_success() {
     assert(result.module.constants[1].initializer.kind == orison::syntax::ExpressionKind::binary);
     assert(result.module.constants[1].initializer.text == "+");
     assert(result.module.constants[1].initializer.left->text == "UART0_BASE");
+    assert(result.module.constants[2].initializer.kind == orison::syntax::ExpressionKind::call);
+    assert(result.module.constants[2].initializer.left->text == "Pointer");
+    assert(result.module.constants[2].initializer.left->generic_arguments.size() == 1);
+    assert(result.module.constants[2].initializer.left->generic_arguments.front().name == "UInt32");
     assert(result.module.constants[1].initializer.right->text == "0x00");
 }
 

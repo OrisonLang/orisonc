@@ -1,0 +1,14 @@
+package fixtures.constant.pointer
+
+record UartRegisters
+    status: UInt32
+    control: UInt32
+
+const UART0_BASE: Address = 0x4000_1000
+const UART0: Pointer<UartRegisters> = Pointer<UartRegisters>(UART0_BASE)
+
+unsafe function uart_pointer() -> Pointer<UartRegisters>
+    UART0
+
+unsafe function uart_status() -> UInt32
+    volatile_read(address_of(UART0.status))

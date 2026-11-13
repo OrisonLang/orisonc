@@ -225,6 +225,26 @@ auto main() -> int {
     assert(scalar_constants_ir.find("@DEVICE_BASE") == std::string::npos);
     assert(std::system((executable.string() + " run " + scalar_constants_path.string()).c_str()) == 0);
 
+    auto pointer_constants_path = fixtures / "pointer_constants_emit.or";
+    auto pointer_constants_ir_path = smoke_temp_root / "pointer_constants.ll";
+    assert(
+        std::system(
+            (executable.string() + " --emit-llvm " + pointer_constants_path.string() +
+             " > " + pointer_constants_ir_path.string()).c_str()
+        ) == 0
+    );
+    auto pointer_constants_ir_input = std::ifstream {pointer_constants_ir_path};
+    auto pointer_constants_ir = std::string {
+        std::istreambuf_iterator<char> {pointer_constants_ir_input},
+        std::istreambuf_iterator<char> {},
+    };
+    assert(
+        pointer_constants_ir.find("ret ptr inttoptr (i64 1073745920 to ptr)") !=
+        std::string::npos
+    );
+    assert(pointer_constants_ir.find("load volatile i32") != std::string::npos);
+    assert(pointer_constants_ir.find("@UART0") == std::string::npos);
+
     auto fixed_array_constants_path = fixtures / "fixed_array_constants_run.or";
     auto fixed_array_constants_ir_path = smoke_temp_root / "fixed_array_constants.ll";
     assert(

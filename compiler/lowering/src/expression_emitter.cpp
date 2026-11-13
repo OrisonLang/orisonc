@@ -1530,6 +1530,24 @@ auto lower_pointer_operand(
     FunctionLoweringSession& session,
     std::ostringstream& output
 ) -> std::optional<LoweredExpression> {
+    if (expression.kind == syntax::ExpressionKind::call && expression.left != nullptr &&
+        expression.left->kind == syntax::ExpressionKind::name &&
+        expression.left->text == "address_of") {
+        auto address = lowered_expression(
+            expression,
+            "i64",
+            IntegerSignedness::not_integer,
+            context,
+            session,
+            output
+        );
+        return address.has_value()
+            ? std::optional<LoweredExpression> {
+                lower_address_to_pointer(std::move(*address), session, output)
+            }
+            : std::nullopt;
+    }
+
     auto inferred = inferred_expression_type(expression, context, session.state);
     if (inferred.has_value() && inferred->type == "ptr") {
         return lowered_expression(
@@ -2252,6 +2270,16 @@ auto resolve_aggregate_address_base(
     std::ostringstream& output
 ) -> std::optional<AggregateAddressBase> {
     if (auto record_name = pointer_pointee_source_type_name(base_source_type)) {
+        if (base_expression.kind == syntax::ExpressionKind::name) {
+            auto constant = context.lowering.constants.find(base_expression.text);
+            if (constant != context.lowering.constants.end() &&
+                constant->second.value.type == "ptr") {
+                return AggregateAddressBase {
+                    .pointer_value = constant->second.value.value,
+                    .source_type_name = std::move(*record_name),
+                };
+            }
+        }
         auto base_pointer = lower_pointer_operand(base_expression, context, session, output);
         if (!base_pointer.has_value()) {
             return std::nullopt;
@@ -2366,7 +2394,20 @@ auto lower_pointer_record_field_address(
     }
 
     auto const& base_expression = *path.base_expression;
-    auto base_source_type = source_type_name_for_expression(base_expression, context, session.state);
+    auto base_source_type = std::optional<std::string> {};
+    if (base_expression.kind == syntax::ExpressionKind::name) {
+        auto constant = context.lowering.constants.find(base_expression.text);
+        if (constant != context.lowering.constants.end()) {
+            base_source_type = constant->second.source_type_name;
+        }
+    }
+    if (!base_source_type.has_value()) {
+        base_source_type = source_type_name_for_expression(
+            base_expression,
+            context.lowering,
+            session.state
+        );
+    }
     if (!base_source_type.has_value()) {
         return std::nullopt;
     }

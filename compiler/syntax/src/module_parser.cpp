@@ -747,6 +747,38 @@ private:
                expression.arguments.empty();
     }
 
+    auto current_starts_generic_constructor() const -> bool {
+        if (!is(TokenKind::identifier) || current().lexeme.empty() ||
+            current().lexeme.front() < 'A' || current().lexeme.front() > 'Z' ||
+            peek().kind != TokenKind::less) {
+            return false;
+        }
+
+        auto depth = std::size_t {0};
+        for (auto lookahead = index_ + 1; lookahead < tokens_.size(); ++lookahead) {
+            auto kind = tokens_[lookahead].kind;
+            if (kind == TokenKind::newline || kind == TokenKind::eof) {
+                return false;
+            }
+            if (kind == TokenKind::less) {
+                ++depth;
+                continue;
+            }
+            if (kind != TokenKind::greater) {
+                continue;
+            }
+            if (depth == 0) {
+                return false;
+            }
+            --depth;
+            if (depth == 0) {
+                return lookahead + 1 < tokens_.size() &&
+                    tokens_[lookahead + 1].kind == TokenKind::left_paren;
+            }
+        }
+        return false;
+    }
+
     auto parse_postfix_expression(ParseResult& result, ExpressionSyntax expression) -> ExpressionSyntax {
         while (true) {
             if (is(TokenKind::left_paren)) {
@@ -994,6 +1026,16 @@ private:
         }
 
         if (is(TokenKind::identifier)) {
+            if (current_starts_generic_constructor()) {
+                auto const line = current().line;
+                auto constructor_type = parse_type(result, "constructor requires a valid type");
+                return ExpressionSyntax {
+                    .kind = ExpressionKind::name,
+                    .line = line,
+                    .text = std::move(constructor_type.name),
+                    .generic_arguments = std::move(constructor_type.generic_arguments),
+                };
+            }
             auto expression = make_name_expression(current().lexeme);
             advance();
             return expression;

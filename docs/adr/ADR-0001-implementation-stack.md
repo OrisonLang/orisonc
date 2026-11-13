@@ -386,6 +386,10 @@ analysis, and lowering components.
   identity, and source initializer metadata. Producer-private constant dependencies are expanded before serialization.
   Consumers localize imported types and constructor names, then reuse semantic validation and the local constant
   evaluator, so imported constants retain storage-free lowering and do not require producer runtime globals.
+  Generic constructor expressions retain their protected-grammar type arguments in the syntax tree and package
+  interface metadata. Pointer constants fold `Pointer<T>(Address)` to immutable LLVM `inttoptr` expressions. Pointer
+  returns and aggregate-field addresses consume those expressions directly, including the tour's MMIO register-block
+  pattern, without emitting a runtime global.
 - Development builds may use the platform's monolithic shared LLVM target when component archives are unavailable;
   release packaging must use a static LLVM distribution to preserve statically linked tool executables.
 - Future ADRs should define the lowering pipeline, incremental compilation architecture, and runtime boundary.
