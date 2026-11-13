@@ -4769,7 +4769,8 @@ auto emit_module(
         options.generic_function_specialization_requests,
         options.imported_record_declarations,
         options.imported_choice_declarations,
-        options.imported_type_declarations
+        options.imported_type_declarations,
+        options.imported_constant_declarations
     );
     result.generic_function_specialization_requests =
         context.generic_function_specialization_requests;

@@ -84,6 +84,21 @@ auto run_semantic_analysis_stage(
             semantic_analysis_options.imported_function_declarations.push_back(function);
         }
     }
+    auto resolved_imported_constants = semantics::resolve_imported_constant_declarations(
+        result.parse_result.module,
+        options.available_package_interfaces
+    );
+    for (auto const& constant : resolved_imported_constants) {
+        auto already_supplied = std::ranges::any_of(
+            semantic_analysis_options.imported_constant_declarations,
+            [&](semantics::ImportedConstantDeclaration const& supplied_constant) {
+                return supplied_constant.local_name == constant.local_name;
+            }
+        );
+        if (!already_supplied) {
+            semantic_analysis_options.imported_constant_declarations.push_back(constant);
+        }
+    }
 
     semantics::ModuleSemanticAnalyzer semantic_analyzer;
     result.semantic_result = semantic_analyzer.analyze(result.parse_result.module, semantic_analysis_options);

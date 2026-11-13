@@ -186,6 +186,8 @@ auto main() -> int {
             "    Ok(value: Value)",
             "public interface Reader",
             "    function read(this: shared This) -> UInt32",
+            "const BASE: UInt32 = 40",
+            "public const ANSWER: UInt32 = BASE + 2",
         }
     );
     auto package_interface_path = smoke_temp_root / "external_types.opi";
@@ -209,6 +211,7 @@ auto main() -> int {
             "type interface Reader 0\n"
             "type choice Result 1 Value\n"
             "variant Result Ok 1 value Value Value\n"
+            "constant ANSWER UInt32 UInt32 (40 + 2)\n"
         );
     }
 
@@ -242,6 +245,55 @@ auto main() -> int {
             "type 'Pair<UInt32>' supplies 1 type argument; type 'Pair' requires 2"
         ) != std::string::npos
     );
+
+    auto constant_consumer_path = smoke_temp_root / "constant_consumer.or";
+    write_fixture(
+        constant_consumer_path,
+        "demo.constantconsumer",
+        {
+            "import",
+            "    ANSWER as ExternalAnswer from external.types",
+            "function main() -> UInt32",
+            "    ExternalAnswer - 42 as UInt32",
+        }
+    );
+    auto constant_consumer_path_text = constant_consumer_path.string();
+    auto constant_consumer_object_path = smoke_temp_root / "constant_consumer.o";
+    auto constant_consumer_object_path_text = constant_consumer_object_path.string();
+    std::array<char const*, 7> constant_consumer_object_argv {
+        "orisonc",
+        "--package-interface",
+        package_interface_path_text.c_str(),
+        "--emit-object",
+        constant_consumer_path_text.c_str(),
+        "-o",
+        constant_consumer_object_path_text.c_str(),
+    };
+    auto constant_consumer_object_result = app.run(
+        std::span<char const* const>(
+            constant_consumer_object_argv.data(),
+            constant_consumer_object_argv.size()
+        )
+    );
+    assert_success_with_empty_stdout(constant_consumer_object_result);
+    auto constant_consumer_object_input = std::ifstream(
+        constant_consumer_object_path,
+        std::ios::in | std::ios::binary
+    );
+    auto constant_consumer_object = std::string(
+        std::istreambuf_iterator<char>(constant_consumer_object_input),
+        std::istreambuf_iterator<char>()
+    );
+    auto constant_consumer_objects = std::array<std::string_view, 1> {
+        constant_consumer_object,
+    };
+    auto constant_consumer_executable_path = smoke_temp_root / "constant_consumer";
+    auto constant_consumer_link = orison::link::HostLinker {}.link(
+        constant_consumer_objects,
+        constant_consumer_executable_path
+    );
+    assert(!constant_consumer_link.has_errors());
+    assert(std::system(constant_consumer_executable_path.string().c_str()) == 0);
 
     auto generic_producer_path = smoke_temp_root / "generic producer.or";
     write_fixture(

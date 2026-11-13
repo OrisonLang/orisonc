@@ -399,6 +399,10 @@ auto build_lowering_emission_options(
     );
     emission_options.imported_record_declarations = std::move(imported_aggregates.records);
     emission_options.imported_choice_declarations = std::move(imported_aggregates.choices);
+    emission_options.imported_constant_declarations = semantics::resolve_imported_constant_declarations(
+        result.parse_result.module,
+        options.available_package_interfaces
+    );
     emission_options.semantic_owned_cleanup_lowering_authorizations =
         options.test_only_semantic_owned_cleanup_lowering_authorizations;
     emission_options.semantic_owned_cleanup_lowering_authorizations.insert(

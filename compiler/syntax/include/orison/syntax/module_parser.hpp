@@ -109,6 +109,7 @@ struct ExpressionSyntax {
 };
 
 struct ConstantSyntax {
+    Visibility visibility = Visibility::package_visibility;
     std::size_t line = 0;
     std::string name;
     TypeSyntax type;

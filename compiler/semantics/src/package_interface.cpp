@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <charconv>
 #include <sstream>
+#include <unordered_map>
 #include <unordered_set>
 #include <utility>
 
@@ -57,6 +58,16 @@ void remove_carriage_return(std::string& line) {
     }
 }
 
+auto trimmed_text(std::string_view text) -> std::string_view {
+    while (!text.empty() && text.front() == ' ') {
+        text.remove_prefix(1);
+    }
+    while (!text.empty() && text.back() == ' ') {
+        text.remove_suffix(1);
+    }
+    return text;
+}
+
 auto render_type(syntax::TypeSyntax const& type) -> std::string {
     auto rendered = type.name;
     if (type.generic_arguments.empty()) {
@@ -71,6 +82,167 @@ auto render_type(syntax::TypeSyntax const& type) -> std::string {
     }
     rendered += '>';
     return rendered;
+}
+
+auto render_constant_expression(syntax::ExpressionSyntax const& expression) -> std::string {
+    using syntax::ExpressionKind;
+    switch (expression.kind) {
+    case ExpressionKind::name:
+    case ExpressionKind::integer_literal:
+    case ExpressionKind::float_literal:
+    case ExpressionKind::string_literal:
+    case ExpressionKind::boolean_literal:
+        return expression.text;
+    case ExpressionKind::array_literal: {
+        auto rendered = std::string {"["};
+        for (auto index = std::size_t {0}; index < expression.arguments.size(); ++index) {
+            if (index != 0) {
+                rendered += ", ";
+            }
+            rendered += render_constant_expression(expression.arguments[index]);
+        }
+        rendered += "]";
+        return rendered;
+    }
+    case ExpressionKind::unary:
+        if (expression.left == nullptr) {
+            return {};
+        }
+        if (expression.text == "not" || expression.text == "bit_not") {
+            return expression.text + " " + render_constant_expression(*expression.left);
+        }
+        return expression.text + render_constant_expression(*expression.left);
+    case ExpressionKind::cast:
+        return expression.left == nullptr
+            ? std::string {}
+            : render_constant_expression(*expression.left) + " as " + expression.text;
+    case ExpressionKind::call: {
+        if (expression.left == nullptr) {
+            return {};
+        }
+        auto rendered = render_constant_expression(*expression.left) + "(";
+        for (auto index = std::size_t {0}; index < expression.arguments.size(); ++index) {
+            if (index != 0) {
+                rendered += ", ";
+            }
+            rendered += render_constant_expression(expression.arguments[index]);
+        }
+        rendered += ")";
+        return rendered;
+    }
+    case ExpressionKind::member_access:
+        return expression.left == nullptr
+            ? std::string {}
+            : render_constant_expression(*expression.left) + "." + expression.text;
+    case ExpressionKind::null_safe_member_access:
+        return expression.left == nullptr
+            ? std::string {}
+            : render_constant_expression(*expression.left) + "?." + expression.text;
+    case ExpressionKind::index_access:
+        return expression.left == nullptr || expression.arguments.size() != 1
+            ? std::string {}
+            : render_constant_expression(*expression.left) + "[" +
+                render_constant_expression(expression.arguments.front()) + "]";
+    case ExpressionKind::binary:
+        return expression.left == nullptr || expression.right == nullptr
+            ? std::string {}
+            : "(" + render_constant_expression(*expression.left) + " " + expression.text + " " +
+                render_constant_expression(*expression.right) + ")";
+    case ExpressionKind::ternary:
+        return expression.left == nullptr || expression.right == nullptr || expression.alternate == nullptr
+            ? std::string {}
+            : "(" + render_constant_expression(*expression.left) + " ? " +
+                render_constant_expression(*expression.right) + " : " +
+                render_constant_expression(*expression.alternate) + ")";
+    case ExpressionKind::task:
+    case ExpressionKind::thread:
+        return {};
+    }
+    return {};
+}
+
+auto clone_constant_expression(syntax::ExpressionSyntax const& expression) -> syntax::ExpressionSyntax {
+    auto cloned = syntax::ExpressionSyntax {
+        .kind = expression.kind,
+        .line = expression.line,
+        .text = expression.text,
+    };
+    for (auto const& argument : expression.arguments) {
+        cloned.arguments.push_back(clone_constant_expression(argument));
+    }
+    if (expression.left != nullptr) {
+        cloned.left = std::make_unique<syntax::ExpressionSyntax>(clone_constant_expression(*expression.left));
+    }
+    if (expression.right != nullptr) {
+        cloned.right = std::make_unique<syntax::ExpressionSyntax>(clone_constant_expression(*expression.right));
+    }
+    if (expression.alternate != nullptr) {
+        cloned.alternate = std::make_unique<syntax::ExpressionSyntax>(
+            clone_constant_expression(*expression.alternate)
+        );
+    }
+    return cloned;
+}
+
+auto expand_constant_expression(
+    syntax::ExpressionSyntax const& expression,
+    std::unordered_map<std::string, syntax::ConstantSyntax const*> const& constants,
+    std::unordered_set<std::string>& active_constants
+) -> syntax::ExpressionSyntax {
+    if (expression.kind == syntax::ExpressionKind::name) {
+        auto constant = constants.find(expression.text);
+        if (constant != constants.end() && active_constants.insert(expression.text).second) {
+            auto expanded = expand_constant_expression(
+                constant->second->initializer,
+                constants,
+                active_constants
+            );
+            active_constants.erase(expression.text);
+            return expanded;
+        }
+    }
+
+    auto expanded = syntax::ExpressionSyntax {
+        .kind = expression.kind,
+        .line = expression.line,
+        .text = expression.text,
+    };
+    for (auto const& argument : expression.arguments) {
+        expanded.arguments.push_back(expand_constant_expression(argument, constants, active_constants));
+    }
+    if (expression.left != nullptr) {
+        expanded.left = std::make_unique<syntax::ExpressionSyntax>(
+            expression.kind == syntax::ExpressionKind::call
+                ? clone_constant_expression(*expression.left)
+                : expand_constant_expression(*expression.left, constants, active_constants)
+        );
+    }
+    if (expression.right != nullptr) {
+        expanded.right = std::make_unique<syntax::ExpressionSyntax>(
+            expand_constant_expression(*expression.right, constants, active_constants)
+        );
+    }
+    if (expression.alternate != nullptr) {
+        expanded.alternate = std::make_unique<syntax::ExpressionSyntax>(
+            expand_constant_expression(*expression.alternate, constants, active_constants)
+        );
+    }
+    return expanded;
+}
+
+auto parse_constant_declaration(
+    std::string_view name,
+    syntax::TypeSyntax const& type,
+    std::string_view initializer_text
+) -> std::optional<syntax::ConstantSyntax> {
+    auto source_text = "package orison.package_interface\nconst " + std::string(name) + ": " +
+        render_type(type) + " = " + std::string(initializer_text) + "\n";
+    auto source_file = source::SourceFile {"<package-interface>", std::move(source_text)};
+    auto parsed = syntax::ModuleParser {}.parse(source_file);
+    if (parsed.diagnostics.has_errors() || parsed.module.constants.size() != 1) {
+        return std::nullopt;
+    }
+    return std::move(parsed.module.constants.front());
 }
 
 auto parse_type_at(std::string_view text, std::size_t& offset) -> std::optional<syntax::TypeSyntax> {
@@ -395,6 +567,38 @@ auto localize_imported_type(
     return type;
 }
 
+void localize_imported_constant_expression(
+    syntax::ExpressionSyntax& expression,
+    syntax::ModuleSyntax const& module,
+    std::string_view package_name
+) {
+    if (expression.kind == syntax::ExpressionKind::call && expression.left != nullptr &&
+        expression.left->kind == syntax::ExpressionKind::name) {
+        auto imported_type = std::ranges::find_if(
+            module.imports,
+            [&](syntax::ImportSyntax const& import) {
+                return import.from_package == package_name &&
+                    import.name == expression.left->text && !import.alias.empty();
+            }
+        );
+        if (imported_type != module.imports.end()) {
+            expression.left->text = imported_type->alias;
+        }
+    }
+    for (auto& argument : expression.arguments) {
+        localize_imported_constant_expression(argument, module, package_name);
+    }
+    if (expression.left != nullptr) {
+        localize_imported_constant_expression(*expression.left, module, package_name);
+    }
+    if (expression.right != nullptr) {
+        localize_imported_constant_expression(*expression.right, module, package_name);
+    }
+    if (expression.alternate != nullptr) {
+        localize_imported_constant_expression(*expression.alternate, module, package_name);
+    }
+}
+
 }  // namespace
 
 auto build_package_interface(syntax::ModuleSyntax const& module) -> PackageInterface {
@@ -465,6 +669,28 @@ auto build_package_interface(syntax::ModuleSyntax const& module) -> PackageInter
         }
     }
 
+    auto constants_by_name = std::unordered_map<std::string, syntax::ConstantSyntax const*> {};
+    for (auto const& constant : module.constants) {
+        constants_by_name.emplace(constant.name, &constant);
+    }
+    for (auto const& constant : module.constants) {
+        if (constant.visibility != syntax::Visibility::public_visibility) {
+            continue;
+        }
+        auto active_constants = std::unordered_set<std::string> {constant.name};
+        auto initializer = expand_constant_expression(
+            constant.initializer,
+            constants_by_name,
+            active_constants
+        );
+        package_interface.exported_constants.push_back(PackageConstantDeclaration {
+            .name = constant.name,
+            .type = constant.type,
+            .type_identity = package_interface_type_identity(constant.type, module),
+            .initializer_text = render_constant_expression(initializer),
+        });
+    }
+
     for (auto const& function : module.functions) {
         if (function.visibility != syntax::Visibility::public_visibility) {
             continue;
@@ -499,6 +725,8 @@ auto serialize_package_interface(PackageInterface const& package_interface) -> s
     );
     auto functions = package_interface.exported_functions;
     std::ranges::sort(functions, {}, &PackageFunctionDeclaration::name);
+    auto constants = package_interface.exported_constants;
+    std::ranges::sort(constants, {}, &PackageConstantDeclaration::name);
 
     auto output = std::ostringstream {};
     output << "orison-package-interface " << package_interface_format_version << '\n';
@@ -544,6 +772,10 @@ auto serialize_package_interface(PackageInterface const& package_interface) -> s
             }
             output << '\n';
         }
+    }
+    for (auto const& constant : constants) {
+        output << "constant " << constant.name << ' ' << render_type(constant.type) << ' '
+               << render_type_identity(constant.type_identity) << ' ' << constant.initializer_text << '\n';
     }
     for (auto const& function : functions) {
         output << "function " << function.name << ' ' << function.generic_parameters.size();
@@ -602,6 +834,7 @@ auto parse_package_interface(std::string_view text) -> PackageInterfaceParseResu
     auto result = PackageInterface {.package_name = std::move(package_name)};
     auto exported_names = std::unordered_set<std::string> {};
     auto exported_function_names = std::unordered_set<std::string> {};
+    auto exported_constant_names = std::unordered_set<std::string> {};
     auto line_number = std::size_t {2};
     while (std::getline(input, line)) {
         ++line_number;
@@ -744,6 +977,38 @@ auto parse_package_interface(std::string_view text) -> PackageInterfaceParseResu
             }
             owner->choice_variants.push_back(std::move(variant));
             owner->choice_variant_payload_type_identities.push_back(std::move(payload_identities));
+            continue;
+        }
+
+        if (record_kind == "constant") {
+            auto constant = PackageConstantDeclaration {};
+            auto type_text = std::string {};
+            auto identity_text = std::string {};
+            if (!(declaration_line >> constant.name >> type_text >> identity_text) ||
+                !exported_constant_names.insert(constant.name).second) {
+                return parse_error(
+                    "invalid package interface constant declaration at line " +
+                    std::to_string(line_number)
+                );
+            }
+            std::getline(declaration_line, constant.initializer_text);
+            constant.initializer_text = std::string(trimmed_text(constant.initializer_text));
+            auto type = parse_type(type_text);
+            auto identity = parse_type_identity(identity_text);
+            if (!type.has_value() || !identity.has_value() || constant.initializer_text.empty() ||
+                !parse_constant_declaration(
+                    constant.name,
+                    *type,
+                    constant.initializer_text
+                ).has_value()) {
+                return parse_error(
+                    "invalid package interface constant declaration at line " +
+                    std::to_string(line_number)
+                );
+            }
+            constant.type = std::move(*type);
+            constant.type_identity = std::move(*identity);
+            result.exported_constants.push_back(std::move(constant));
             continue;
         }
 
@@ -1138,6 +1403,74 @@ auto resolve_imported_function_declarations(
     }
 
     return imported_declarations;
+}
+
+auto resolve_imported_constant_declarations(
+    syntax::ModuleSyntax const& module,
+    std::vector<PackageInterface> const& package_interfaces
+) -> std::vector<ImportedConstantDeclaration> {
+    auto imported_declarations = std::vector<ImportedConstantDeclaration> {};
+    for (auto const& import : module.imports) {
+        auto package_interface = std::ranges::find_if(
+            package_interfaces,
+            [&](PackageInterface const& candidate) {
+                return candidate.package_name == import.from_package;
+            }
+        );
+        if (package_interface == package_interfaces.end()) {
+            continue;
+        }
+        auto declaration = std::ranges::find_if(
+            package_interface->exported_constants,
+            [&](PackageConstantDeclaration const& candidate) {
+                return candidate.name == import.name;
+            }
+        );
+        if (declaration == package_interface->exported_constants.end()) {
+            continue;
+        }
+
+        auto localized_type = localize_imported_type(
+            declaration->type,
+            module,
+            package_interface->package_name
+        );
+        auto parsed = parse_constant_declaration(
+            declaration->name,
+            localized_type,
+            declaration->initializer_text
+        );
+        if (!parsed.has_value()) {
+            continue;
+        }
+        localize_imported_constant_expression(
+            parsed->initializer,
+            module,
+            package_interface->package_name
+        );
+        imported_declarations.push_back(ImportedConstantDeclaration {
+            .package_name = package_interface->package_name,
+            .declaration_name = declaration->name,
+            .local_name = import.alias.empty() ? import.name : import.alias,
+            .type = std::move(localized_type),
+            .initializer_text = render_constant_expression(parsed->initializer),
+        });
+    }
+    return imported_declarations;
+}
+
+auto materialize_imported_constant(
+    ImportedConstantDeclaration const& declaration
+) -> std::optional<syntax::ConstantSyntax> {
+    auto constant = parse_constant_declaration(
+        declaration.local_name,
+        declaration.type,
+        declaration.initializer_text
+    );
+    if (constant.has_value()) {
+        constant->line = 0;
+    }
+    return constant;
 }
 
 }  // namespace orison::semantics

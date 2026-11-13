@@ -48,10 +48,18 @@ struct PackageFunctionDeclaration {
     bool is_unsafe = false;
 };
 
+struct PackageConstantDeclaration {
+    std::string name;
+    syntax::TypeSyntax type;
+    GenericSpecializationTypeIdentity type_identity;
+    std::string initializer_text;
+};
+
 struct PackageInterface {
     std::string package_name;
     std::vector<PackageTypeDeclaration> exported_type_declarations;
     std::vector<PackageFunctionDeclaration> exported_functions;
+    std::vector<PackageConstantDeclaration> exported_constants;
 };
 
 struct PackageInterfaceParseResult {
@@ -81,6 +89,14 @@ struct ImportedFunctionDeclaration {
     std::string declaration_name;
     std::string local_name;
     PackageFunctionDeclaration declaration;
+};
+
+struct ImportedConstantDeclaration {
+    std::string package_name;
+    std::string declaration_name;
+    std::string local_name;
+    syntax::TypeSyntax type;
+    std::string initializer_text;
 };
 
 struct GenericFunctionSpecializationRequest {
@@ -126,5 +142,14 @@ auto resolve_imported_function_declarations(
     syntax::ModuleSyntax const& module,
     std::vector<PackageInterface> const& package_interfaces
 ) -> std::vector<ImportedFunctionDeclaration>;
+
+auto resolve_imported_constant_declarations(
+    syntax::ModuleSyntax const& module,
+    std::vector<PackageInterface> const& package_interfaces
+) -> std::vector<ImportedConstantDeclaration>;
+
+auto materialize_imported_constant(
+    ImportedConstantDeclaration const& declaration
+) -> std::optional<syntax::ConstantSyntax>;
 
 }  // namespace orison::semantics

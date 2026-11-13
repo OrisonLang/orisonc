@@ -2089,6 +2089,52 @@ auto main() -> int {
     assert(!imported_function_link.has_errors());
     assert(std::system(imported_function_executable.string().c_str()) == 0);
 
+    auto imported_constant_producer_path = smoke_temp_root / "imported_constant_producer.or";
+    {
+        std::ofstream output(imported_constant_producer_path);
+        output << "package external.constants\n";
+        output << "const BASE: UInt32 = 40\n";
+        output << "public const ANSWER: UInt32 = BASE + 2\n";
+    }
+    auto imported_constant_producer = pipeline.analyze(imported_constant_producer_path);
+    assert(!imported_constant_producer.has_errors());
+    auto imported_constant_interface = orison::semantics::build_package_interface(
+        imported_constant_producer.parse_result.module
+    );
+    assert(imported_constant_interface.exported_constants.size() == 1);
+    assert(imported_constant_interface.exported_constants.front().initializer_text == "(40 + 2)");
+
+    auto imported_constant_consumer_path = smoke_temp_root / "imported_constant_consumer.or";
+    {
+        std::ofstream output(imported_constant_consumer_path);
+        output << "package demo.constantimports\n";
+        output << "import\n";
+        output << "    ANSWER as ExternalAnswer from external.constants\n";
+        output << "function main() -> UInt32\n";
+        output << "    ExternalAnswer - 42 as UInt32\n";
+    }
+    auto imported_constant_consumer = pipeline.emit_object(
+        imported_constant_consumer_path,
+        orison::pipeline::CompilePipelineOptions {
+            .available_package_interfaces = {imported_constant_interface},
+        }
+    );
+    assert(!imported_constant_consumer.has_errors());
+    assert(!imported_constant_consumer.object_bytes.empty());
+    assert(imported_constant_consumer.ir_text.find("sub i32 42, 42") != std::string::npos);
+    assert(imported_constant_consumer.ir_text.find("@ANSWER") == std::string::npos);
+    assert(imported_constant_consumer.ir_text.find("@ExternalAnswer") == std::string::npos);
+    auto imported_constant_object_images = std::array<std::string_view, 1> {
+        imported_constant_consumer.object_bytes,
+    };
+    auto imported_constant_executable = smoke_temp_root / "imported_constant_consumer";
+    auto imported_constant_link = orison::link::HostLinker {}.link(
+        imported_constant_object_images,
+        imported_constant_executable
+    );
+    assert(!imported_constant_link.has_errors());
+    assert(std::system(imported_constant_executable.string().c_str()) == 0);
+
     auto imported_aggregate_producer_path = smoke_temp_root / "imported_aggregate_producer.or";
     {
         std::ofstream output(imported_aggregate_producer_path);

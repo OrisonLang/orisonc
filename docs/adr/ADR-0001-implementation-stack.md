@@ -371,17 +371,21 @@ analysis, and lowering components.
   lowered precision. Function IR consumes final scalar literals rather than backend-specific constant expressions.
   Fixed-array module constants lower recursively into immutable LLVM aggregate literals. Elements may use supported
   primitive constant expressions or references to local constants; whole-array references and nested fixed arrays
-  remain storage-free and reuse ordinary aggregate value lowering. Record, choice, and imported constants remain open.
+  remain storage-free and reuse ordinary aggregate value lowering.
   Record module constants also lower recursively into immutable named-struct literals. Ordinary, aliased, nested, and
   concrete generic records may contain supported primitive, fixed-array, or record constant values; fixed arrays may
   contain record values. Whole-record references, returns, and field projections remain storage-free.
   Choice module constants lower into immutable tag or direct `{ tag, payload }` literals. Payload-free, single-payload,
   multi-payload, aliased, and concrete generic choices recursively compose with supported constant values when every
   variant uses the direct payload ABI. Choices with distinct payload types use target-order immutable byte-array
-  literals with ABI-defined aggregate padding and zero-filled trailing storage. Imported constants remain open.
+  literals with ABI-defined aggregate padding and zero-filled trailing storage.
   Built-in `Maybe<T>` metadata is available to semantic constant and switch-pattern analysis without a source
   redeclaration. `Some(value)` and `Empty` module constants lower into immutable `{ i1, payload }` literals and compose
   recursively with aliases, records, and fixed arrays without runtime global storage.
+  Public constants are serialized in version-1 package interfaces as backend-neutral source type, canonical type
+  identity, and source initializer metadata. Producer-private constant dependencies are expanded before serialization.
+  Consumers localize imported types and constructor names, then reuse semantic validation and the local constant
+  evaluator, so imported constants retain storage-free lowering and do not require producer runtime globals.
 - Development builds may use the platform's monolithic shared LLVM target when component archives are unavailable;
   release packaging must use a static LLVM distribution to preserve statically linked tool executables.
 - Future ADRs should define the lowering pipeline, incremental compilation architecture, and runtime boundary.

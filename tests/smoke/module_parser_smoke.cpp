@@ -602,7 +602,7 @@ void test_constant_success() {
     {
         std::ofstream output(path);
         output << "package demo.consts\n";
-        output << "const UART0_BASE: Address = 0x4000_1000\n";
+        output << "public const UART0_BASE: Address = 0x4000_1000\n";
         output << "const UART0_DATA: Address = UART0_BASE + 0x00\n";
     }
 
@@ -614,10 +614,12 @@ void test_constant_success() {
 
     assert(!result.diagnostics.has_errors());
     assert(result.module.constants.size() == 2);
+    assert(result.module.constants[0].visibility == orison::syntax::Visibility::public_visibility);
     assert(result.module.constants[0].name == "UART0_BASE");
     assert(result.module.constants[0].type.name == "Address");
     assert(result.module.constants[0].initializer.text == "0x4000_1000");
     assert(result.module.constants[1].name == "UART0_DATA");
+    assert(result.module.constants[1].visibility == orison::syntax::Visibility::package_visibility);
     assert(result.module.constants[1].initializer.kind == orison::syntax::ExpressionKind::binary);
     assert(result.module.constants[1].initializer.text == "+");
     assert(result.module.constants[1].initializer.left->text == "UART0_BASE");

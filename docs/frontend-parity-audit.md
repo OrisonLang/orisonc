@@ -3949,3 +3949,7 @@ This file tracks which source-language frontend slices are reflected in the curr
   payloads. Encoding follows target byte order and ABI field offsets, preserves aggregate padding as zero, and
   zero-fills unused trailing storage. Scalar and padded-record payloads round-trip through ordinary switch lowering
   without runtime globals. Imported constants remain open. No syntax changed.
+- 2026-11-12: Public constants now cross package boundaries through version-1 package interfaces. Interfaces preserve
+  backend-neutral type and initializer metadata, expand producer-private constant dependencies, and localize imported
+  constructor names. Consumers reuse semantic validation and constant lowering, producing storage-free IR without a
+  producer runtime global. Serialized `.opi` compile, link, and execution coverage passes. No syntax changed.

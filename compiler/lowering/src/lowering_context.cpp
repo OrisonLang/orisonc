@@ -1558,12 +1558,34 @@ auto lower_module_constant_expression(
     };
 }
 
-void collect_module_constants(syntax::ModuleSyntax const& module, LoweringContext& context) {
+void collect_module_constants(
+    syntax::ModuleSyntax const& module,
+    std::vector<semantics::ImportedConstantDeclaration> const& imported_constants,
+    LoweringContext& context
+) {
+    auto materialized_imports = std::vector<syntax::ConstantSyntax> {};
+    materialized_imports.reserve(imported_constants.size());
+    for (auto const& imported : imported_constants) {
+        auto materialized = semantics::materialize_imported_constant(imported);
+        if (materialized.has_value()) {
+            materialized_imports.push_back(std::move(*materialized));
+        }
+    }
+
     auto declarations = std::unordered_map<std::string, syntax::ConstantSyntax const*> {};
+    for (auto const& constant : materialized_imports) {
+        declarations.emplace(constant.name, &constant);
+    }
     for (auto const& constant : module.constants) {
         declarations.emplace(constant.name, &constant);
     }
     auto active_constants = std::unordered_set<std::string> {};
+    for (auto const& constant : materialized_imports) {
+        auto lowered = lower_module_constant(constant.name, declarations, context, active_constants);
+        if (lowered.has_value()) {
+            context.constants.emplace(constant.name, std::move(*lowered));
+        }
+    }
     for (auto const& constant : module.constants) {
         auto lowered = lower_module_constant(constant.name, declarations, context, active_constants);
         if (lowered.has_value()) {
@@ -4627,7 +4649,8 @@ auto build_lowering_context(
     std::vector<semantics::GenericFunctionSpecializationRequest> const& specialization_requests,
     std::vector<syntax::RecordSyntax> const& imported_records,
     std::vector<syntax::ChoiceSyntax> const& imported_choices,
-    std::vector<semantics::ImportedTypeDeclarationMetadata> const& imported_types
+    std::vector<semantics::ImportedTypeDeclarationMetadata> const& imported_types,
+    std::vector<semantics::ImportedConstantDeclaration> const& imported_constants
 ) -> LoweringContext {
     auto context = LoweringContext {};
     context.package_name = module.package_name;
@@ -4692,7 +4715,7 @@ auto build_lowering_context(
         module, imported_records, instantiated_types, generic_records, record_names, context
     );
     project_local_aggregate_alias_layouts(module, context);
-    collect_module_constants(module, context);
+    collect_module_constants(module, imported_constants, context);
 
     for (auto const& function : module.functions) {
         auto symbol_name = function.name;

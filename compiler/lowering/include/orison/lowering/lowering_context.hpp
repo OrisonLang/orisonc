@@ -108,7 +108,8 @@ auto build_lowering_context(
     std::vector<semantics::GenericFunctionSpecializationRequest> const& specialization_requests = {},
     std::vector<syntax::RecordSyntax> const& imported_records = {},
     std::vector<syntax::ChoiceSyntax> const& imported_choices = {},
-    std::vector<semantics::ImportedTypeDeclarationMetadata> const& imported_types = {}
+    std::vector<semantics::ImportedTypeDeclarationMetadata> const& imported_types = {},
+    std::vector<semantics::ImportedConstantDeclaration> const& imported_constants = {}
 ) -> LoweringContext;
 
 auto build_lowering_context(

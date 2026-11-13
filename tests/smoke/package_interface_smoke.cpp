@@ -3,6 +3,7 @@
 
 #include <algorithm>
 #include <cassert>
+#include <memory>
 #include <string>
 
 int main() {
@@ -98,6 +99,32 @@ int main() {
         .name = "internal_transform",
         .return_type = {.name = "Unit"},
     });
+    producer.constants.push_back(orison::syntax::ConstantSyntax {
+        .name = "BASE",
+        .type = {.name = "UInt32"},
+        .initializer = {
+            .kind = orison::syntax::ExpressionKind::integer_literal,
+            .text = "40",
+        },
+    });
+    auto answer_initializer = orison::syntax::ExpressionSyntax {
+        .kind = orison::syntax::ExpressionKind::binary,
+        .text = "+",
+        .left = std::make_unique<orison::syntax::ExpressionSyntax>(orison::syntax::ExpressionSyntax {
+            .kind = orison::syntax::ExpressionKind::name,
+            .text = "BASE",
+        }),
+        .right = std::make_unique<orison::syntax::ExpressionSyntax>(orison::syntax::ExpressionSyntax {
+            .kind = orison::syntax::ExpressionKind::integer_literal,
+            .text = "2",
+        }),
+    };
+    producer.constants.push_back(orison::syntax::ConstantSyntax {
+        .visibility = orison::syntax::Visibility::public_visibility,
+        .name = "ANSWER",
+        .type = {.name = "UInt32"},
+        .initializer = std::move(answer_initializer),
+    });
 
     auto package_interface = orison::semantics::build_package_interface(producer);
     assert(package_interface.package_name == "external.types");
@@ -144,6 +171,9 @@ int main() {
     assert(find_export("InternalRecord") == package_interface.exported_type_declarations.end());
     assert(package_interface.exported_functions.size() == 1);
     assert(package_interface.exported_functions.front().name == "transform");
+    assert(package_interface.exported_constants.size() == 1);
+    assert(package_interface.exported_constants.front().name == "ANSWER");
+    assert(package_interface.exported_constants.front().initializer_text == "(40 + 2)");
 
     auto serialized = orison::semantics::serialize_package_interface(package_interface);
     assert(
@@ -161,6 +191,7 @@ int main() {
         "variant Result Error 1 reason ExternalDetail external.shared::Detail\n"
         "type alias SharedDetail 0\n"
         "alias SharedDetail ExternalDetail external.shared::Detail\n"
+        "constant ANSWER UInt32 UInt32 (40 + 2)\n"
         "function transform 1 Value 1 values shared.View<Value> Result<Value> async unsafe 1 Value 2 Reader Shareable\n"
     );
     auto parsed = orison::semantics::parse_package_interface(serialized);
@@ -171,6 +202,18 @@ int main() {
     assert(parsed.package_interface->exported_functions.front().is_async);
     assert(parsed.package_interface->exported_functions.front().is_unsafe);
     assert(parsed.package_interface->exported_functions.front().where_constraints.size() == 1);
+    assert(parsed.package_interface->exported_constants.size() == 1);
+    auto imported_constant = orison::semantics::ImportedConstantDeclaration {
+        .package_name = "external.types",
+        .declaration_name = "ANSWER",
+        .local_name = "ExternalAnswer",
+        .type = {.name = "UInt32"},
+        .initializer_text = parsed.package_interface->exported_constants.front().initializer_text,
+    };
+    auto materialized_constant = orison::semantics::materialize_imported_constant(imported_constant);
+    assert(materialized_constant.has_value());
+    assert(materialized_constant->name == "ExternalAnswer");
+    assert(materialized_constant->initializer.kind == orison::syntax::ExpressionKind::binary);
 
     auto empty = orison::semantics::parse_package_interface("");
     assert(empty.has_error());
@@ -218,6 +261,13 @@ int main() {
     );
     assert(invalid_function.has_error());
     assert(invalid_function.error_message == "invalid package interface function declaration at line 3");
+    auto invalid_constant = orison::semantics::parse_package_interface(
+        "orison-package-interface 1\n"
+        "package external.types\n"
+        "constant ANSWER UInt32 UInt32\n"
+    );
+    assert(invalid_constant.has_error());
+    assert(invalid_constant.error_message == "invalid package interface constant declaration at line 3");
 
     auto specialization_requests = std::vector<orison::semantics::GenericFunctionSpecializationRequest> {
         {

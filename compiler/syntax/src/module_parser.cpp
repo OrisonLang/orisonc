@@ -62,7 +62,7 @@ private:
             parse_import(result);
             break;
         case TokenKind::keyword_const:
-            parse_constant(result);
+            parse_constant(result, Visibility::package_visibility);
             break;
         case TokenKind::keyword_type:
             parse_type_alias(result, Visibility::package_visibility);
@@ -103,6 +103,9 @@ private:
 
     void parse_visibility_qualified_top_level_declaration(ParseResult& result, Visibility visibility) {
         switch (current().kind) {
+        case TokenKind::keyword_const:
+            parse_constant(result, visibility);
+            break;
         case TokenKind::keyword_type:
             parse_type_alias(result, visibility);
             break;
@@ -128,7 +131,7 @@ private:
             parse_function(result, visibility);
             break;
         default:
-            result.diagnostics.error(current().line, "visibility modifier must be followed by type, record, choice, interface, foreign, async, unsafe, or function");
+            result.diagnostics.error(current().line, "visibility modifier must be followed by const, type, record, choice, interface, foreign, async, unsafe, or function");
             skip_to_next_line();
             break;
         }
@@ -174,7 +177,8 @@ private:
         }
 
         auto const& next = peek();
-        return next.kind == TokenKind::keyword_record || next.kind == TokenKind::keyword_choice ||
+        return next.kind == TokenKind::keyword_const || next.kind == TokenKind::keyword_record ||
+               next.kind == TokenKind::keyword_choice ||
                next.kind == TokenKind::keyword_interface || next.kind == TokenKind::keyword_function ||
                next.kind == TokenKind::keyword_type || next.kind == TokenKind::keyword_foreign ||
                next.kind == TokenKind::keyword_unsafe || next.kind == TokenKind::keyword_async;
@@ -1865,7 +1869,7 @@ private:
         skip_to_next_line();
     }
 
-    void parse_constant(ParseResult& result) {
+    void parse_constant(ParseResult& result, Visibility visibility) {
         auto line = current().line;
         advance();
         auto name = expect_identifier(result, "constant declaration requires a name");
@@ -1902,6 +1906,7 @@ private:
         }
 
         result.module.constants.push_back(ConstantSyntax {
+            .visibility = visibility,
             .line = line,
             .name = std::move(name),
             .type = std::move(type),

@@ -5539,6 +5539,21 @@ private:
         module_constant_bindings_.clear();
         std::unordered_set<std::string> seen_constant_names;
 
+        for (auto const& constant : options_.imported_constant_declarations) {
+            if (!seen_constant_names.insert(constant.local_name).second) {
+                diagnostics_.error(
+                    1,
+                    "imported constant '" + constant.local_name + "' is duplicated"
+                );
+                continue;
+            }
+            module_constant_bindings_.push_back(Binding {
+                .name = constant.local_name,
+                .type_name = render_type_name(constant.type),
+                .module_constant = true,
+            });
+        }
+
         for (auto const& constant : module_.constants) {
             if (!seen_constant_names.insert(constant.name).second) {
                 diagnostics_.error(
