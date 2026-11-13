@@ -3963,3 +3963,6 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-11-13: `address_of(value)` now retains `Pointer<ValueType>` in lowering source-type queries. This lets local and
   imported register-block `volatile_write(address_of(field), literal)` calls infer the field type, emit volatile stores,
   and pass object emission. Existing semantic write-type compatibility remains enforced. No syntax changed.
+- 2026-11-13: Ordinary aggregate field addresses now have end-to-end raw-memory coverage. A stack-backed record passes
+  `address_of(field)` directly to `raw_write` and `raw_read`; lowering emits the field GEP, typed store, and typed load,
+  while the CLI compile-link-run path returns success. No syntax changed.

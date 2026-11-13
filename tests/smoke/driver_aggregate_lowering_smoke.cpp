@@ -140,6 +140,31 @@ auto main() -> int {
         }
     );
 
+    auto emit_local_record_raw_access_path =
+        std::filesystem::temp_directory_path() / "emit_local_record_raw_access.or";
+    write_fixture(
+        emit_local_record_raw_access_path,
+        "demo.emit",
+        {
+            "record Registers",
+            "    status: UInt32",
+            "    control: UInt32",
+            "unsafe function main() -> UInt32",
+            "    var regs = Registers(0 as UInt32, 0 as UInt32)",
+            "    raw_write(address_of(regs.control), 7)",
+            "    raw_read(address_of(regs.control))",
+        }
+    );
+    auto emit_local_record_raw_access = run_emit_llvm(app, emit_local_record_raw_access_path);
+    assert_success_with_stdout_contains(
+        emit_local_record_raw_access,
+        {
+            "getelementptr %record.Registers, ptr %regs.addr, i32 0, i32 1",
+            "store i32 7, ptr",
+            "load i32, ptr",
+        }
+    );
+
     auto emit_local_array_address_path = std::filesystem::temp_directory_path() / "emit_local_array_address.or";
     write_fixture(
         emit_local_array_address_path,

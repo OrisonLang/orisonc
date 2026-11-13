@@ -1,0 +1,10 @@
+package examples.local_raw_aggregate_field_access
+
+record Registers
+    status: UInt32
+    control: UInt32
+
+unsafe function main() -> UInt32
+    var registers = Registers(0 as UInt32, 0 as UInt32)
+    raw_write(address_of(registers.control), 7)
+    raw_read(address_of(registers.control)) - 7 as UInt32
