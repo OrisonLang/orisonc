@@ -1,0 +1,11 @@
+package demo.importedpointer
+
+import
+    UartRegisters as Registers from devices.uart.types
+    UART0 as Device from devices.uart.types
+
+unsafe function uart_pointer() -> Pointer<Registers>
+    Device
+
+unsafe function uart_status() -> UInt32
+    volatile_read(address_of(Device.status))

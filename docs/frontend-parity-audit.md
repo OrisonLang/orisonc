@@ -3957,3 +3957,6 @@ This file tracks which source-language frontend slices are reflected in the curr
   A root `Pointer<T>(Address)` initializer for a `Pointer<T>` constant validates its explicit element type and lowers
   to a storage-free LLVM `inttoptr` expression. Pointer returns and `address_of` field paths cover the tour's MMIO
   register-block pattern. Nested pointer construction in other constant aggregates remains rejected. No syntax changed.
+- 2026-11-13: Imported pointer constants now have real version-1 `.opi` producer/consumer coverage. The consumer renames
+  the imported register-block type and pointer constant, then lowers pointer return and volatile field access without a
+  runtime global. LLVM IR and object emission pass. No syntax changed.

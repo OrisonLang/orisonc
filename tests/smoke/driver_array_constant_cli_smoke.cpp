@@ -245,6 +245,50 @@ auto main() -> int {
     assert(pointer_constants_ir.find("load volatile i32") != std::string::npos);
     assert(pointer_constants_ir.find("@UART0") == std::string::npos);
 
+    auto imported_pointer_producer_path = fixtures / "imported_pointer_constant_producer.or";
+    auto imported_pointer_interface_path = smoke_temp_root / "imported_pointer_constant_producer.opi";
+    assert(
+        std::system(
+            (executable.string() + " --emit-package-interface " +
+             imported_pointer_producer_path.string() + " -o " +
+             imported_pointer_interface_path.string()).c_str()
+        ) == 0
+    );
+
+    auto imported_pointer_consumer_path = fixtures / "imported_pointer_constant_consumer.or";
+    auto imported_pointer_ir_path = smoke_temp_root / "imported_pointer_constant_consumer.ll";
+    assert(
+        std::system(
+            (executable.string() + " --package-interface " +
+             imported_pointer_interface_path.string() + " --emit-llvm " +
+             imported_pointer_consumer_path.string() + " > " +
+             imported_pointer_ir_path.string()).c_str()
+        ) == 0
+    );
+    auto imported_pointer_ir_input = std::ifstream {imported_pointer_ir_path};
+    auto imported_pointer_ir = std::string {
+        std::istreambuf_iterator<char> {imported_pointer_ir_input},
+        std::istreambuf_iterator<char> {},
+    };
+    assert(
+        imported_pointer_ir.find("ret ptr inttoptr (i64 1073745920 to ptr)") !=
+        std::string::npos
+    );
+    assert(imported_pointer_ir.find("load volatile i32") != std::string::npos);
+    assert(imported_pointer_ir.find("@UART0") == std::string::npos);
+    assert(imported_pointer_ir.find("@Device") == std::string::npos);
+
+    auto imported_pointer_object_path = smoke_temp_root / "imported_pointer_constant_consumer.o";
+    assert(
+        std::system(
+            (executable.string() + " --package-interface " +
+             imported_pointer_interface_path.string() + " --emit-object " +
+             imported_pointer_consumer_path.string() + " -o " +
+             imported_pointer_object_path.string()).c_str()
+        ) == 0
+    );
+    assert(std::filesystem::file_size(imported_pointer_object_path) > 0);
+
     auto fixed_array_constants_path = fixtures / "fixed_array_constants_run.or";
     auto fixed_array_constants_ir_path = smoke_temp_root / "fixed_array_constants.ll";
     assert(

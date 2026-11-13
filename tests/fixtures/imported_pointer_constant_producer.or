@@ -1,0 +1,9 @@
+package devices.uart.types
+
+public record UartRegisters
+    public data: UInt32
+    public status: UInt32
+    public control: UInt32
+
+const UART0_BASE: Address = 0x4000_1000
+public const UART0: Pointer<UartRegisters> = Pointer<UartRegisters>(UART0_BASE)
