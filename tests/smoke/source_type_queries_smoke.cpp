@@ -7631,6 +7631,20 @@ int main() {
     assert(orison::lowering::source_type_name_for_expression(record_constructor("Bucket"), context, state) == "Bucket");
     assert(
         orison::lowering::source_type_name_for_expression(
+            call("address_of", member(name("wrapper"), "bucket")),
+            context,
+            state
+        ) == "Pointer<Bucket>"
+    );
+    assert(
+        orison::lowering::source_type_name_for_expression(
+            call("address_of", member(member(name("wrapper_pointer"), "bucket"), "values")),
+            context,
+            state
+        ) == "Pointer<Array<UInt32, 3>>"
+    );
+    assert(
+        orison::lowering::source_type_name_for_expression(
             call("Pointer", call("address_of", member(name("wrapper"), "bucket"))),
             context,
             state

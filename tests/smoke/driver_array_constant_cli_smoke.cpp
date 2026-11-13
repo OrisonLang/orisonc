@@ -243,7 +243,17 @@ auto main() -> int {
         std::string::npos
     );
     assert(pointer_constants_ir.find("load volatile i32") != std::string::npos);
+    assert(pointer_constants_ir.find("store volatile i32 1") != std::string::npos);
     assert(pointer_constants_ir.find("@UART0") == std::string::npos);
+
+    auto pointer_constants_object_path = smoke_temp_root / "pointer_constants.o";
+    assert(
+        std::system(
+            (executable.string() + " --emit-object " + pointer_constants_path.string() +
+             " -o " + pointer_constants_object_path.string()).c_str()
+        ) == 0
+    );
+    assert(std::filesystem::file_size(pointer_constants_object_path) > 0);
 
     auto imported_pointer_producer_path = fixtures / "imported_pointer_constant_producer.or";
     auto imported_pointer_interface_path = smoke_temp_root / "imported_pointer_constant_producer.opi";
@@ -275,6 +285,7 @@ auto main() -> int {
         std::string::npos
     );
     assert(imported_pointer_ir.find("load volatile i32") != std::string::npos);
+    assert(imported_pointer_ir.find("store volatile i32 1") != std::string::npos);
     assert(imported_pointer_ir.find("@UART0") == std::string::npos);
     assert(imported_pointer_ir.find("@Device") == std::string::npos);
 

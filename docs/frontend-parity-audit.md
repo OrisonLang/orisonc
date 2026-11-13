@@ -3960,3 +3960,6 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-11-13: Imported pointer constants now have real version-1 `.opi` producer/consumer coverage. The consumer renames
   the imported register-block type and pointer constant, then lowers pointer return and volatile field access without a
   runtime global. LLVM IR and object emission pass. No syntax changed.
+- 2026-11-13: `address_of(value)` now retains `Pointer<ValueType>` in lowering source-type queries. This lets local and
+  imported register-block `volatile_write(address_of(field), literal)` calls infer the field type, emit volatile stores,
+  and pass object emission. Existing semantic write-type compatibility remains enforced. No syntax changed.

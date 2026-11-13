@@ -121,6 +121,8 @@ The explicit constructor element type must match the declared pointer element ty
 retains its unsafe-context requirement, and nested runtime construction remains invalid in constant aggregates.
 Imported pointer constants localize their declared pointee and constructor type arguments through explicit type imports,
 including renamed register-block types, before the consumer repeats semantic validation and constant lowering.
+Lowering source-type queries represent `address_of(value)` as `Pointer<ValueType>`, preserving the semantic destination
+type needed to lower unannotated raw or volatile write values without weakening write compatibility checks.
 The driver emits request artifacts with `--emit-specialization-requests` and accepts repeatable
 `--specialization-requests` inputs, allowing build orchestration to aggregate consumer requests for producer
 compilation. ADR-0008 defines explicit dependency scheduling and object selection through driver build plans.

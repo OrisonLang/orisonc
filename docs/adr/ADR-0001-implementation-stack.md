@@ -391,6 +391,8 @@ analysis, and lowering components.
   returns and aggregate-field addresses consume those expressions directly, including the tour's MMIO register-block
   pattern, without emitting a runtime global. Serialized package interfaces preserve this behavior when consumers
   rename both the imported register-block type and pointer constant; LLVM IR and object emission use the localized type.
+  Source-type queries retain `address_of(value)` as `Pointer<ValueType>`. Raw and volatile writes therefore infer an
+  unannotated value literal from the addressed destination type, including local and imported MMIO register fields.
 - Development builds may use the platform's monolithic shared LLVM target when component archives are unavailable;
   release packaging must use a static LLVM distribution to preserve statically linked tool executables.
 - Future ADRs should define the lowering pipeline, incremental compilation architecture, and runtime boundary.

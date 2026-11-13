@@ -9,3 +9,6 @@ unsafe function uart_pointer() -> Pointer<Registers>
 
 unsafe function uart_status() -> UInt32
     volatile_read(address_of(Device.status))
+
+unsafe function uart_enable() -> Unit
+    volatile_write(address_of(Device.control), 0x01)

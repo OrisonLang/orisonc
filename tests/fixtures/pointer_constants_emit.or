@@ -12,3 +12,6 @@ unsafe function uart_pointer() -> Pointer<UartRegisters>
 
 unsafe function uart_status() -> UInt32
     volatile_read(address_of(UART0.status))
+
+unsafe function uart_enable() -> Unit
+    volatile_write(address_of(UART0.control), 0x01)

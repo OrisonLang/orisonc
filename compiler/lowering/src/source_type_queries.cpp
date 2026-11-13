@@ -5482,6 +5482,16 @@ auto source_type_name_for_expression(
     }
 
     if (expression.kind == syntax::ExpressionKind::call && expression.left != nullptr &&
+        expression.left->kind == syntax::ExpressionKind::name && expression.left->text == "address_of" &&
+        expression.arguments.size() == 1) {
+        auto pointee_source_type =
+            source_type_name_for_expression(expression.arguments.front(), context, state);
+        return pointee_source_type.has_value()
+            ? std::optional<std::string> {"Pointer<" + *pointee_source_type + ">"}
+            : std::nullopt;
+    }
+
+    if (expression.kind == syntax::ExpressionKind::call && expression.left != nullptr &&
         expression.left->kind == syntax::ExpressionKind::name && expression.left->text == "Pointer" &&
         expression.arguments.size() == 1) {
         auto const& source = expression.arguments.front();
