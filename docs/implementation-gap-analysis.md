@@ -2,6 +2,23 @@
 
 ## Brief Snapshot
 
+Date: 2026-11-13
+
+- `orisonc` has a complete native pipeline for the validated source matrix: parsing, semantic analysis, LLVM IR,
+  object emission, linking, and execution.
+- Mature lowering areas include scalar and aggregate control flow, fixed arrays, concrete generics, package-directed
+  generic specialization, module constants and imports, raw/volatile pointer access, substantial `DynamicArray<T>`
+  ownership cleanup, and scalar task/thread execution.
+- Backend-validated tour examples prove representative slices, not arbitrary composition of every language feature.
+- The highest-impact bounded lowering gap is value-level `Maybe<Unit>`. Null-safe `Unit` method calls currently lower
+  only when their result is discarded; storing, returning, or switching on the result remains gated.
+- A tag-only LLVM `i1` representation is the recommended `Maybe<Unit>` ABI. It preserves the only runtime distinction,
+  `Empty` versus `Some(unit)`, while source typing continues to distinguish `Bool` from `Maybe<Unit>`.
+- Interface existential/dynamic dispatch and general C variadic adaptation need explicit representation metadata before
+  implementation. Cross-target linking and richer source-span diagnostics remain broader tooling gaps.
+- Recommended next implementation: add the tag-only `Maybe<Unit>` ABI, constructors, null-safe value calls, return and
+  binding flow, switch consumption, diagnostics, and compile-link-run coverage.
+
 Date: 2026-09-03
 
 - `orisonc` has an end-to-end C++ compiler path: parse, semantic checks, LLVM IR emission, object emission, host
