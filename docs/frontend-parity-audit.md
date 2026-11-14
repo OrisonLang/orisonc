@@ -3966,3 +3966,6 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-11-13: Ordinary aggregate field addresses now have end-to-end raw-memory coverage. A stack-backed record passes
   `address_of(field)` directly to `raw_write` and `raw_read`; lowering emits the field GEP, typed store, and typed load,
   while the CLI compile-link-run path returns success. No syntax changed.
+- 2026-11-13: Runtime-indexed nested aggregate field addresses now have direct raw-memory coverage. A local record owns
+  an array of records, and `address_of(log.entries[index].control)` lowers through the outer field, runtime index, and
+  inner field GEPs before typed raw store/load. The CLI compile-link-run path passes. No syntax changed.

@@ -1,0 +1,14 @@
+package examples.local_raw_indexed_aggregate_field_access
+
+record Registers
+    status: UInt32
+    control: UInt32
+
+record Log
+    entries: Array<Registers, 2>
+
+unsafe function main() -> UInt32
+    var log = Log([Registers(0 as UInt32, 0 as UInt32), Registers(0 as UInt32, 0 as UInt32)])
+    let index = 1 as UInt64
+    raw_write(address_of(log.entries[index].control), 23)
+    raw_read(address_of(log.entries[index].control)) - 23 as UInt32
