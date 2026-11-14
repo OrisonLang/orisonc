@@ -50,6 +50,16 @@ auto maybe_value_abi_for_source_type(
     }
 
     auto maybe_llvm_type = llvm_type_for_source_type_name(source_type_name, context);
+    auto resolved_payload_source_type = resolved_source_type_alias_name(*payload_source_type, context);
+    if (maybe_llvm_type == "i1" && resolved_payload_source_type == "Unit") {
+        return MaybeValueAbi {
+            .source_type_name = std::string(source_type_name),
+            .payload_source_type_name = std::move(*payload_source_type),
+            .llvm_type = std::move(*maybe_llvm_type),
+            .payload_llvm_type = "void",
+        };
+    }
+
     auto payload_llvm_type = llvm_type_for_source_type_name(*payload_source_type, context);
     if (!maybe_llvm_type.has_value() || !payload_llvm_type.has_value() ||
         *maybe_llvm_type == "void" || *payload_llvm_type == "void") {
@@ -89,6 +99,14 @@ auto emit_empty_maybe_value(
     std::size_t& next_temporary_index,
     std::ostringstream& output
 ) -> LoweredExpression {
+    if (abi.llvm_type == "i1" && abi.payload_llvm_type == "void") {
+        return LoweredExpression {
+            .type = "i1",
+            .value = "false",
+            .signedness = IntegerSignedness::not_integer,
+        };
+    }
+
     auto temporary_name = next_llvm_temporary_name(next_temporary_index);
     output << "  " << temporary_name << " = insertvalue " << abi.llvm_type
            << " undef, i1 false, 0\n";
@@ -121,6 +139,13 @@ auto emit_some_maybe_value(
 ) -> std::optional<LoweredExpression> {
     if (payload.type != abi.payload_llvm_type) {
         return std::nullopt;
+    }
+    if (abi.llvm_type == "i1" && abi.payload_llvm_type == "void") {
+        return LoweredExpression {
+            .type = "i1",
+            .value = "true",
+            .signedness = IntegerSignedness::not_integer,
+        };
     }
 
     auto tagged_name = next_llvm_temporary_name(next_temporary_index);

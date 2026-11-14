@@ -205,6 +205,26 @@ auto main() -> int {
 
     assert_cli_emit_llvm_success(
         executable,
+        smoke_temp_root / "orison_cli_maybe_unit_constructors.or",
+        std::vector<std::string_view> {
+            "package demo.cli",
+            "function present() -> Maybe<Unit>",
+            "    Some(unit)",
+            "function absent() -> Maybe<Unit>",
+            "    Empty",
+            "function main() -> UInt32",
+            "    return 0 as UInt32",
+        },
+        {
+            "define i1 @present()",
+            "ret i1 true",
+            "define i1 @absent()",
+            "ret i1 false",
+        }
+    );
+
+    assert_cli_emit_llvm_success(
+        executable,
         smoke_temp_root / "orison_cli_choice_constructor_emit.or",
         std::vector<std::string_view> {
             "package demo.cli",

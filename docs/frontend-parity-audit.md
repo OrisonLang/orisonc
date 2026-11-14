@@ -1,5 +1,8 @@
 # Frontend Parity Audit
 
+- 2026-11-14: Value-level `Maybe<Unit>` now has a tag-only LLVM `i1` ABI. Source-aware type mapping and constructor
+  lowering emit `Empty` as `false` and `Some(unit)` as `true`; bare LLVM `i1` inference remains `Bool`. Focused ABI,
+  type-query, and CLI LLVM-emission coverage passes. No source syntax changed.
 - 2026-09-11: Nested final-control forwarded-parameter alias handoffs now have reassignment rejection coverage.
   Source-query coverage rejects both nested orderings as unsupported handoff shapes, and Array CLI smoke coverage
   verifies use-after-move diagnostics.

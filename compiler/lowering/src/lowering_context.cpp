@@ -4152,6 +4152,9 @@ auto contextual_type_for(
         auto payload_type = contextual_type_for(
             type.generic_arguments.front(), record_names, choices, type_aliases
         );
+        if (payload_type == "void") {
+            return "i1";
+        }
         if (payload_type.has_value()) {
             return "{ i1, " + *payload_type + " }";
         }
@@ -4340,6 +4343,9 @@ auto llvm_field_type_for(
         auto payload_type = llvm_field_type_for(
             type.generic_arguments[0], record_names, choices, type_aliases
         );
+        if (payload_type == "void") {
+            return "i1";
+        }
         if (!payload_type.empty() && payload_type != "void") {
             return "{ i1, " + payload_type + " }";
         }

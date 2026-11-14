@@ -1873,6 +1873,9 @@ private:
     auto infer_expression_type_name(syntax::ExpressionSyntax const& expression) const -> std::string {
         switch (expression.kind) {
         case syntax::ExpressionKind::name: {
+            if (expression.text == "unit") {
+                return "Unit";
+            }
             auto const* binding = find_binding(expression.text);
             if (binding != nullptr) {
                 return binding->type_name;

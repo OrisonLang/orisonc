@@ -2653,7 +2653,10 @@ representation.
   focused on non-runtime-index fixture families while preserving direct all-mode execution.
 - Void-returning null-safe member calls used as statements lower through receiver-tag control flow: the present branch
   extracts the `Maybe<T>` payload and emits the void member call, the empty branch skips the call, and both branches
-  merge without materializing `Maybe<Unit>`. Value-level `Maybe<Unit>` remains future-gated.
+  merge without materializing `Maybe<Unit>`.
+- Value-level `Maybe<Unit>` uses a tag-only LLVM `i1` ABI. `false` represents `Empty`; `true` represents `Some(unit)`.
+  Source context retains the distinction between `Maybe<Unit>` and `Bool`, and LLVM-only `i1` inference remains
+  `Bool`. Constructors emit constants without payload storage or temporary instructions.
 - Descriptor-backed runtime-index DynamicArray cleanup now zero-finalizes the descriptor owner after deallocation,
   matching the newer member-cleanup rewrite tail.
 - Runtime-index constructor-move IR-shape diagnostics now report descriptor-owner zeroing separately from inline

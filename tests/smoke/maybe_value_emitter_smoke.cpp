@@ -51,6 +51,7 @@ int main() {
     assert(record_llvm_abi->payload_llvm_type == "%record.Bucket");
 
     assert(!orison::lowering::maybe_value_abi_for_llvm_type("i32", context).has_value());
+    assert(!orison::lowering::maybe_value_abi_for_llvm_type("i1", context).has_value());
 
     auto next_temporary_index = std::size_t {0};
     auto empty_output = std::ostringstream {};
@@ -89,7 +90,40 @@ int main() {
     );
 
     assert(!orison::lowering::maybe_value_abi_for_source_type("UInt32", context).has_value());
-    assert(!orison::lowering::maybe_value_abi_for_source_type("Maybe<Unit>", context).has_value());
+    auto unit_abi = orison::lowering::maybe_value_abi_for_source_type("Maybe<Unit>", context);
+    assert(unit_abi.has_value());
+    assert(unit_abi->source_type_name == "Maybe<Unit>");
+    assert(unit_abi->payload_source_type_name == "Unit");
+    assert(unit_abi->llvm_type == "i1");
+    assert(unit_abi->payload_llvm_type == "void");
+
+    auto unit_empty_output = std::ostringstream {};
+    auto unit_empty = orison::lowering::emit_empty_maybe_value(
+        *unit_abi,
+        next_temporary_index,
+        unit_empty_output
+    );
+    assert(unit_empty.type == "i1");
+    assert(unit_empty.value == "false");
+    assert(unit_empty_output.str().empty());
+    assert(next_temporary_index == 3);
+
+    auto unit_some_output = std::ostringstream {};
+    auto unit_some = orison::lowering::emit_some_maybe_value(
+        *unit_abi,
+        orison::lowering::LoweredExpression {
+            .type = "void",
+            .value = {},
+            .signedness = orison::lowering::IntegerSignedness::not_integer,
+        },
+        next_temporary_index,
+        unit_some_output
+    );
+    assert(unit_some.has_value());
+    assert(unit_some->type == "i1");
+    assert(unit_some->value == "true");
+    assert(unit_some_output.str().empty());
+    assert(next_temporary_index == 3);
 
     auto mismatch_output = std::ostringstream {};
     auto mismatch = orison::lowering::emit_some_maybe_value(

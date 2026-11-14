@@ -7570,7 +7570,9 @@ int main() {
     assert(owned_dynamic_array_type.has_value());
     assert(*owned_dynamic_array_type == std::string {orison::lowering::dynamic_array_descriptor_llvm_type()});
 
-    assert(!orison::lowering::llvm_type_for_source_type_name("Maybe<Unit>", context).has_value());
+    auto maybe_unit_type = orison::lowering::llvm_type_for_source_type_name("Maybe<Unit>", context);
+    assert(maybe_unit_type.has_value());
+    assert(*maybe_unit_type == "i1");
 
     assert(orison::lowering::source_type_name_for_expression(name("wrapper"), context, state) == "Wrapper");
     assert(

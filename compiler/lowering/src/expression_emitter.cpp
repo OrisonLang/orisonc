@@ -3963,6 +3963,14 @@ auto lowered_expression(
 ) -> std::optional<LoweredExpression> {
     auto& state = session.state;
     auto& failures = session.failures;
+    if (expression.kind == syntax::ExpressionKind::name && expression.text == "unit" &&
+        expected_llvm_type == "void") {
+        return LoweredExpression {
+            .type = "void",
+            .value = {},
+            .signedness = IntegerSignedness::not_integer,
+        };
+    }
     if (auto literal = lowered_integer_literal(expression, expected_llvm_type, expected_signedness)) {
         return literal;
     }
@@ -4001,7 +4009,10 @@ auto lowered_expression(
     }
 
     if (expression.kind == syntax::ExpressionKind::name && expression.text == "Empty") {
-        if (auto maybe_abi = maybe_value_abi_for_llvm_type(expected_llvm_type, context.lowering)) {
+        auto maybe_abi = expected_source_type_name.has_value()
+            ? maybe_value_abi_for_source_type(*expected_source_type_name, context.lowering)
+            : maybe_value_abi_for_llvm_type(expected_llvm_type, context.lowering);
+        if (maybe_abi.has_value() && maybe_abi->llvm_type == expected_llvm_type) {
             return emit_empty_maybe_value(*maybe_abi, state.next_temporary_index, output);
         }
     }

@@ -4667,7 +4667,15 @@ void test_qualified_this_type_in_local_annotation_failure() {
     auto path = std::filesystem::temp_directory_path() / "orison_semantics_this_type_local_failure.or";
     write_receiver_fixture(path, {"function cache() -> Unit", "    let current: exclusive This = unit"});
 
-    assert_fixture_this_type_context_diagnostic(path, 3);
+    auto diagnostics = analyze_orison_fixture(path);
+    assert(diagnostics.entries().size() == 2);
+    assert(diagnostics.entries()[0].line == 3);
+    assert(diagnostics.entries()[0].message == this_type_context_message());
+    assert(diagnostics.entries()[1].line == 3);
+    assert(
+        diagnostics.entries()[1].message ==
+        "binding initializer type 'Unit' does not match declared type 'exclusive.This'"
+    );
 }
 
 void test_receiver_parameter_with_nonself_type_inside_method_failure() {

@@ -5262,6 +5262,13 @@ auto lowered_type_for_source_type_name(
     }
 
     if (auto payload_type_name = maybe_payload_source_type_name(type_name)) {
+        auto resolved_payload_type_name = resolved_source_type_alias_name(*payload_type_name, context);
+        if (resolved_payload_type_name == "Unit") {
+            return LoweredType {
+                .type = "i1",
+                .signedness = IntegerSignedness::not_integer,
+            };
+        }
         auto payload_type = lowered_type_for_source_type_name(*payload_type_name, context);
         if (payload_type.has_value()) {
             return LoweredType {
