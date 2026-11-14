@@ -1,0 +1,17 @@
+package examples.pointer_raw_indexed_aggregate_field_access
+
+record Registers
+    status: UInt32
+    control: UInt32
+
+record Log
+    entries: Array<Registers, 2>
+
+unsafe function update(log: Pointer<Log>, index: UInt64) -> UInt32
+    raw_write(address_of(log.entries[index].control), 31)
+    raw_read(address_of(log.entries[index].control))
+
+unsafe function main() -> UInt32
+    var log = Log([Registers(0 as UInt32, 0 as UInt32), Registers(0 as UInt32, 0 as UInt32)])
+    let pointer: Pointer<Log> = Pointer(address_of(log))
+    update(pointer, 1 as UInt64) - 31 as UInt32

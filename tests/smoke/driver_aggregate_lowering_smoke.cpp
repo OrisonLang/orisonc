@@ -195,6 +195,35 @@ auto main() -> int {
         }
     );
 
+    auto emit_pointer_indexed_record_raw_access_path =
+        std::filesystem::temp_directory_path() / "emit_pointer_indexed_record_raw_access.or";
+    write_fixture(
+        emit_pointer_indexed_record_raw_access_path,
+        "demo.emit",
+        {
+            "record Registers",
+            "    status: UInt32",
+            "    control: UInt32",
+            "record Log",
+            "    entries: Array<Registers, 2>",
+            "unsafe function main(log: Pointer<Log>, index: UInt64) -> UInt32",
+            "    raw_write(address_of(log.entries[index].control), 31)",
+            "    raw_read(address_of(log.entries[index].control))",
+        }
+    );
+    auto emit_pointer_indexed_record_raw_access =
+        run_emit_llvm(app, emit_pointer_indexed_record_raw_access_path);
+    assert_success_with_stdout_contains(
+        emit_pointer_indexed_record_raw_access,
+        {
+            "getelementptr %record.Log, ptr %log, i32 0, i32 0",
+            "getelementptr [2 x %record.Registers], ptr %tmp",
+            "getelementptr %record.Registers, ptr %tmp",
+            "store i32 31, ptr",
+            "load i32, ptr",
+        }
+    );
+
     auto emit_local_array_address_path = std::filesystem::temp_directory_path() / "emit_local_array_address.or";
     write_fixture(
         emit_local_array_address_path,

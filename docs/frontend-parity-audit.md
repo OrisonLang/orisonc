@@ -3969,3 +3969,6 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-11-13: Runtime-indexed nested aggregate field addresses now have direct raw-memory coverage. A local record owns
   an array of records, and `address_of(log.entries[index].control)` lowers through the outer field, runtime index, and
   inner field GEPs before typed raw store/load. The CLI compile-link-run path passes. No syntax changed.
+- 2026-11-13: Pointer-backed runtime-indexed nested aggregate fields now have direct raw-memory coverage. A
+  `Pointer<Log>` base uses `address_of(log.entries[index].control)` for typed raw store/load, proving the GEP chain does
+  not depend on stack-local aggregate ownership. The CLI compile-link-run path passes. No syntax changed.

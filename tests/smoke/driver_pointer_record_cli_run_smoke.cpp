@@ -28,11 +28,12 @@ auto main() -> int {
 
     auto executable = std::filesystem::current_path().parent_path() / "tools" / "orisonc" / "orisonc";
     auto examples = std::filesystem::path(ORISON_SOURCE_DIR) / "examples";
-    constexpr auto run_examples = std::array<std::string_view, 9> {
+    constexpr auto run_examples = std::array<std::string_view, 10> {
         "nested_pointer_aggregate_assignment.or",
         "pointer_array_nested_assignment.or",
         "pointer_record_field_assignment.or",
         "pointer_record_nested_addressing.or",
+        "pointer_raw_indexed_aggregate_field_access.or",
         "local_record_aggregate_reassignment.or",
         "local_record_field_assignment.or",
         "local_record_nested_addressing.or",
