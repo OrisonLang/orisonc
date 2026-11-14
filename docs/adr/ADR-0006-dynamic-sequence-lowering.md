@@ -2657,6 +2657,9 @@ representation.
 - Value-level `Maybe<Unit>` uses a tag-only LLVM `i1` ABI. `false` represents `Empty`; `true` represents `Some(unit)`.
   Source context retains the distinction between `Maybe<Unit>` and `Bool`, and LLVM-only `i1` inference remains
   `Bool`. Constructors emit constants without payload storage or temporary instructions.
+- Null-safe `Unit` method calls materialize that tag-only value when used as expressions. The empty receiver path
+  contributes `false`; the present path invokes the void method and contributes `true`; an LLVM `phi i1` merges both
+  paths. Direct returns and typed immutable bindings preserve the source-level `Maybe<Unit>` identity.
 - Descriptor-backed runtime-index DynamicArray cleanup now zero-finalizes the descriptor owner after deallocation,
   matching the newer member-cleanup rewrite tail.
 - Runtime-index constructor-move IR-shape diagnostics now report descriptor-owner zeroing separately from inline

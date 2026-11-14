@@ -3735,8 +3735,18 @@ auto lower_null_safe_member_call_expression(
         return std::nullopt;
     }
 
-    auto temporary_name = next_llvm_temporary_name(session.state.next_temporary_index);
-    auto call_result = emit_value_call(std::move(temporary_name), method, *arguments, output);
+    auto call_result = LoweredExpression {};
+    if (method.return_type == "void") {
+        emit_void_call(method, *arguments, output);
+        call_result = LoweredExpression {
+            .type = "void",
+            .value = {},
+            .signedness = IntegerSignedness::not_integer,
+        };
+    } else {
+        auto temporary_name = next_llvm_temporary_name(session.state.next_temporary_index);
+        call_result = emit_value_call(std::move(temporary_name), method, *arguments, output);
+    }
     auto some_result = emit_some_maybe_value(
         *result_abi,
         call_result,

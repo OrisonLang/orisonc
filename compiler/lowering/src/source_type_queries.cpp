@@ -5573,14 +5573,15 @@ auto source_type_name_for_expression(
                   context,
                   state
               );
-        if (signature == nullptr || signature->return_type.empty() || signature->return_type == "void") {
+        if (signature == nullptr || signature->return_type.empty()) {
             return std::nullopt;
         }
 
         auto return_source_type = !signature->source_return_type_name.empty()
             ? std::optional<std::string> {signature->source_return_type_name}
             : source_type_name_for_llvm_type(signature->return_type, context);
-        if (!return_source_type.has_value()) {
+        if (!return_source_type.has_value() ||
+            (signature->return_type == "void" && *return_source_type != "Unit")) {
             return std::nullopt;
         }
         return expression.left->kind == syntax::ExpressionKind::null_safe_member_access

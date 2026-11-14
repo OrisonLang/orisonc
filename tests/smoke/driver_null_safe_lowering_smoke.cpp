@@ -441,6 +441,45 @@ auto main() -> int {
         }
     );
 
+    auto emit_null_safe_unit_member_call_path =
+        std::filesystem::temp_directory_path() / "emit_null_safe_unit_member_call.or";
+    write_fixture(
+        emit_null_safe_unit_member_call_path,
+        "demo.unit_member_call",
+        {
+            "record Device",
+            "    value: UInt32",
+            "extend Device",
+            "    function reset(this: shared This) -> Unit",
+            "        return",
+            "function reset_result(device: Maybe<Device>) -> Maybe<Unit>",
+            "    device?.reset()",
+            "function main() -> UInt32",
+            "    let device: Maybe<Device> = Empty",
+            "    let result: Maybe<Unit> = device?.reset()",
+            "    return 0 as UInt32",
+        }
+    );
+    auto emit_null_safe_unit_member_call = run_emit_llvm(app, emit_null_safe_unit_member_call_path);
+    assert_success_with_stdout_contains(
+        emit_null_safe_unit_member_call,
+        {
+            "%record.Device = type { i32 }",
+            "define void @__orison_method.demo.unit_member_call.Device.reset(%record.Device %this)",
+            "define i1 @reset_result({ i1, %record.Device } %device)",
+            "nullsafe.call.empty.",
+            "nullsafe.call.some.",
+            "call void @__orison_method.demo.unit_member_call.Device.reset(%record.Device",
+            "phi i1 [false, %nullsafe.call.empty.",
+            "[true, %nullsafe.call.some.",
+            "ret i1 %tmp",
+            "define i32 @main()",
+            "add i1 0, %tmp",
+            "ret i32 0",
+        }
+    );
+    assert_run_success(run_program(app, emit_null_safe_unit_member_call_path));
+
     auto emit_null_safe_concrete_generic_aggregate_member_call_path =
         std::filesystem::temp_directory_path() / "emit_null_safe_concrete_generic_aggregate_member_call.or";
     write_fixture(

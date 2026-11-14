@@ -1,5 +1,8 @@
 # Frontend Parity Audit
 
+- 2026-11-14: Null-safe `Unit` method calls now materialize value-level `Maybe<Unit>` results. The empty path yields
+  `false`, the present path invokes the void method and yields `true`, and `phi i1` merges the result for direct returns
+  and typed immutable bindings. Production LLVM emission and compile-link-run coverage pass. No source syntax changed.
 - 2026-11-14: Value-level `Maybe<Unit>` now has a tag-only LLVM `i1` ABI. Source-aware type mapping and constructor
   lowering emit `Empty` as `false` and `Some(unit)` as `true`; bare LLVM `i1` inference remains `Bool`. Focused ABI,
   type-query, and CLI LLVM-emission coverage passes. No source syntax changed.

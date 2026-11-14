@@ -12,12 +12,12 @@ Date: 2026-11-14
 - Backend-validated tour examples prove representative slices, not arbitrary composition of every language feature.
 - Value-level `Maybe<Unit>` now has a tag-only LLVM `i1` ABI. `Empty` and `Some(unit)` constructors lower to `false`
   and `true`, while source typing continues to distinguish `Bool` from `Maybe<Unit>`.
-- Null-safe `Unit` method calls still lower only when their result is discarded; storing, returning, or switching on
-  the resulting `Maybe<Unit>` remains gated.
+- Null-safe `Unit` method calls now produce `Maybe<Unit>` values for direct returns and typed immutable bindings.
+  Mutable binding and switch-consumption coverage remain open.
 - Interface existential/dynamic dispatch and general C variadic adaptation need explicit representation metadata before
   implementation. Cross-target linking and richer source-span diagnostics remain broader tooling gaps.
-- Recommended next implementation: materialize null-safe `Unit` method-call results through the tag-only ABI, starting
-  with direct returns and typed bindings before switch consumption.
+- Recommended next implementation: lower switch consumption of tag-only `Maybe<Unit>`, including `Some(unit)` payload
+  binding behavior and exhaustiveness coverage.
 
 Date: 2026-09-03
 

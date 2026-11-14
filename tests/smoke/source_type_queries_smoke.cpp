@@ -1036,6 +1036,22 @@ int main() {
             .symbol_name = "method.Box_UInt32_.pair",
         },
     });
+    context.methods.push_back(orison::lowering::LoweredMethodSignature {
+        .receiver_type_name = "Box<UInt32>",
+        .method_name = "reset",
+        .signature = orison::lowering::LoweredFunctionSignature {
+            .return_type = "void",
+            .source_return_type_name = "Unit",
+            .return_signedness = orison::lowering::IntegerSignedness::not_integer,
+            .parameter_types = {"%record.Box_UInt32_", "i32"},
+            .parameter_source_type_names = {"shared.Box<UInt32>", "UInt32"},
+            .parameter_signedness = {
+                orison::lowering::IntegerSignedness::not_integer,
+                orison::lowering::IntegerSignedness::unsigned_integer,
+            },
+            .symbol_name = "method.Box_UInt32_.reset",
+        },
+    });
 
     auto state = orison::lowering::FunctionLoweringState {};
     state.source_type_names["wrapper"] = "Wrapper";
@@ -7608,6 +7624,13 @@ int main() {
             context,
             state
         ) == "Maybe<Array<Box<UInt32>, 2>>"
+    );
+    assert(
+        orison::lowering::source_type_name_for_expression(
+            null_safe_method_call(name("box"), "reset", cast(integer_literal("0"), "UInt32")),
+            context,
+            state
+        ) == "Maybe<Unit>"
     );
     assert(
         !orison::lowering::source_type_name_for_expression(
