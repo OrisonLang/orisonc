@@ -1386,6 +1386,14 @@ auto inferred_expression_type(
         };
     }
 
+    if (expression.kind == syntax::ExpressionKind::call && expression.left != nullptr &&
+        expression.left->kind == syntax::ExpressionKind::null_safe_member_access) {
+        auto source_type = source_type_name_for_expression(expression, context, state);
+        return source_type.has_value()
+            ? lowered_type_for_source_type_name(*source_type, context.lowering)
+            : std::nullopt;
+    }
+
     if (expression.kind == syntax::ExpressionKind::unary &&
         expression.text == "await" &&
         expression.left != nullptr &&

@@ -249,5 +249,38 @@ int main() {
     assert(sourced_tag_result.plan.has_value());
     assert(sourced_tag_result.plan->cases[0].pattern->value == "0");
     assert(sourced_tag_result.plan->cases[1].pattern->value == "1");
+
+    auto maybe_unit_cases = std::vector<orison::syntax::SwitchCaseSyntax> {};
+    auto some_unit_case = orison::syntax::SwitchCaseSyntax {};
+    some_unit_case.pattern.kind = orison::syntax::ExpressionKind::call;
+    some_unit_case.pattern.left = std::make_unique<orison::syntax::ExpressionSyntax>();
+    some_unit_case.pattern.left->kind = orison::syntax::ExpressionKind::name;
+    some_unit_case.pattern.left->text = "Some";
+    some_unit_case.pattern.arguments.push_back(orison::syntax::ExpressionSyntax {
+        .kind = orison::syntax::ExpressionKind::name,
+        .text = "payload",
+    });
+    maybe_unit_cases.push_back(std::move(some_unit_case));
+    auto empty_unit_case = orison::syntax::SwitchCaseSyntax {};
+    empty_unit_case.pattern.kind = orison::syntax::ExpressionKind::name;
+    empty_unit_case.pattern.text = "Empty";
+    maybe_unit_cases.push_back(std::move(empty_unit_case));
+
+    auto maybe_unit_result = orison::lowering::plan_switch(
+        maybe_unit_cases,
+        orison::lowering::LoweredType {
+            .type = "i1",
+            .signedness = orison::lowering::IntegerSignedness::not_integer,
+        },
+        tag_choice_context,
+        std::string_view {"Maybe<Unit>"},
+        7
+    );
+    assert(maybe_unit_result.failure == orison::lowering::ControlFlowLoweringFailureReason::none);
+    assert(maybe_unit_result.plan.has_value());
+    assert(maybe_unit_result.plan->cases[0].pattern->type == "i1");
+    assert(maybe_unit_result.plan->cases[0].pattern->value == "true");
+    assert(maybe_unit_result.plan->cases[1].pattern->type == "i1");
+    assert(maybe_unit_result.plan->cases[1].pattern->value == "false");
     return 0;
 }

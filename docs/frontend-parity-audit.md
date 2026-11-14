@@ -1,5 +1,8 @@
 # Frontend Parity Audit
 
+- 2026-11-14: Final switches now consume tag-only `Maybe<Unit>` values, including direct null-safe `Unit` method-call
+  results. Source-aware planning maps `Some(payload)` and `Empty` to `true` and `false`; the bound `Unit` payload uses
+  no LLVM storage. Planning and production compile-link-run coverage pass. No source syntax changed.
 - 2026-11-14: Null-safe `Unit` method calls now materialize value-level `Maybe<Unit>` results. The empty path yields
   `false`, the present path invokes the void method and yields `true`, and `phi i1` merges the result for direct returns
   and typed immutable bindings. Production LLVM emission and compile-link-run coverage pass. No source syntax changed.

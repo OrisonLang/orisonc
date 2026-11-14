@@ -128,6 +128,9 @@ analysis, and lowering components.
   lowering, binding-scope policy, and diagnostic translation.
 - Final scalar switch case/default validation, pattern lowering, and deterministic block planning live in a dedicated
   component that returns a non-owning plan.
+- Final switch planning retains source type identity when multiple source types share an LLVM representation.
+  Tag-only `Maybe<Unit>` uses `i1` while remaining distinct from `Bool`: `Some(payload)` and `Empty` lower to `true`
+  and `false`, and the `Unit` payload binding occupies no LLVM storage.
 - Final switch CFG execution lives in a shared emitter over non-owning callbacks; it owns dispatch-table emission,
   case labels, predecessor tracking, fallback blocks, merge planning, phi emission, and current-block transitions while
   control-flow lowering retains subject validation, case-body lowering, binding-scope policy, and diagnostics.

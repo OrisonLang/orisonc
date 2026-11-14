@@ -390,11 +390,27 @@ void bind_switch_payload(
     if (planned_case.syntax == nullptr) {
         return;
     }
-    auto payload_type = maybe_payload_type_for_switch_subject(subject.type);
     auto binding_name = maybe_payload_binding_name(planned_case.syntax->pattern);
+    auto source_payload_type = subject_source_type_name.has_value()
+        ? maybe_payload_source_type_name(*subject_source_type_name)
+        : std::optional<std::string> {};
+    auto resolved_source_payload_type = source_payload_type.has_value()
+        ? resolved_source_type_alias_name(*source_payload_type, context.lowering)
+        : std::optional<std::string> {};
+    if (subject.type == "i1" && resolved_source_payload_type == "Unit" && binding_name.has_value()) {
+        session.state.immutable_bindings[*binding_name] = LoweredExpression {
+            .type = "void",
+            .value = {},
+            .signedness = IntegerSignedness::not_integer,
+        };
+        session.state.source_type_names[*binding_name] = std::move(*source_payload_type);
+        return;
+    }
+
+    auto payload_type = maybe_payload_type_for_switch_subject(subject.type);
     if (payload_type.has_value() && binding_name.has_value()) {
-        auto source_type_name = subject_source_type_name.has_value()
-            ? maybe_payload_source_type_name(*subject_source_type_name)
+        auto source_type_name = source_payload_type.has_value()
+            ? std::move(source_payload_type)
             : source_type_name_for_llvm_type(*payload_type, context.lowering);
         if (!source_type_name.has_value()) {
             source_type_name = source_type_name_for_llvm_type(*payload_type, context.lowering);
