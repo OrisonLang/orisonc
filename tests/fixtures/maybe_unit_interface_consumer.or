@@ -1,0 +1,17 @@
+package fixtures.maybe_unit_interface_consumer
+
+import
+    PRESENT as ImportedPresent from fixtures.maybe_unit_interface
+    ABSENT as ImportedAbsent from fixtures.maybe_unit_interface
+    produced_present as imported_present from fixtures.maybe_unit_interface
+    produced_absent as imported_absent from fixtures.maybe_unit_interface
+
+function classify(value: Maybe<Unit>) -> UInt32
+    switch value
+        Some(_) => 1 as UInt32
+        Empty => 0 as UInt32
+
+public function main() -> Int32
+    if classify(ImportedPresent) == 1 and classify(ImportedAbsent) == 0 and classify(imported_present()) == 1 and classify(imported_absent()) == 0
+        return 0
+    return 1

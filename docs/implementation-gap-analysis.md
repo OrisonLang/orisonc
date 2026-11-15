@@ -19,10 +19,12 @@ Date: 2026-11-14
   indexing, nested switch consumption, and linked execution while rejecting `Bool` stores.
 - Ternary and final `if`/`switch` values merge `Maybe<Unit>` through `i1` PHIs, statement-level branches preserve it
   through mutable assignment, and mixed `Bool` arms remain invalid.
+- Module constants lower `Maybe<Unit>` to storage-free `i1` literals. Version-1 package interfaces preserve imported
+  constant and function source identity across aliases, separate object emission, linking, and execution.
 - Interface existential/dynamic dispatch and general C variadic adaptation need explicit representation metadata before
   implementation. Cross-target linking and richer source-span diagnostics remain broader tooling gaps.
-- Recommended next implementation: validate tag-only `Maybe<Unit>` in module constants and separate compilation,
-  including package-interface serialization and imported function/constant ABI use.
+- Recommended next implementation: validate tag-only `Maybe<Unit>` through source aliases and package-directed concrete
+  generic specialization, including cross-package generic function ABI use.
 
 Date: 2026-09-03
 

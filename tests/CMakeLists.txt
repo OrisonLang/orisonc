@@ -28,6 +28,11 @@ target_link_libraries(orison_driver_artifact_smoke
         orison_driver
 )
 
+target_compile_definitions(orison_driver_artifact_smoke
+    PRIVATE
+        ORISON_SOURCE_DIR="${CMAKE_SOURCE_DIR}"
+)
+
 target_compile_features(orison_driver_artifact_smoke PRIVATE cxx_std_23)
 
 add_test(

@@ -393,10 +393,14 @@ analysis, and lowering components.
   Built-in `Maybe<T>` metadata is available to semantic constant and switch-pattern analysis without a source
   redeclaration. `Some(value)` and `Empty` module constants lower into immutable `{ i1, payload }` literals and compose
   recursively with aliases, records, and fixed arrays without runtime global storage.
+  `Maybe<Unit>` constants use the tag-only ABI: `Empty` lowers to `i1 0` and `Some(unit)` lowers to `i1 1`. The `unit`
+  literal remains a built-in value during constant reference validation rather than an ordinary constant dependency.
   Public constants are serialized in version-1 package interfaces as backend-neutral source type, canonical type
   identity, and source initializer metadata. Producer-private constant dependencies are expanded before serialization.
   Consumers localize imported types and constructor names, then reuse semantic validation and the local constant
-  evaluator, so imported constants retain storage-free lowering and do not require producer runtime globals.
+  evaluator, so imported constants retain storage-free lowering and do not require producer runtime globals. Imported
+  `Maybe<Unit>` constants and functions preserve the same `i1` ABI across separately emitted producer and consumer
+  objects.
   Generic constructor expressions retain their protected-grammar type arguments in the syntax tree and package
   interface metadata. Pointer constants fold `Pointer<T>(Address)` to immutable LLVM `inttoptr` expressions. Pointer
   returns and aggregate-field addresses consume those expressions directly, including the tour's MMIO register-block

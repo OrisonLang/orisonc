@@ -1485,6 +1485,32 @@ auto lower_module_constant_expression(
         ? maybe_payload_source_type_name(*resolved_source_type_name)
         : std::nullopt;
     if (maybe_payload_source_type.has_value()) {
+        auto resolved_payload_source_type = resolved_source_type_alias_name(
+            *maybe_payload_source_type,
+            context
+        );
+        if (resolved_payload_source_type == "Unit" && expected_type.type == "i1") {
+            if (expression.kind == syntax::ExpressionKind::name && expression.text == "Empty") {
+                return LoweredExpression {
+                    .type = "i1",
+                    .value = "0",
+                    .signedness = IntegerSignedness::not_integer,
+                };
+            }
+            if (expression.kind == syntax::ExpressionKind::call && expression.left != nullptr &&
+                expression.left->kind == syntax::ExpressionKind::name &&
+                expression.left->text == "Some" && expression.arguments.size() == 1 &&
+                expression.arguments.front().kind == syntax::ExpressionKind::name &&
+                expression.arguments.front().text == "unit") {
+                return LoweredExpression {
+                    .type = "i1",
+                    .value = "1",
+                    .signedness = IntegerSignedness::not_integer,
+                };
+            }
+            return std::nullopt;
+        }
+
         auto payload_type = lowered_type_for_source_type_name(*maybe_payload_source_type, context);
         auto maybe_llvm_type = payload_type.has_value()
             ? "{ i1, " + payload_type->type + " }"

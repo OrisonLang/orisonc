@@ -295,6 +295,121 @@ auto main() -> int {
     assert(!constant_consumer_link.has_errors());
     assert(std::system(constant_consumer_executable_path.string().c_str()) == 0);
 
+    auto fixtures = std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures";
+    auto maybe_unit_producer_path = fixtures / "maybe_unit_interface_producer.or";
+    auto maybe_unit_interface_path = smoke_temp_root / "maybe_unit_interface_producer.opi";
+    auto maybe_unit_interface_result =
+        run_emit_package_interface(app, maybe_unit_producer_path, maybe_unit_interface_path);
+    assert_success_with_empty_stdout(maybe_unit_interface_result);
+    {
+        auto input = std::ifstream(maybe_unit_interface_path);
+        auto contents = std::string(
+            std::istreambuf_iterator<char>(input),
+            std::istreambuf_iterator<char>()
+        );
+        assert(
+            contents.find("constant ABSENT Maybe<Unit> Maybe<Unit> Empty\n") !=
+            std::string::npos
+        );
+        assert(
+            contents.find("constant PRESENT Maybe<Unit> Maybe<Unit> Some(unit)\n") !=
+            std::string::npos
+        );
+        assert(
+            contents.find("function produced_absent 0 0 Maybe<Unit> sync safe 0\n") !=
+            std::string::npos
+        );
+        assert(
+            contents.find("function produced_present 0 0 Maybe<Unit> sync safe 0\n") !=
+            std::string::npos
+        );
+    }
+
+    auto maybe_unit_producer_object_path = smoke_temp_root / "maybe_unit_interface_producer.o";
+    auto maybe_unit_producer_object_result =
+        run_emit_object(app, maybe_unit_producer_path, maybe_unit_producer_object_path);
+    assert_success_with_empty_stdout(maybe_unit_producer_object_result);
+
+    auto maybe_unit_consumer_path = fixtures / "maybe_unit_interface_consumer.or";
+    auto maybe_unit_interface_path_text = maybe_unit_interface_path.string();
+    auto maybe_unit_consumer_path_text = maybe_unit_consumer_path.string();
+    std::array<char const*, 5> maybe_unit_consumer_ir_argv {
+        "orisonc",
+        "--package-interface",
+        maybe_unit_interface_path_text.c_str(),
+        "--emit-llvm",
+        maybe_unit_consumer_path_text.c_str(),
+    };
+    auto maybe_unit_consumer_ir_result = app.run(
+        std::span<char const* const>(
+            maybe_unit_consumer_ir_argv.data(),
+            maybe_unit_consumer_ir_argv.size()
+        )
+    );
+    assert(maybe_unit_consumer_ir_result.exit_code == 0);
+    assert(maybe_unit_consumer_ir_result.stderr_text.empty());
+    assert(
+        maybe_unit_consumer_ir_result.stdout_text.find(
+            "declare i1 @__orison_fn.fixtures.maybe_unit_interface.produced_present()"
+        ) !=
+        std::string::npos
+    );
+    assert(
+        maybe_unit_consumer_ir_result.stdout_text.find(
+            "declare i1 @__orison_fn.fixtures.maybe_unit_interface.produced_absent()"
+        ) !=
+        std::string::npos
+    );
+    assert(maybe_unit_consumer_ir_result.stdout_text.find("@ImportedPresent") == std::string::npos);
+    assert(maybe_unit_consumer_ir_result.stdout_text.find("@ImportedAbsent") == std::string::npos);
+
+    auto maybe_unit_consumer_object_path = smoke_temp_root / "maybe_unit_interface_consumer.o";
+    auto maybe_unit_consumer_object_path_text = maybe_unit_consumer_object_path.string();
+    std::array<char const*, 7> maybe_unit_consumer_object_argv {
+        "orisonc",
+        "--package-interface",
+        maybe_unit_interface_path_text.c_str(),
+        "--emit-object",
+        maybe_unit_consumer_path_text.c_str(),
+        "-o",
+        maybe_unit_consumer_object_path_text.c_str(),
+    };
+    auto maybe_unit_consumer_object_result = app.run(
+        std::span<char const* const>(
+            maybe_unit_consumer_object_argv.data(),
+            maybe_unit_consumer_object_argv.size()
+        )
+    );
+    assert_success_with_empty_stdout(maybe_unit_consumer_object_result);
+
+    auto maybe_unit_producer_object_input = std::ifstream(
+        maybe_unit_producer_object_path,
+        std::ios::in | std::ios::binary
+    );
+    auto maybe_unit_producer_object = std::string(
+        std::istreambuf_iterator<char>(maybe_unit_producer_object_input),
+        std::istreambuf_iterator<char>()
+    );
+    auto maybe_unit_consumer_object_input = std::ifstream(
+        maybe_unit_consumer_object_path,
+        std::ios::in | std::ios::binary
+    );
+    auto maybe_unit_consumer_object = std::string(
+        std::istreambuf_iterator<char>(maybe_unit_consumer_object_input),
+        std::istreambuf_iterator<char>()
+    );
+    auto maybe_unit_objects = std::array<std::string_view, 2> {
+        maybe_unit_producer_object,
+        maybe_unit_consumer_object,
+    };
+    auto maybe_unit_executable_path = smoke_temp_root / "maybe_unit_interface_consumer";
+    auto maybe_unit_link = orison::link::HostLinker {}.link(
+        maybe_unit_objects,
+        maybe_unit_executable_path
+    );
+    assert(!maybe_unit_link.has_errors());
+    assert(std::system(maybe_unit_executable_path.string().c_str()) == 0);
+
     auto generic_producer_path = smoke_temp_root / "generic producer.or";
     write_fixture(
         generic_producer_path,

@@ -5712,7 +5712,8 @@ private:
 
     void validate_constant_initializer_references(syntax::ExpressionSyntax const& expression) {
         auto validator = [&](syntax::ExpressionSyntax const& current) {
-            if (current.kind != syntax::ExpressionKind::name || find_binding(current.text) != nullptr ||
+            if (current.kind != syntax::ExpressionKind::name || current.text == "unit" ||
+                find_binding(current.text) != nullptr ||
                 choice_variant_arities_.contains(current.text)) {
                 return false;
             }

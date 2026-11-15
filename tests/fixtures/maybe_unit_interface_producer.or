@@ -1,0 +1,12 @@
+package fixtures.maybe_unit_interface
+
+const LOCAL_PRESENT: Maybe<Unit> = Some(unit)
+
+public const PRESENT: Maybe<Unit> = LOCAL_PRESENT
+public const ABSENT: Maybe<Unit> = Empty
+
+public function produced_present() -> Maybe<Unit>
+    PRESENT
+
+public function produced_absent() -> Maybe<Unit>
+    ABSENT
