@@ -47,6 +47,8 @@ analysis, and lowering components.
   function and control-flow emission share it without assigning ordinary statement policy to CFG lowering.
 - Straight-line scalar mutable locals use explicit LLVM stack storage; statement lowering owns `var` allocation,
   initialization, and name-target assignment, while expression lowering emits visible loads from typed mutable bindings.
+  Tag-only `Maybe<Unit>` uses the same `i1` storage operations while mutable-binding source metadata keeps it distinct
+  from `Bool` for initialization, assignment, calls, and switches.
 - Initial `while` lowering owns deterministic condition/body/exit CFG emission in a dedicated loop component and
   supports scoped loop-local `let`/`var` declarations, mutable-local assignments, and discarded scalar-result call
   statements plus direct `Unit` call statements; member calls remain explicit follow-up work. Direct and conditionally

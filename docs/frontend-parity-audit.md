@@ -1,5 +1,8 @@
 # Frontend Parity Audit
 
+- 2026-11-14: Mutable `Maybe<Unit>` locals now have production compile-link-run coverage for annotated and inferred
+  bindings, constructor and null-safe-call assignment, `Empty` reassignment, loads, returns, and downstream switches.
+  A negative CLI regression rejects assigning `Bool` to the shared `i1` representation. No source syntax changed.
 - 2026-11-14: Final switches now consume tag-only `Maybe<Unit>` values, including direct null-safe `Unit` method-call
   results. Source-aware planning maps `Some(payload)` and `Empty` to `true` and `false`; the bound `Unit` payload uses
   no LLVM storage. Planning and production compile-link-run coverage pass. No source syntax changed.

@@ -460,12 +460,24 @@ auto main() -> int {
             "    switch value",
             "        Some(payload) => 1 as UInt32",
             "        Empty => 0 as UInt32",
+            "function mutate_reset(device: Maybe<Device>) -> Maybe<Unit>",
+            "    var result: Maybe<Unit> = Empty",
+            "    result = device?.reset()",
+            "    result",
+            "function inferred_mutate_reset(device: Maybe<Device>) -> Maybe<Unit>",
+            "    var result = device?.reset()",
+            "    result = Empty",
+            "    result = device?.reset()",
+            "    result",
+            "function constructor_mutation() -> Maybe<Unit>",
+            "    var result: Maybe<Unit> = Empty",
+            "    result = Some(unit)",
+            "    result",
             "function main() -> UInt32",
             "    let absent: Maybe<Device> = Empty",
             "    let present: Maybe<Device> = Some(Device(7 as UInt32))",
-            "    switch preserve_reset(present)",
-            "        Some(payload) => classify(preserve_reset(absent))",
-            "        Empty => 1 as UInt32",
+            "    let total: UInt32 = classify(preserve_reset(present)) + classify(inferred_mutate_reset(present)) + classify(mutate_reset(absent)) + classify(constructor_mutation())",
+            "    return total - 3 as UInt32",
         }
     );
     auto emit_null_safe_unit_member_call = run_emit_llvm(app, emit_null_safe_unit_member_call_path);
@@ -484,13 +496,41 @@ auto main() -> int {
             "ret i1 %tmp",
             "define i32 @classify(i1 %value)",
             "switch i1 %value",
+            "define i1 @mutate_reset({ i1, %record.Device } %device)",
+            "%result.addr = alloca i1",
+            "store i1 false, ptr %result.addr",
+            "store i1 %tmp",
+            "load i1, ptr %result.addr",
+            "define i1 @inferred_mutate_reset({ i1, %record.Device } %device)",
+            "define i1 @constructor_mutation()",
+            "store i1 true, ptr %result.addr",
             "define i32 @main()",
             "call i1 @preserve_reset({ i1, %record.Device }",
+            "call i1 @mutate_reset({ i1, %record.Device }",
+            "call i1 @inferred_mutate_reset({ i1, %record.Device }",
+            "call i1 @constructor_mutation()",
             "call i32 @classify(i1 %tmp",
             "ret i32 %tmp",
         }
     );
     assert_run_success(run_program(app, emit_null_safe_unit_member_call_path));
+
+    auto reject_bool_maybe_unit_assignment_path =
+        std::filesystem::temp_directory_path() / "reject_bool_maybe_unit_assignment.or";
+    write_fixture(
+        reject_bool_maybe_unit_assignment_path,
+        "demo.unit_assignment_type",
+        {
+            "function main() -> UInt32",
+            "    var result: Maybe<Unit> = Empty",
+            "    result = true",
+            "    return 0 as UInt32",
+        }
+    );
+    assert_failure_with_stderr_contains(
+        run_emit_llvm(app, reject_bool_maybe_unit_assignment_path),
+        "assignment value type 'Bool' does not match declared type 'Maybe<Unit>'"
+    );
 
     auto emit_null_safe_concrete_generic_aggregate_member_call_path =
         std::filesystem::temp_directory_path() / "emit_null_safe_concrete_generic_aggregate_member_call.or";
