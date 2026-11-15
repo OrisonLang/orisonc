@@ -15,10 +15,12 @@ Date: 2026-11-14
 - Null-safe `Unit` method calls now produce `Maybe<Unit>` values for direct returns and typed immutable bindings.
   Final switches consume direct and bound tag-only values with `Some(payload)` and `Empty` patterns. Annotated and
   inferred mutable bindings preserve source identity through initialization, reassignment, loads, returns, and calls.
+- Record fields and fixed arrays preserve `Maybe<Unit>` identity through construction, projection, assignment,
+  indexing, nested switch consumption, and linked execution while rejecting `Bool` stores.
 - Interface existential/dynamic dispatch and general C variadic adaptation need explicit representation metadata before
   implementation. Cross-target linking and richer source-span diagnostics remain broader tooling gaps.
-- Recommended next implementation: validate tag-only `Maybe<Unit>` composition in record fields and fixed arrays,
-  including construction, projection, assignment, indexing, and switch consumption.
+- Recommended next implementation: validate tag-only `Maybe<Unit>` through ternary and final `if`/`switch` value
+  merges, including branch assignment and downstream consumption.
 
 Date: 2026-09-03
 

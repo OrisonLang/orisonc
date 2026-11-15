@@ -515,6 +515,88 @@ auto main() -> int {
     );
     assert_run_success(run_program(app, emit_null_safe_unit_member_call_path));
 
+    auto emit_maybe_unit_aggregate_path =
+        std::filesystem::temp_directory_path() / "emit_maybe_unit_aggregate.or";
+    write_fixture(
+        emit_maybe_unit_aggregate_path,
+        "demo.unit_aggregate",
+        {
+            "record UnitState",
+            "    current: Maybe<Unit>",
+            "    history: Array<Maybe<Unit>, 2>",
+            "function main() -> UInt32",
+            "    var state: UnitState = UnitState(Empty, [Empty, Some(unit)])",
+            "    state.current = Some(unit)",
+            "    state.history[0 as UInt64] = state.current",
+            "    state.current = Empty",
+            "    switch state.history[0 as UInt64]",
+            "        Some(payload) =>",
+            "            switch state.current",
+            "                Some(unexpected) => 1 as UInt32",
+            "                Empty =>",
+            "                    switch state.history[1 as UInt64]",
+            "                        Some(second) => 0 as UInt32",
+            "                        Empty => 2 as UInt32",
+            "        Empty => 3 as UInt32",
+        }
+    );
+    auto emit_maybe_unit_aggregate = run_emit_llvm(app, emit_maybe_unit_aggregate_path);
+    assert_success_with_stdout_contains(
+        emit_maybe_unit_aggregate,
+        {
+            "%record.UnitState = type { i1, [2 x i1] }",
+            "insertvalue [2 x i1] undef, i1 false, 0",
+            "insertvalue [2 x i1] %tmp",
+            "i1 true, 1",
+            "insertvalue %record.UnitState undef, i1 false, 0",
+            "alloca %record.UnitState",
+            "getelementptr %record.UnitState",
+            "getelementptr [2 x i1]",
+            "store i1 true, ptr",
+            "store i1 false, ptr",
+            "load i1, ptr",
+            "switch i1",
+            "ret i32 %tmp",
+        }
+    );
+    assert_run_success(run_program(app, emit_maybe_unit_aggregate_path));
+
+    auto reject_bool_maybe_unit_field_assignment_path =
+        std::filesystem::temp_directory_path() / "reject_bool_maybe_unit_field_assignment.or";
+    write_fixture(
+        reject_bool_maybe_unit_field_assignment_path,
+        "demo.unit_field_assignment_type",
+        {
+            "record UnitState",
+            "    current: Maybe<Unit>",
+            "function main() -> UInt32",
+            "    var state: UnitState = UnitState(Empty)",
+            "    state.current = true",
+            "    return 0 as UInt32",
+        }
+    );
+    assert_failure_with_stderr_contains(
+        run_emit_llvm(app, reject_bool_maybe_unit_field_assignment_path),
+        "assignment value type 'Bool' does not match declared type 'Maybe<Unit>'"
+    );
+
+    auto reject_bool_maybe_unit_element_assignment_path =
+        std::filesystem::temp_directory_path() / "reject_bool_maybe_unit_element_assignment.or";
+    write_fixture(
+        reject_bool_maybe_unit_element_assignment_path,
+        "demo.unit_element_assignment_type",
+        {
+            "function main() -> UInt32",
+            "    var history: Array<Maybe<Unit>, 1> = [Empty]",
+            "    history[0 as UInt64] = true",
+            "    return 0 as UInt32",
+        }
+    );
+    assert_failure_with_stderr_contains(
+        run_emit_llvm(app, reject_bool_maybe_unit_element_assignment_path),
+        "assignment value type 'Bool' does not match declared type 'Maybe<Unit>'"
+    );
+
     auto reject_bool_maybe_unit_assignment_path =
         std::filesystem::temp_directory_path() / "reject_bool_maybe_unit_assignment.or";
     write_fixture(

@@ -1,5 +1,8 @@
 # Frontend Parity Audit
 
+- 2026-11-14: Record fields and fixed arrays now have production compile-link-run coverage for tag-only `Maybe<Unit>`.
+  Construction, field projection and assignment, indexed projection and assignment, and nested switches retain source
+  identity over `i1` storage. Negative CLI regressions reject `Bool` field and element assignments. No syntax changed.
 - 2026-11-14: Mutable `Maybe<Unit>` locals now have production compile-link-run coverage for annotated and inferred
   bindings, constructor and null-safe-call assignment, `Empty` reassignment, loads, returns, and downstream switches.
   A negative CLI regression rejects assigning `Bool` to the shared `i1` representation. No source syntax changed.

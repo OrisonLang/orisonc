@@ -133,6 +133,9 @@ analysis, and lowering components.
 - Final switch planning retains source type identity when multiple source types share an LLVM representation.
   Tag-only `Maybe<Unit>` uses `i1` while remaining distinct from `Bool`: `Some(payload)` and `Empty` lower to `true`
   and `false`, and the `Unit` payload binding occupies no LLVM storage.
+- Record and fixed-array aggregate paths retain source type identity independently from LLVM field and element types.
+  `Maybe<Unit>` fields and elements therefore use `i1` storage while construction, projection, assignment, indexing,
+  and switch consumption continue to use `Maybe<Unit>` semantics rather than `Bool` semantics.
 - Final switch CFG execution lives in a shared emitter over non-owning callbacks; it owns dispatch-table emission,
   case labels, predecessor tracking, fallback blocks, merge planning, phi emission, and current-block transitions while
   control-flow lowering retains subject validation, case-body lowering, binding-scope policy, and diagnostics.
