@@ -24,8 +24,12 @@ Each dispatch slot names a thunk. Its LLVM signature preserves the concrete meth
 parameters, while replacing the first concrete receiver parameter with `ptr`. Slot metadata records whether the source
 receiver is `shared This` or `exclusive This`. Bare owned `This` receivers are outside this ABI slice.
 
-The thunk will adapt erased storage to the concrete method receiver ABI. This decision defines metadata only; thunk
-bodies, table globals, existential construction, and indirect calls are not emitted yet.
+The thunk adapts erased storage to the concrete method receiver ABI. Shared scalar and record receivers load their
+value from erased storage. Pointer-native receivers forward the erased pointer directly. Exclusive by-value receivers
+remain blocked until their concrete method ABI preserves mutation through a pointer.
+
+Lowering emits one private immutable array of thunk pointers for each table whose complete slot set is emit-ready.
+Existential construction and indirect calls are not emitted yet.
 
 ## Consequences
 
@@ -34,6 +38,5 @@ receiver position. Concrete values must have stable addressable storage for the 
 
 ## Follow-up work
 
-- Emit receiver thunk bodies for scalar and record receivers.
-- Emit immutable dispatch tables containing thunk pointers.
 - Lower one borrowed concrete-to-interface conversion and indirect method call.
+- Extend pointer-native exclusive receiver coverage as concrete method lowering supports it.

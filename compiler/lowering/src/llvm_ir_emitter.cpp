@@ -6,6 +6,7 @@
 #include "orison/lowering/dynamic_array_runtime.hpp"
 #include "orison/lowering/function_lowering_state.hpp"
 #include "orison/lowering/function_emitter.hpp"
+#include "orison/lowering/interface_dispatch_emitter.hpp"
 #include "orison/lowering/llvm_ir_verifier.hpp"
 #include "orison/lowering/lowering_context.hpp"
 #include "orison/lowering/member_call_receiver.hpp"
@@ -1920,6 +1921,29 @@ auto validate_prelude_module_symbols(
             specialization.source_method == nullptr ? 1 : specialization.source_method->line,
             diagnostics
         );
+    }
+    for (auto const& table : context.interface_dispatch_tables) {
+        if (!can_emit_interface_dispatch_table(table)) {
+            continue;
+        }
+        register_unique_module_symbol(
+            registry,
+            emitted_symbols,
+            table.symbol_name,
+            "interface dispatch table",
+            1,
+            diagnostics
+        );
+        for (auto const& slot : table.slots) {
+            register_unique_module_symbol(
+                registry,
+                emitted_symbols,
+                slot.thunk_symbol_name,
+                "interface dispatch thunk",
+                1,
+                diagnostics
+            );
+        }
     }
     for (auto const& declaration : context.foreign_declarations) {
         register_unique_module_symbol(
@@ -5382,6 +5406,7 @@ auto emit_module(
         owned_cleanup_symbols,
         context.imported_declarations
     );
+    output << emit_interface_dispatch_definitions(context);
     output << emit_owned_cleanup_definitions(
         module,
         context,

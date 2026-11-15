@@ -12612,6 +12612,74 @@ void test_reject_foreign_alias_colliding_with_generic_specialization_symbol() {
     );
 }
 
+void test_emit_interface_dispatch_tables_and_thunks() {
+    auto path = std::filesystem::temp_directory_path() / "orison_lowering_interface_dispatch.or";
+    auto result = lower_source(
+        path,
+        "package demo.dispatch\n"
+        "\n"
+        "interface Readable\n"
+        "    function read(this: shared This, amount: UInt32) -> UInt32\n"
+        "\n"
+        "interface Mutable\n"
+        "    function reset(this: exclusive This) -> Unit\n"
+        "\n"
+        "record Meter\n"
+        "    value: UInt32\n"
+        "\n"
+        "implements Readable for UInt32\n"
+        "    function read(this: shared This, amount: UInt32) -> UInt32\n"
+        "        this + amount\n"
+        "\n"
+        "implements Readable for Meter\n"
+        "    function read(this: shared This, amount: UInt32) -> UInt32\n"
+        "        this.value + amount\n"
+        "\n"
+        "implements Mutable for UInt32\n"
+        "    function reset(this: exclusive This) -> Unit\n"
+        "        return\n"
+        "\n"
+        "function main() -> UInt32\n"
+        "    0 as UInt32\n"
+    );
+
+    assert(!result.has_errors());
+    assert_ir_contains(
+        result,
+        "@__orison_interface_dispatch.demo_dispatch.Readable.for.UInt32 = private constant [1 x ptr] "
+        "[ptr @__orison_interface_dispatch.demo_dispatch.Readable.for.UInt32.read]"
+    );
+    assert_ir_contains(
+        result,
+        "define internal i32 @__orison_interface_dispatch.demo_dispatch.Readable.for.UInt32.read"
+        "(ptr %erased_receiver, i32 %arg1)"
+    );
+    assert_ir_contains(result, "%concrete_receiver = load i32, ptr %erased_receiver");
+    assert_ir_contains(
+        result,
+        "%result = call i32 @__orison_method.demo.dispatch.UInt32.read"
+        "(i32 %concrete_receiver, i32 %arg1)"
+    );
+    assert_ir_contains(
+        result,
+        "@__orison_interface_dispatch.demo_dispatch.Readable.for.Meter = private constant [1 x ptr] "
+        "[ptr @__orison_interface_dispatch.demo_dispatch.Readable.for.Meter.read]"
+    );
+    assert_ir_contains(
+        result,
+        "%concrete_receiver = load %record.Meter, ptr %erased_receiver"
+    );
+    assert_ir_contains(
+        result,
+        "%result = call i32 @__orison_method.demo.dispatch.Meter.read"
+        "(%record.Meter %concrete_receiver, i32 %arg1)"
+    );
+    assert(
+        result.ir_text.find("__orison_interface_dispatch.demo_dispatch.Mutable.for.UInt32") ==
+        std::string::npos
+    );
+}
+
 void test_allow_foreign_alias_matching_unqualified_method_symbol() {
     auto path = std::filesystem::temp_directory_path() / "orison_lowering_foreign_method_symbol_collision.or";
     auto result = lower_source(
@@ -14973,6 +15041,7 @@ auto main() -> int {
     test_emit_fixed_printf_adapter_with_float_promotion();
     test_reject_printf_adapter_with_invalid_fixed_prefix();
     test_reject_printf_adapter_with_unsupported_trailing_type();
+    test_emit_interface_dispatch_tables_and_thunks();
     test_reject_foreign_alias_colliding_with_generic_specialization_symbol();
     test_allow_foreign_alias_matching_unqualified_method_symbol();
     test_reject_source_function_colliding_with_generic_specialization_symbol();

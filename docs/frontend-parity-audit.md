@@ -4011,3 +4011,6 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-11-15: The initial borrowed interface existential ABI is now explicit lowering metadata: `{ ptr, ptr }` stores
   concrete-storage and dispatch-table pointers. Each slot classifies shared or exclusive receiver access and derives a
   thunk signature by replacing only the concrete receiver with `ptr`. No LLVM bodies, globals, calls, or syntax changed.
+- 2026-11-15: LLVM lowering now emits private immutable interface dispatch tables and receiver thunks for shared scalar
+  and record implementations. Thunks load concrete values from erased storage, call the existing concrete method, and
+  forward its result. Exclusive by-value receivers remain blocked. No existential construction or syntax changed.

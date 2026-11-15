@@ -22,6 +22,7 @@ add_library(orison_lowering STATIC
     src/function_emitter.cpp
     src/function_signature.cpp
     src/generic_call_resolution.cpp
+    src/interface_dispatch_emitter.cpp
     src/branch_binding_scope.cpp
     src/llvm_cfg.cpp
     src/llvm_ir_emitter.cpp
