@@ -2,7 +2,7 @@
 
 ## Brief Snapshot
 
-Date: 2026-11-14
+Date: 2026-11-15
 
 - `orisonc` has a complete native pipeline for the validated source matrix: parsing, semantic analysis, LLVM IR,
   object emission, linking, and execution.
@@ -25,10 +25,12 @@ Date: 2026-11-14
   Explicit specialization routing and automatic build-plan discovery produce matching package-qualified `i1` symbols.
 - Concrete generic record fields and generic choice payloads preserve `Maybe<Unit>` source identity through
   construction, projection, payload binding, switch consumption, and linked execution while rejecting `Bool` stores.
+- Ordinary fixed-arity C imports generate declarations and calls from parsed signatures, including renamed symbols,
+  pointer parameters, and size-width values. Source calls remain finite and statically checked.
 - Interface existential/dynamic dispatch and general C variadic adaptation need explicit representation metadata before
   implementation. Cross-target linking and richer source-span diagnostics remain broader tooling gaps.
-- Recommended next implementation: audit and generalize fixed-arity C FFI declaration and call lowering from parsed
-  signatures, with no symbol-specific IR and no variadic Orison parameters.
+- Recommended next implementation: define the internal representation metadata required for one bounded interface
+  existential dispatch path without changing the protected language syntax.
 
 Date: 2026-09-03
 

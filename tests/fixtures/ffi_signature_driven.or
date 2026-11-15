@@ -1,0 +1,9 @@
+package tests.ffi.signature_driven
+
+package foreign "c"
+    function text_length(text: Pointer<Byte>) -> UIntSize as "strlen"
+    function compare_bytes(left: Pointer<Byte>, right: Pointer<Byte>, count: UIntSize) -> Int32 as "memcmp"
+
+public function main() -> Int32
+    let count = text_length("Orison")
+    compare_bytes("Orison", "Orison", count)

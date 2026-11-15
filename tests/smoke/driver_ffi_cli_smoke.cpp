@@ -56,10 +56,21 @@ auto main() -> int {
     auto fixed_ffi_path = examples / "ffi_fixed_parameters.or";
     assert_successful_command(executable.string() + " run " + fixed_ffi_path.string());
 
+    auto fixtures = std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures";
+    auto signature_driven_path = fixtures / "ffi_signature_driven.or";
+    auto signature_driven_ir = read_command_output_with_exit_code(
+        executable.string() + " --emit-llvm " + signature_driven_path.string(),
+        0
+    );
+    assert(signature_driven_ir.find("declare i64 @strlen(ptr)") != std::string::npos);
+    assert(signature_driven_ir.find("declare i32 @memcmp(ptr, ptr, i64)") != std::string::npos);
+    assert(signature_driven_ir.find("call i64 @strlen(ptr ") != std::string::npos);
+    assert(signature_driven_ir.find("call i32 @memcmp(ptr ") != std::string::npos);
+    assert_successful_command(executable.string() + " run " + signature_driven_path.string());
+
     auto aggregate_scalar_ffi_path = examples / "ffi_aggregate_scalar_parameters.or";
     assert_successful_command(executable.string() + " run " + aggregate_scalar_ffi_path.string() + " >/dev/null");
 
-    auto fixtures = std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures";
     auto alias_types_path = fixtures / "ffi_alias_types.or";
     auto alias_interface_path = smoke_temp_root / "ffi_alias_types.opi";
     assert_successful_command(

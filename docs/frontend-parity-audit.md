@@ -4001,3 +4001,7 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-11-13: Pointer-backed runtime-indexed nested aggregate fields now have direct raw-memory coverage. A
   `Pointer<Log>` base uses `address_of(log.entries[index].control)` for typed raw store/load, proving the GEP chain does
   not depend on stack-local aggregate ownership. The CLI compile-link-run path passes. No syntax changed.
+- 2026-11-15: Fixed-arity C FFI lowering is signature-driven for ordinary imports. Renamed `strlen` and `memcmp`
+  declarations generate LLVM signatures from their parsed Orison return and parameter types, emit matching calls,
+  link against the host C runtime, and execute successfully. No symbol-specific IR or source varargs were added. The
+  existing `printf` fixed-to-varargs compatibility adapter remains bounded target ABI policy. No syntax changed.

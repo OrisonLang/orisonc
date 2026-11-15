@@ -412,6 +412,10 @@ analysis, and lowering components.
   rename both the imported register-block type and pointer constant; LLVM IR and object emission use the localized type.
   Source-type queries retain `address_of(value)` as `Pointer<ValueType>`. Raw and volatile writes therefore infer an
   unannotated value literal from the addressed destination type, including local and imported MMIO register fields.
+  Fixed-arity C imports derive their LLVM declarations and call operands from parsed return and parameter types. Local
+  renaming through `as` changes only source lookup; the declared external symbol receives the same generated signature.
+  End-to-end coverage includes renamed `strlen` and `memcmp` imports with pointer and `UIntSize` values. Fixed-to-C
+  varargs adaptation remains a separate target ABI policy and must not be inferred from an arbitrary symbol name.
 - Development builds may use the platform's monolithic shared LLVM target when component archives are unavailable;
   release packaging must use a static LLVM distribution to preserve statically linked tool executables.
 - Future ADRs should define the lowering pipeline, incremental compilation architecture, and runtime boundary.
@@ -421,5 +425,5 @@ analysis, and lowering components.
 - Add the first shared foundation/source/diagnostics libraries.
 - Define the initial frontend pipeline from source text to parsed syntax trees.
 - Replace the provisional external host-link driver with a deliberate cross-platform linker strategy.
-- Generalize C foreign binding lowering so code-complete `orisonc` can dynamically emit declarations and calls for
-  arbitrary programmer-declared `foreign "c"` bindings instead of relying on hard-coded lowered LLVM IR shapes.
+- Replace the initial `printf` compatibility entry with explicit target ABI metadata before broadening fixed-to-C
+  varargs adaptation beyond that validated symbol.
