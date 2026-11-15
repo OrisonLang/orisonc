@@ -391,8 +391,11 @@ void bind_switch_payload(
         return;
     }
     auto binding_name = maybe_payload_binding_name(planned_case.syntax->pattern);
-    auto source_payload_type = subject_source_type_name.has_value()
-        ? maybe_payload_source_type_name(*subject_source_type_name)
+    auto resolved_subject_source_type = subject_source_type_name.has_value()
+        ? resolved_source_type_alias_name(*subject_source_type_name, context.lowering)
+        : std::optional<std::string> {};
+    auto source_payload_type = resolved_subject_source_type.has_value()
+        ? maybe_payload_source_type_name(*resolved_subject_source_type)
         : std::optional<std::string> {};
     auto resolved_source_payload_type = source_payload_type.has_value()
         ? resolved_source_type_alias_name(*source_payload_type, context.lowering)

@@ -21,10 +21,12 @@ Date: 2026-11-14
   through mutable assignment, and mixed `Bool` arms remain invalid.
 - Module constants lower `Maybe<Unit>` to storage-free `i1` literals. Version-1 package interfaces preserve imported
   constant and function source identity across aliases, separate object emission, linking, and execution.
+- Imported source aliases resolve to tag-only `Maybe<Unit>` for switch consumption and concrete generic function ABI.
+  Explicit specialization routing and automatic build-plan discovery produce matching package-qualified `i1` symbols.
 - Interface existential/dynamic dispatch and general C variadic adaptation need explicit representation metadata before
   implementation. Cross-target linking and richer source-span diagnostics remain broader tooling gaps.
-- Recommended next implementation: validate tag-only `Maybe<Unit>` through source aliases and package-directed concrete
-  generic specialization, including cross-package generic function ABI use.
+- Recommended next implementation: finish the tag-only `Maybe<Unit>` slice by validating concrete generic record and
+  choice composition, then return to the next whole-language lowering gap.
 
 Date: 2026-09-03
 

@@ -1,0 +1,6 @@
+package fixtures.maybe_unit_generic
+
+public type Completion = Maybe<Unit>
+
+public function choose<Value>(left: Value, right: Value) -> Value
+    left

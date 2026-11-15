@@ -17,9 +17,12 @@ auto lower_switch_pattern(
     LoweringContext const& context,
     std::optional<std::string_view> subject_source_type_name
 ) -> std::optional<LoweredExpression> {
+    auto resolved_subject_source_type = subject_source_type_name.has_value()
+        ? resolved_source_type_alias_name(*subject_source_type_name, context)
+        : std::optional<std::string> {};
     auto const maybe_subject = subject_type.type.starts_with("{ i1,") ||
-        (subject_type.type == "i1" && subject_source_type_name.has_value() &&
-         maybe_payload_source_type_name(*subject_source_type_name).has_value());
+        (subject_type.type == "i1" && resolved_subject_source_type.has_value() &&
+         maybe_payload_source_type_name(*resolved_subject_source_type).has_value());
     if (maybe_subject && pattern.kind == syntax::ExpressionKind::name && pattern.text == "Empty") {
         return LoweredExpression {
             .type = "i1",

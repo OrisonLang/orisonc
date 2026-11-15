@@ -1,5 +1,8 @@
 # Frontend Parity Audit
 
+- 2026-11-14: Imported aliases of `Maybe<Unit>` now resolve through switch planning and package-directed generic
+  specialization. Explicit specialization artifacts and automatic build-plan discovery emit matching package-qualified
+  `i1` producer-consumer symbols, link separately emitted objects, and execute successfully. No source syntax changed.
 - 2026-11-14: Tag-only `Maybe<Unit>` constants now lower `Empty` and `Some(unit)` to storage-free `i1` values. Public
   constants and functions preserve that ABI through version-1 package-interface serialization, import aliases,
   separate object emission, linking, and execution. Producer-private constant dependencies expand before export. No

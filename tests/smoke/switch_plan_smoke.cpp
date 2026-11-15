@@ -282,5 +282,21 @@ int main() {
     assert(maybe_unit_result.plan->cases[0].pattern->value == "true");
     assert(maybe_unit_result.plan->cases[1].pattern->type == "i1");
     assert(maybe_unit_result.plan->cases[1].pattern->value == "false");
+
+    tag_choice_context.type_aliases.emplace("Completion", "Maybe<Unit>");
+    auto aliased_maybe_unit_result = orison::lowering::plan_switch(
+        maybe_unit_cases,
+        orison::lowering::LoweredType {
+            .type = "i1",
+            .signedness = orison::lowering::IntegerSignedness::not_integer,
+        },
+        tag_choice_context,
+        std::string_view {"Completion"},
+        8
+    );
+    assert(aliased_maybe_unit_result.failure == orison::lowering::ControlFlowLoweringFailureReason::none);
+    assert(aliased_maybe_unit_result.plan.has_value());
+    assert(aliased_maybe_unit_result.plan->cases[0].pattern->value == "true");
+    assert(aliased_maybe_unit_result.plan->cases[1].pattern->value == "false");
     return 0;
 }

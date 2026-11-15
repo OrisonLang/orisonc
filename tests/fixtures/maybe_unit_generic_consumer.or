@@ -1,0 +1,21 @@
+package fixtures.maybe_unit_generic_consumer
+
+import
+    Completion as ExternalCompletion from fixtures.maybe_unit_generic
+    choose as select from fixtures.maybe_unit_generic
+
+function present() -> ExternalCompletion
+    Some(unit)
+
+function absent() -> ExternalCompletion
+    Empty
+
+function classify(value: ExternalCompletion) -> UInt32
+    switch value
+        Some(_) => 1 as UInt32
+        Empty => 0 as UInt32
+
+public function main() -> Int32
+    if classify(select(present(), absent())) == 1 and classify(select(absent(), present())) == 0
+        return 0
+    return 1

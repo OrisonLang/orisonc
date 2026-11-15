@@ -54,6 +54,10 @@ Public aliases may name those aggregate members without changing the materialize
 Imported alias metadata also carries a cycle-safe, fully expanded lowering target when the target is a scalar, fixed
 array, or concrete `Maybe<T>`. Consumer lowering preserves the local import name for semantic identity while using the
 expanded target for function ABI types. Ordinary record and choice aliases continue to use projected imported layouts.
+Producer-owned aliases of `Maybe<Unit>` can drive concrete generic specialization requests. The request retains the
+producer alias identity, producer and consumer symbols agree on the package-qualified specialization name, and the
+specialized parameter and return ABI remains tag-only `i1`. Build-plan fixed-point discovery produces the same result
+as explicit package-interface and specialization-request routing.
 
 ## Follow-up work
 

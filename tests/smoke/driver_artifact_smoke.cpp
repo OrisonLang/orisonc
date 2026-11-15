@@ -410,6 +410,170 @@ auto main() -> int {
     assert(!maybe_unit_link.has_errors());
     assert(std::system(maybe_unit_executable_path.string().c_str()) == 0);
 
+    auto maybe_unit_generic_producer_path = fixtures / "maybe_unit_generic_producer.or";
+    auto maybe_unit_generic_interface_path = smoke_temp_root / "maybe_unit_generic_producer.opi";
+    auto maybe_unit_generic_interface_result = run_emit_package_interface(
+        app,
+        maybe_unit_generic_producer_path,
+        maybe_unit_generic_interface_path
+    );
+    assert_success_with_empty_stdout(maybe_unit_generic_interface_result);
+
+    auto maybe_unit_generic_consumer_path = fixtures / "maybe_unit_generic_consumer.or";
+    auto maybe_unit_generic_requests_path = smoke_temp_root / "maybe_unit_generic_consumer.osr";
+    auto maybe_unit_generic_requests_result = run_emit_specialization_requests(
+        app,
+        maybe_unit_generic_interface_path,
+        maybe_unit_generic_consumer_path,
+        maybe_unit_generic_requests_path
+    );
+    assert_success_with_empty_stdout(maybe_unit_generic_requests_result);
+    {
+        auto input = std::ifstream(maybe_unit_generic_requests_path);
+        auto contents = std::string(
+            std::istreambuf_iterator<char>(input),
+            std::istreambuf_iterator<char>()
+        );
+        assert(
+            contents ==
+            "orison-specialization-requests 1\n"
+            "request fixtures.maybe_unit_generic choose 1 Completion "
+                "fixtures.maybe_unit_generic::Completion\n"
+        );
+    }
+
+    auto maybe_unit_generic_requests_path_text = maybe_unit_generic_requests_path.string();
+    auto maybe_unit_generic_producer_path_text = maybe_unit_generic_producer_path.string();
+    std::array<char const*, 5> maybe_unit_generic_producer_ir_argv {
+        "orisonc",
+        "--specialization-requests",
+        maybe_unit_generic_requests_path_text.c_str(),
+        "--emit-llvm",
+        maybe_unit_generic_producer_path_text.c_str(),
+    };
+    auto maybe_unit_generic_producer_ir_result = app.run(
+        std::span<char const* const>(
+            maybe_unit_generic_producer_ir_argv.data(),
+            maybe_unit_generic_producer_ir_argv.size()
+        )
+    );
+    assert(maybe_unit_generic_producer_ir_result.exit_code == 0);
+    assert(maybe_unit_generic_producer_ir_result.stderr_text.empty());
+    assert(
+        maybe_unit_generic_producer_ir_result.stdout_text.find(
+            "define i1 @__orison_fn.fixtures.maybe_unit_generic.choose__Completion(i1 %left, i1 %right)"
+        ) != std::string::npos
+    );
+
+    auto maybe_unit_generic_interface_path_text = maybe_unit_generic_interface_path.string();
+    auto maybe_unit_generic_consumer_path_text = maybe_unit_generic_consumer_path.string();
+    std::array<char const*, 5> maybe_unit_generic_consumer_ir_argv {
+        "orisonc",
+        "--package-interface",
+        maybe_unit_generic_interface_path_text.c_str(),
+        "--emit-llvm",
+        maybe_unit_generic_consumer_path_text.c_str(),
+    };
+    auto maybe_unit_generic_consumer_ir_result = app.run(
+        std::span<char const* const>(
+            maybe_unit_generic_consumer_ir_argv.data(),
+            maybe_unit_generic_consumer_ir_argv.size()
+        )
+    );
+    assert(maybe_unit_generic_consumer_ir_result.exit_code == 0);
+    assert(maybe_unit_generic_consumer_ir_result.stderr_text.empty());
+    assert(
+        maybe_unit_generic_consumer_ir_result.stdout_text.find(
+            "declare i1 @__orison_fn.fixtures.maybe_unit_generic.choose__Completion(i1, i1)"
+        ) != std::string::npos
+    );
+
+    auto maybe_unit_generic_producer_object_path = smoke_temp_root / "maybe_unit_generic_producer.o";
+    auto maybe_unit_generic_producer_object_path_text = maybe_unit_generic_producer_object_path.string();
+    std::array<char const*, 7> maybe_unit_generic_producer_object_argv {
+        "orisonc",
+        "--specialization-requests",
+        maybe_unit_generic_requests_path_text.c_str(),
+        "--emit-object",
+        maybe_unit_generic_producer_path_text.c_str(),
+        "-o",
+        maybe_unit_generic_producer_object_path_text.c_str(),
+    };
+    auto maybe_unit_generic_producer_object_result = app.run(
+        std::span<char const* const>(
+            maybe_unit_generic_producer_object_argv.data(),
+            maybe_unit_generic_producer_object_argv.size()
+        )
+    );
+    assert_success_with_empty_stdout(maybe_unit_generic_producer_object_result);
+
+    auto maybe_unit_generic_consumer_object_path = smoke_temp_root / "maybe_unit_generic_consumer.o";
+    auto maybe_unit_generic_consumer_object_path_text = maybe_unit_generic_consumer_object_path.string();
+    std::array<char const*, 7> maybe_unit_generic_consumer_object_argv {
+        "orisonc",
+        "--package-interface",
+        maybe_unit_generic_interface_path_text.c_str(),
+        "--emit-object",
+        maybe_unit_generic_consumer_path_text.c_str(),
+        "-o",
+        maybe_unit_generic_consumer_object_path_text.c_str(),
+    };
+    auto maybe_unit_generic_consumer_object_result = app.run(
+        std::span<char const* const>(
+            maybe_unit_generic_consumer_object_argv.data(),
+            maybe_unit_generic_consumer_object_argv.size()
+        )
+    );
+    assert_success_with_empty_stdout(maybe_unit_generic_consumer_object_result);
+
+    auto maybe_unit_generic_producer_object_input = std::ifstream(
+        maybe_unit_generic_producer_object_path,
+        std::ios::in | std::ios::binary
+    );
+    auto maybe_unit_generic_producer_object = std::string(
+        std::istreambuf_iterator<char>(maybe_unit_generic_producer_object_input),
+        std::istreambuf_iterator<char>()
+    );
+    auto maybe_unit_generic_consumer_object_input = std::ifstream(
+        maybe_unit_generic_consumer_object_path,
+        std::ios::in | std::ios::binary
+    );
+    auto maybe_unit_generic_consumer_object = std::string(
+        std::istreambuf_iterator<char>(maybe_unit_generic_consumer_object_input),
+        std::istreambuf_iterator<char>()
+    );
+    auto maybe_unit_generic_objects = std::array<std::string_view, 2> {
+        maybe_unit_generic_producer_object,
+        maybe_unit_generic_consumer_object,
+    };
+    auto maybe_unit_generic_executable_path = smoke_temp_root / "maybe_unit_generic_consumer";
+    auto maybe_unit_generic_link = orison::link::HostLinker {}.link(
+        maybe_unit_generic_objects,
+        maybe_unit_generic_executable_path
+    );
+    assert(!maybe_unit_generic_link.has_errors());
+    assert(std::system(maybe_unit_generic_executable_path.string().c_str()) == 0);
+
+    auto maybe_unit_generic_plan_path = smoke_temp_root / "maybe_unit_generic.obp";
+    {
+        auto output = std::ofstream(maybe_unit_generic_plan_path);
+        output << "orison-build-plan 1\n";
+        output << "entry fixtures.maybe_unit_generic_consumer\n";
+        output << "module fixtures.maybe_unit_generic "
+               << maybe_unit_generic_producer_path.string() << "\n";
+        output << "module fixtures.maybe_unit_generic_consumer "
+               << maybe_unit_generic_consumer_path.string() << "\n";
+    }
+    auto maybe_unit_generic_plan_executable_path =
+        smoke_temp_root / "maybe_unit_generic_plan_consumer";
+    auto maybe_unit_generic_plan_result = run_build_plan(
+        app,
+        maybe_unit_generic_plan_path,
+        maybe_unit_generic_plan_executable_path
+    );
+    assert_success_with_empty_stdout(maybe_unit_generic_plan_result);
+    assert(std::system(maybe_unit_generic_plan_executable_path.string().c_str()) == 0);
+
     auto generic_producer_path = smoke_temp_root / "generic producer.or";
     write_fixture(
         generic_producer_path,

@@ -134,7 +134,8 @@ analysis, and lowering components.
   component that returns a non-owning plan.
 - Final switch planning retains source type identity when multiple source types share an LLVM representation.
   Tag-only `Maybe<Unit>` uses `i1` while remaining distinct from `Bool`: `Some(payload)` and `Empty` lower to `true`
-  and `false`, and the `Unit` payload binding occupies no LLVM storage.
+  and `false`, and the `Unit` payload binding occupies no LLVM storage. Switch planning resolves source aliases before
+  identifying `Maybe<T>` patterns and payload types, so local and imported aliases retain the same behavior.
 - Record and fixed-array aggregate paths retain source type identity independently from LLVM field and element types.
   `Maybe<Unit>` fields and elements therefore use `i1` storage while construction, projection, assignment, indexing,
   and switch consumption continue to use `Maybe<Unit>` semantics rather than `Bool` semantics.
