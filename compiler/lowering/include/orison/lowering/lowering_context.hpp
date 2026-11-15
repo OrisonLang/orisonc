@@ -23,9 +23,23 @@ struct LoweredMethodSignature {
     LoweredFunctionSignature signature;
 };
 
+struct LoweredInterfaceExistentialAbi {
+    std::string llvm_type = "{ ptr, ptr }";
+    std::size_t concrete_storage_pointer_index = 0;
+    std::size_t dispatch_table_pointer_index = 1;
+};
+
+enum class LoweredInterfaceReceiverAccess {
+    shared,
+    exclusive,
+};
+
 struct LoweredInterfaceDispatchSlot {
     std::size_t index = 0;
     std::string method_name;
+    LoweredInterfaceReceiverAccess receiver_access = LoweredInterfaceReceiverAccess::shared;
+    std::string thunk_symbol_name;
+    LoweredFunctionSignature thunk_signature;
     LoweredFunctionSignature concrete_method_signature;
 };
 
@@ -95,6 +109,7 @@ struct LoweringContext {
     std::unordered_map<std::string, std::vector<std::string>> generic_record_parameters;
     std::unordered_map<std::string, LoweredChoiceLayout> choices;
     std::vector<LoweredMethodSignature> methods;
+    LoweredInterfaceExistentialAbi interface_existential_abi;
     std::vector<LoweredInterfaceDispatchTable> interface_dispatch_tables;
     std::vector<LoweredFunctionSignature> foreign_declarations;
     std::vector<LoweredFunctionSignature> imported_declarations;
@@ -151,6 +166,13 @@ auto lowered_interface_dispatch_table_symbol_name(
     std::string_view package_name,
     std::string_view interface_type_name,
     std::string_view receiver_type_name
+) -> std::string;
+
+auto lowered_interface_dispatch_thunk_symbol_name(
+    std::string_view package_name,
+    std::string_view interface_type_name,
+    std::string_view receiver_type_name,
+    std::string_view method_name
 ) -> std::string;
 
 auto lowered_record_type_name(std::string_view record_name) -> std::string;

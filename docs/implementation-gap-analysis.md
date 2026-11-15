@@ -27,12 +27,13 @@ Date: 2026-11-15
   construction, projection, payload binding, switch consumption, and linked execution while rejecting `Bool` stores.
 - Ordinary fixed-arity C imports generate declarations and calls from parsed signatures, including renamed symbols,
   pointer parameters, and size-width values. Source calls remain finite and statically checked.
-- Concrete non-generic interface implementations now have declaration-ordered internal dispatch metadata. Existential
-  value storage, receiver thunks, table globals, and indirect calls remain open.
+- Concrete non-generic interface implementations now have declaration-ordered internal dispatch metadata. A borrowed
+  `{ ptr, ptr }` existential ABI and erased-receiver thunk signatures are defined; thunk bodies, table globals,
+  existential construction, and indirect calls remain open.
 - General C variadic adaptation needs explicit target metadata. Cross-target linking and richer source-span diagnostics
   remain broader tooling gaps.
-- Recommended next implementation: define the erased existential value and receiver thunk ABI for the validated
-  non-generic interface metadata slice without changing the protected language syntax.
+- Recommended next implementation: emit scalar and record receiver thunks plus immutable dispatch tables for the
+  validated non-generic interface metadata slice.
 
 Date: 2026-09-03
 

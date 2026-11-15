@@ -688,6 +688,9 @@ int main() {
     assert(context.records.size() == 16);
     assert(context.choices.size() == 4);
     assert(context.foreign_declarations.size() == 1);
+    assert(context.interface_existential_abi.llvm_type == "{ ptr, ptr }");
+    assert(context.interface_existential_abi.concrete_storage_pointer_index == 0);
+    assert(context.interface_existential_abi.dispatch_table_pointer_index == 1);
     assert(context.interface_dispatch_tables.size() == 1);
     assert(context.generic_record_parameters.size() == 2);
     assert(context.generic_record_parameters.contains("Box"));
@@ -887,6 +890,19 @@ int main() {
     assert(reader_dispatch.slots.size() == 1);
     assert(reader_dispatch.slots.front().index == 0);
     assert(reader_dispatch.slots.front().method_name == "read");
+    assert(
+        reader_dispatch.slots.front().receiver_access ==
+        orison::lowering::LoweredInterfaceReceiverAccess::shared
+    );
+    assert(
+        reader_dispatch.slots.front().thunk_symbol_name ==
+        "__orison_interface_dispatch.Reader.for.Device.read"
+    );
+    assert(reader_dispatch.slots.front().thunk_signature.return_type == "i32");
+    assert(
+        reader_dispatch.slots.front().thunk_signature.parameter_types ==
+        std::vector<std::string>({"ptr", "i32"})
+    );
     assert(reader_dispatch.slots.front().concrete_method_signature.symbol_name == "method.Device.read");
     assert(reader_dispatch.slots.front().concrete_method_signature.return_type == "i32");
     assert(
@@ -972,7 +988,7 @@ int main() {
             InterfaceMethodSyntax {
                 .name = "second",
                 .parameters = {
-                    ParameterSyntax {.name = "this", .type = TypeSyntax {.name = "shared.This"}},
+                    ParameterSyntax {.name = "this", .type = TypeSyntax {.name = "exclusive.This"}},
                 },
                 .return_type = TypeSyntax {.name = "UInt32"},
             },
@@ -985,7 +1001,7 @@ int main() {
     reversed_implementation.methods.push_back(FunctionSyntax {
         .name = "second",
         .parameters = {
-            ParameterSyntax {.name = "this", .type = TypeSyntax {.name = "shared.This"}},
+            ParameterSyntax {.name = "this", .type = TypeSyntax {.name = "exclusive.This"}},
         },
         .return_type = TypeSyntax {.name = "UInt32"},
     });
@@ -1006,11 +1022,56 @@ int main() {
     assert(ordered_dispatch.slots.size() == 2);
     assert(ordered_dispatch.slots[0].index == 0);
     assert(ordered_dispatch.slots[0].method_name == "first");
+    assert(
+        ordered_dispatch.slots[0].receiver_access ==
+        orison::lowering::LoweredInterfaceReceiverAccess::shared
+    );
+    assert(ordered_dispatch.slots[0].thunk_signature.parameter_types == std::vector<std::string>({"ptr"}));
     assert(ordered_dispatch.slots[0].concrete_method_signature.symbol_name ==
            "__orison_method.demo.UInt32.first");
     assert(ordered_dispatch.slots[1].index == 1);
     assert(ordered_dispatch.slots[1].method_name == "second");
+    assert(
+        ordered_dispatch.slots[1].receiver_access ==
+        orison::lowering::LoweredInterfaceReceiverAccess::exclusive
+    );
+    assert(
+        ordered_dispatch.slots[1].thunk_symbol_name ==
+        "__orison_interface_dispatch.demo.OrderedPair.for.UInt32.second"
+    );
+    assert(ordered_dispatch.slots[1].thunk_signature.parameter_types == std::vector<std::string>({"ptr"}));
     assert(ordered_dispatch.slots[1].concrete_method_signature.symbol_name ==
            "__orison_method.demo.UInt32.second");
+
+    auto owned_receiver_module = ModuleSyntax {};
+    owned_receiver_module.interfaces.push_back(InterfaceSyntax {
+        .name = "OwnedReceiver",
+        .methods = {
+            InterfaceMethodSyntax {
+                .name = "consume",
+                .parameters = {
+                    ParameterSyntax {.name = "this", .type = TypeSyntax {.name = "This"}},
+                },
+                .return_type = TypeSyntax {.name = "Unit"},
+            },
+        },
+    });
+    auto owned_receiver_implementation = ImplementationSyntax {
+        .interface_type = TypeSyntax {.name = "OwnedReceiver"},
+        .receiver_type = TypeSyntax {.name = "UInt32"},
+    };
+    owned_receiver_implementation.methods.push_back(FunctionSyntax {
+        .name = "consume",
+        .parameters = {
+            ParameterSyntax {.name = "this", .type = TypeSyntax {.name = "This"}},
+        },
+        .return_type = TypeSyntax {.name = "Unit"},
+    });
+    owned_receiver_module.implementations.push_back(std::move(owned_receiver_implementation));
+    auto owned_receiver_diagnostics = orison::diagnostics::DiagnosticBag {};
+    auto owned_receiver_context =
+        orison::lowering::build_lowering_context(owned_receiver_module, owned_receiver_diagnostics);
+    assert(!owned_receiver_diagnostics.has_errors());
+    assert(owned_receiver_context.interface_dispatch_tables.empty());
     return 0;
 }

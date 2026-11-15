@@ -32,6 +32,6 @@ remain visible, so receiver adaptation requirements are explicit rather than hid
 
 ## Follow-up work
 
-- Define the erased existential value and receiver thunk ABI.
+- Apply the borrowed existential and receiver thunk ABI defined by ADR-0011.
 - Emit one immutable dispatch table for the validated metadata slice.
 - Lower one concrete-to-interface conversion and one indirect method call end to end.

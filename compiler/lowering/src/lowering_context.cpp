@@ -4339,7 +4339,16 @@ void collect_interface_dispatch_tables(
 
         auto supported = true;
         for (auto const& interface_method : interface_declaration->methods) {
-            if (!interface_method.generic_parameters.empty()) {
+            if (!interface_method.generic_parameters.empty() ||
+                interface_method.parameters.empty() ||
+                interface_method.parameters.front().name != "this") {
+                supported = false;
+                break;
+            }
+            auto receiver_access = LoweredInterfaceReceiverAccess::shared;
+            if (interface_method.parameters.front().type.name == "exclusive.This") {
+                receiver_access = LoweredInterfaceReceiverAccess::exclusive;
+            } else if (interface_method.parameters.front().type.name != "shared.This") {
                 supported = false;
                 break;
             }
@@ -4365,9 +4374,22 @@ void collect_interface_dispatch_tables(
                 supported = false;
                 break;
             }
+            auto thunk_signature = lowered_method->signature;
+            thunk_signature.symbol_name = lowered_interface_dispatch_thunk_symbol_name(
+                module.package_name,
+                table.interface_type_name,
+                table.receiver_type_name,
+                interface_method.name
+            );
+            thunk_signature.parameter_types.front() = "ptr";
+            thunk_signature.parameter_source_type_names.front().clear();
+            thunk_signature.parameter_signedness.front() = IntegerSignedness::not_integer;
             table.slots.push_back(LoweredInterfaceDispatchSlot {
                 .index = table.slots.size(),
                 .method_name = interface_method.name,
+                .receiver_access = receiver_access,
+                .thunk_symbol_name = thunk_signature.symbol_name,
+                .thunk_signature = std::move(thunk_signature),
                 .concrete_method_signature = lowered_method->signature,
             });
         }
@@ -5254,6 +5276,31 @@ auto lowered_interface_dispatch_table_symbol_name(
     append_sanitized(interface_type_name);
     symbol += ".for.";
     append_sanitized(receiver_type_name);
+    return symbol;
+}
+
+auto lowered_interface_dispatch_thunk_symbol_name(
+    std::string_view package_name,
+    std::string_view interface_type_name,
+    std::string_view receiver_type_name,
+    std::string_view method_name
+) -> std::string {
+    auto symbol = lowered_interface_dispatch_table_symbol_name(
+        package_name,
+        interface_type_name,
+        receiver_type_name
+    );
+    symbol += ".";
+    for (auto character : method_name) {
+        if ((character >= 'a' && character <= 'z') ||
+            (character >= 'A' && character <= 'Z') ||
+            (character >= '0' && character <= '9') ||
+            character == '_') {
+            symbol.push_back(character);
+            continue;
+        }
+        symbol.push_back('_');
+    }
     return symbol;
 }
 

@@ -4008,3 +4008,6 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-11-15: Lowering now records deterministic interface dispatch metadata for non-generic interfaces implemented by
   concrete receiver types. Interface declaration order defines method slots, and each slot retains its concrete method
   symbol and lowered signature. No table globals, erased values, indirect calls, or syntax changes were introduced.
+- 2026-11-15: The initial borrowed interface existential ABI is now explicit lowering metadata: `{ ptr, ptr }` stores
+  concrete-storage and dispatch-table pointers. Each slot classifies shared or exclusive receiver access and derives a
+  thunk signature by replacing only the concrete receiver with `ptr`. No LLVM bodies, globals, calls, or syntax changed.
