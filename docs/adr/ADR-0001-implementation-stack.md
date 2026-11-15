@@ -292,6 +292,9 @@ analysis, and lowering components.
   Receiver method return lowering carries declared generic record return context through final `if`/`switch` arms,
   guard failure returns, deferred-cleanup returns, and loop-built returns, including fixed arrays of concrete generic
   records across control-flow, early-return, loop-built, and nested aggregate return paths.
+  Concrete generic choice constructor lowering forwards each substituted payload source type into nested expression
+  lowering. Source-sensitive payloads such as `Maybe<Unit>` therefore retain `Empty`/`Some(unit)` semantics when their
+  shared LLVM representation alone would otherwise appear to be `Bool`.
 - Lowered scalar expression and inferred-type metadata live in a neutral `lowered_value.hpp`; function state and
   emitter APIs share these records without assigning representation ownership to state or expression emission.
   Read-only aggregate addressable binding setup is shared through a lowering helper so parameters, immutable aggregate

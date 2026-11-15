@@ -2119,7 +2119,8 @@ auto lower_choice_constructor_expression(
                     integer_signedness_for(syntax::TypeSyntax {.name = payload.source_type_name}),
                     context,
                     session,
-                    output
+                    output,
+                    payload.source_type_name
                 );
             }
             if (!lowered_payload.has_value()) {
@@ -2202,7 +2203,8 @@ auto lower_choice_constructor_expression(
                         integer_signedness_for(syntax::TypeSyntax {.name = payload.source_type_name}),
                         context,
                         session,
-                        output
+                        output,
+                        payload.source_type_name
                     );
                 }
                 if (!lowered_payload.has_value()) {

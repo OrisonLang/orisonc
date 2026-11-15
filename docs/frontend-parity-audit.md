@@ -1,5 +1,9 @@
 # Frontend Parity Audit
 
+- 2026-11-14: Concrete generic records and choices now compose with tag-only `Maybe<Unit>`. Generic record fields use
+  `i1` storage, generic choice constructors preserve substituted payload source context, and payload switches recover
+  `Maybe<Unit>` semantics. A negative regression rejects `Bool` assignment to the generic record field. No source
+  syntax changed.
 - 2026-11-14: Imported aliases of `Maybe<Unit>` now resolve through switch planning and package-directed generic
   specialization. Explicit specialization artifacts and automatic build-plan discovery emit matching package-qualified
   `i1` producer-consumer symbols, link separately emitted objects, and execute successfully. No source syntax changed.

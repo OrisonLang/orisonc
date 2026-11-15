@@ -561,6 +561,71 @@ auto main() -> int {
     );
     assert_run_success(run_program(app, emit_maybe_unit_aggregate_path));
 
+    auto emit_maybe_unit_generic_aggregate_path =
+        std::filesystem::temp_directory_path() / "emit_maybe_unit_generic_aggregate.or";
+    write_fixture(
+        emit_maybe_unit_generic_aggregate_path,
+        "demo.unit_generic_aggregate",
+        {
+            "record Box<T>",
+            "    value: T",
+            "choice Envelope<T>",
+            "    Present(value: T)",
+            "    Missing",
+            "function classify(value: Maybe<Unit>) -> UInt32",
+            "    switch value",
+            "        Some(payload) => 1 as UInt32",
+            "        Empty => 0 as UInt32",
+            "function read_box(box: Box<Maybe<Unit>>) -> UInt32",
+            "    classify(box.value)",
+            "function read_envelope(envelope: Envelope<Maybe<Unit>>) -> UInt32",
+            "    switch envelope",
+            "        Present(value) => classify(value)",
+            "        Missing => 2 as UInt32",
+            "function main() -> UInt32",
+            "    let box: Box<Maybe<Unit>> = Box(Some(unit))",
+            "    let present: Envelope<Maybe<Unit>> = Present(Empty)",
+            "    let missing: Envelope<Maybe<Unit>> = Missing",
+            "    return read_box(box) + read_envelope(present) + read_envelope(missing) - 3 as UInt32",
+        }
+    );
+    auto emit_maybe_unit_generic_aggregate = run_emit_llvm(app, emit_maybe_unit_generic_aggregate_path);
+    assert_success_with_stdout_contains(
+        emit_maybe_unit_generic_aggregate,
+        {
+            "%record.Box_Maybe_Unit__ = type { i1 }",
+            "define i32 @read_box(%record.Box_Maybe_Unit__ %box)",
+            "define i32 @read_envelope({ i32, i1 } %envelope)",
+            "insertvalue %record.Box_Maybe_Unit__ undef, i1 true, 0",
+            "insertvalue { i32, i1 } undef, i32 0, 0",
+            "insertvalue { i32, i1 } %tmp",
+            "i1 false, 1",
+            "switch i32",
+            "call i32 @classify(i1 %tmp",
+            "ret i32 %tmp",
+        }
+    );
+    assert_run_success(run_program(app, emit_maybe_unit_generic_aggregate_path));
+
+    auto reject_bool_maybe_unit_generic_field_assignment_path =
+        std::filesystem::temp_directory_path() / "reject_bool_maybe_unit_generic_field_assignment.or";
+    write_fixture(
+        reject_bool_maybe_unit_generic_field_assignment_path,
+        "demo.unit_generic_field_assignment_type",
+        {
+            "record Box<T>",
+            "    value: T",
+            "function main() -> UInt32",
+            "    var box: Box<Maybe<Unit>> = Box(Empty)",
+            "    box.value = true",
+            "    return 0 as UInt32",
+        }
+    );
+    assert_failure_with_stderr_contains(
+        run_emit_llvm(app, reject_bool_maybe_unit_generic_field_assignment_path),
+        "assignment value type 'Bool' does not match declared type 'Maybe<Unit>'"
+    );
+
     auto emit_maybe_unit_control_flow_path =
         std::filesystem::temp_directory_path() / "emit_maybe_unit_control_flow.or";
     write_fixture(

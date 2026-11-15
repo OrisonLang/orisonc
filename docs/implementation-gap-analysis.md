@@ -23,10 +23,12 @@ Date: 2026-11-14
   constant and function source identity across aliases, separate object emission, linking, and execution.
 - Imported source aliases resolve to tag-only `Maybe<Unit>` for switch consumption and concrete generic function ABI.
   Explicit specialization routing and automatic build-plan discovery produce matching package-qualified `i1` symbols.
+- Concrete generic record fields and generic choice payloads preserve `Maybe<Unit>` source identity through
+  construction, projection, payload binding, switch consumption, and linked execution while rejecting `Bool` stores.
 - Interface existential/dynamic dispatch and general C variadic adaptation need explicit representation metadata before
   implementation. Cross-target linking and richer source-span diagnostics remain broader tooling gaps.
-- Recommended next implementation: finish the tag-only `Maybe<Unit>` slice by validating concrete generic record and
-  choice composition, then return to the next whole-language lowering gap.
+- Recommended next implementation: audit and generalize fixed-arity C FFI declaration and call lowering from parsed
+  signatures, with no symbol-specific IR and no variadic Orison parameters.
 
 Date: 2026-09-03
 
