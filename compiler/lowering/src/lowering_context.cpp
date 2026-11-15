@@ -4306,6 +4306,77 @@ auto collect_method_signature(
     };
 }
 
+void collect_interface_dispatch_tables(
+    syntax::ModuleSyntax const& module,
+    LoweringContext& context
+) {
+    for (auto const& implementation : module.implementations) {
+        if (!implementation.interface_type.generic_arguments.empty() ||
+            is_generic_receiver_pattern(implementation.receiver_type, module)) {
+            continue;
+        }
+
+        auto interface_declaration = std::ranges::find_if(
+            module.interfaces,
+            [&](syntax::InterfaceSyntax const& candidate) {
+                return candidate.name == implementation.interface_type.name &&
+                    candidate.generic_parameters.empty();
+            }
+        );
+        if (interface_declaration == module.interfaces.end()) {
+            continue;
+        }
+
+        auto table = LoweredInterfaceDispatchTable {
+            .interface_type_name = render_source_type_name(implementation.interface_type),
+            .receiver_type_name = render_source_type_name(implementation.receiver_type),
+        };
+        table.symbol_name = lowered_interface_dispatch_table_symbol_name(
+            module.package_name,
+            table.interface_type_name,
+            table.receiver_type_name
+        );
+
+        auto supported = true;
+        for (auto const& interface_method : interface_declaration->methods) {
+            if (!interface_method.generic_parameters.empty()) {
+                supported = false;
+                break;
+            }
+            auto implementation_method = std::ranges::find_if(
+                implementation.methods,
+                [&](syntax::FunctionSyntax const& candidate) {
+                    return candidate.name == interface_method.name;
+                }
+            );
+            if (implementation_method == implementation.methods.end() ||
+                !implementation_method->generic_parameters.empty()) {
+                supported = false;
+                break;
+            }
+            auto lowered_method = std::ranges::find_if(
+                context.methods,
+                [&](LoweredMethodSignature const& candidate) {
+                    return candidate.source_method == &*implementation_method;
+                }
+            );
+            if (lowered_method == context.methods.end() ||
+                !has_supported_function_signature_types(lowered_method->signature)) {
+                supported = false;
+                break;
+            }
+            table.slots.push_back(LoweredInterfaceDispatchSlot {
+                .index = table.slots.size(),
+                .method_name = interface_method.name,
+                .concrete_method_signature = lowered_method->signature,
+            });
+        }
+        if (supported) {
+            context.interface_dispatch_tables.push_back(std::move(table));
+        }
+    }
+}
+
 auto is_decimal_integer_text(std::string_view text) -> bool {
     if (text.empty()) {
         return false;
@@ -4987,6 +5058,8 @@ auto build_lowering_context(
         }
     }
 
+    collect_interface_dispatch_tables(module, context);
+
     auto generic_method_specializations = collect_generic_method_specializations(module, context.functions);
     for (auto& specialization : generic_method_specializations) {
         if (specialization.method == nullptr) {
@@ -5153,6 +5226,34 @@ auto lowered_package_method_symbol_name(
     symbol += method_symbol_name.starts_with(method_prefix)
         ? method_symbol_name.substr(method_prefix.size())
         : method_symbol_name;
+    return symbol;
+}
+
+auto lowered_interface_dispatch_table_symbol_name(
+    std::string_view package_name,
+    std::string_view interface_type_name,
+    std::string_view receiver_type_name
+) -> std::string {
+    auto symbol = std::string {"__orison_interface_dispatch."};
+    auto append_sanitized = [&symbol](std::string_view text) {
+        for (auto character : text) {
+            if ((character >= 'a' && character <= 'z') ||
+                (character >= 'A' && character <= 'Z') ||
+                (character >= '0' && character <= '9') ||
+                character == '_') {
+                symbol.push_back(character);
+                continue;
+            }
+            symbol.push_back('_');
+        }
+    };
+    if (!package_name.empty()) {
+        append_sanitized(package_name);
+        symbol += ".";
+    }
+    append_sanitized(interface_type_name);
+    symbol += ".for.";
+    append_sanitized(receiver_type_name);
     return symbol;
 }
 

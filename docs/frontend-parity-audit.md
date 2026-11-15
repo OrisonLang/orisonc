@@ -4005,3 +4005,6 @@ This file tracks which source-language frontend slices are reflected in the curr
   declarations generate LLVM signatures from their parsed Orison return and parameter types, emit matching calls,
   link against the host C runtime, and execute successfully. No symbol-specific IR or source varargs were added. The
   existing `printf` fixed-to-varargs compatibility adapter remains bounded target ABI policy. No syntax changed.
+- 2026-11-15: Lowering now records deterministic interface dispatch metadata for non-generic interfaces implemented by
+  concrete receiver types. Interface declaration order defines method slots, and each slot retains its concrete method
+  symbol and lowered signature. No table globals, erased values, indirect calls, or syntax changes were introduced.

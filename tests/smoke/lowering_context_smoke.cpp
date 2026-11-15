@@ -10,6 +10,8 @@ int main() {
     using orison::syntax::FunctionSyntax;
     using orison::syntax::FieldSyntax;
     using orison::syntax::ImplementationSyntax;
+    using orison::syntax::InterfaceMethodSyntax;
+    using orison::syntax::InterfaceSyntax;
     using orison::syntax::ExtensionSyntax;
     using orison::syntax::ExpressionKind;
     using orison::syntax::ExpressionSyntax;
@@ -583,6 +585,19 @@ int main() {
             ChoiceVariantSyntax {.name = "Empty"},
         },
     });
+    module.interfaces.push_back(InterfaceSyntax {
+        .name = "Reader",
+        .methods = {
+            InterfaceMethodSyntax {
+                .name = "read",
+                .parameters = {
+                    ParameterSyntax {.name = "this", .type = TypeSyntax {.name = "shared.This"}},
+                    ParameterSyntax {.name = "offset", .type = TypeSyntax {.name = "UInt32"}},
+                },
+                .return_type = TypeSyntax {.name = "UInt32"},
+            },
+        },
+    });
     auto implementation = ImplementationSyntax {
         .interface_type = TypeSyntax {.name = "Reader"},
         .receiver_type = TypeSyntax {.name = "Device"},
@@ -673,6 +688,7 @@ int main() {
     assert(context.records.size() == 16);
     assert(context.choices.size() == 4);
     assert(context.foreign_declarations.size() == 1);
+    assert(context.interface_dispatch_tables.size() == 1);
     assert(context.generic_record_parameters.size() == 2);
     assert(context.generic_record_parameters.contains("Box"));
     assert(context.generic_record_parameters.at("Box").size() == 1);
@@ -864,6 +880,19 @@ int main() {
     assert(context.methods[0].signature.parameter_types.size() == 2);
     assert(context.methods[0].signature.parameter_types[0] == "%record.Device");
     assert(context.methods[0].signature.parameter_types[1] == "i32");
+    auto const& reader_dispatch = context.interface_dispatch_tables.front();
+    assert(reader_dispatch.interface_type_name == "Reader");
+    assert(reader_dispatch.receiver_type_name == "Device");
+    assert(reader_dispatch.symbol_name == "__orison_interface_dispatch.Reader.for.Device");
+    assert(reader_dispatch.slots.size() == 1);
+    assert(reader_dispatch.slots.front().index == 0);
+    assert(reader_dispatch.slots.front().method_name == "read");
+    assert(reader_dispatch.slots.front().concrete_method_signature.symbol_name == "method.Device.read");
+    assert(reader_dispatch.slots.front().concrete_method_signature.return_type == "i32");
+    assert(
+        reader_dispatch.slots.front().concrete_method_signature.parameter_types ==
+        std::vector<std::string>({"%record.Device", "i32"})
+    );
     assert(context.methods[1].receiver_type_name == "Box<UInt32>");
     assert(context.methods[1].method_name == "reset");
     assert(context.methods[1].signature.symbol_name == "method.Box_UInt32_.reset");
@@ -928,5 +957,60 @@ int main() {
         diagnostics.entries().front().message ==
         "foreign symbol 'printf' parameter 'value' has no supported C variadic ABI representation"
     );
+
+    auto ordered_module = ModuleSyntax {.package_name = "demo"};
+    ordered_module.interfaces.push_back(InterfaceSyntax {
+        .name = "OrderedPair",
+        .methods = {
+            InterfaceMethodSyntax {
+                .name = "first",
+                .parameters = {
+                    ParameterSyntax {.name = "this", .type = TypeSyntax {.name = "shared.This"}},
+                },
+                .return_type = TypeSyntax {.name = "UInt32"},
+            },
+            InterfaceMethodSyntax {
+                .name = "second",
+                .parameters = {
+                    ParameterSyntax {.name = "this", .type = TypeSyntax {.name = "shared.This"}},
+                },
+                .return_type = TypeSyntax {.name = "UInt32"},
+            },
+        },
+    });
+    auto reversed_implementation = ImplementationSyntax {
+        .interface_type = TypeSyntax {.name = "OrderedPair"},
+        .receiver_type = TypeSyntax {.name = "UInt32"},
+    };
+    reversed_implementation.methods.push_back(FunctionSyntax {
+        .name = "second",
+        .parameters = {
+            ParameterSyntax {.name = "this", .type = TypeSyntax {.name = "shared.This"}},
+        },
+        .return_type = TypeSyntax {.name = "UInt32"},
+    });
+    reversed_implementation.methods.push_back(FunctionSyntax {
+        .name = "first",
+        .parameters = {
+            ParameterSyntax {.name = "this", .type = TypeSyntax {.name = "shared.This"}},
+        },
+        .return_type = TypeSyntax {.name = "UInt32"},
+    });
+    ordered_module.implementations.push_back(std::move(reversed_implementation));
+    auto ordered_diagnostics = orison::diagnostics::DiagnosticBag {};
+    auto ordered_context = orison::lowering::build_lowering_context(ordered_module, ordered_diagnostics);
+    assert(!ordered_diagnostics.has_errors());
+    assert(ordered_context.interface_dispatch_tables.size() == 1);
+    auto const& ordered_dispatch = ordered_context.interface_dispatch_tables.front();
+    assert(ordered_dispatch.symbol_name == "__orison_interface_dispatch.demo.OrderedPair.for.UInt32");
+    assert(ordered_dispatch.slots.size() == 2);
+    assert(ordered_dispatch.slots[0].index == 0);
+    assert(ordered_dispatch.slots[0].method_name == "first");
+    assert(ordered_dispatch.slots[0].concrete_method_signature.symbol_name ==
+           "__orison_method.demo.UInt32.first");
+    assert(ordered_dispatch.slots[1].index == 1);
+    assert(ordered_dispatch.slots[1].method_name == "second");
+    assert(ordered_dispatch.slots[1].concrete_method_signature.symbol_name ==
+           "__orison_method.demo.UInt32.second");
     return 0;
 }

@@ -23,6 +23,19 @@ struct LoweredMethodSignature {
     LoweredFunctionSignature signature;
 };
 
+struct LoweredInterfaceDispatchSlot {
+    std::size_t index = 0;
+    std::string method_name;
+    LoweredFunctionSignature concrete_method_signature;
+};
+
+struct LoweredInterfaceDispatchTable {
+    std::string interface_type_name;
+    std::string receiver_type_name;
+    std::string symbol_name;
+    std::vector<LoweredInterfaceDispatchSlot> slots;
+};
+
 struct GenericMethodSpecialization {
     std::string receiver_type_name;
     std::string method_name;
@@ -82,6 +95,7 @@ struct LoweringContext {
     std::unordered_map<std::string, std::vector<std::string>> generic_record_parameters;
     std::unordered_map<std::string, LoweredChoiceLayout> choices;
     std::vector<LoweredMethodSignature> methods;
+    std::vector<LoweredInterfaceDispatchTable> interface_dispatch_tables;
     std::vector<LoweredFunctionSignature> foreign_declarations;
     std::vector<LoweredFunctionSignature> imported_declarations;
     std::vector<std::shared_ptr<syntax::FunctionSyntax>> generic_function_specializations;
@@ -131,6 +145,12 @@ auto lowered_method_symbol_name(
 auto lowered_package_method_symbol_name(
     std::string_view package_name,
     std::string_view method_symbol_name
+) -> std::string;
+
+auto lowered_interface_dispatch_table_symbol_name(
+    std::string_view package_name,
+    std::string_view interface_type_name,
+    std::string_view receiver_type_name
 ) -> std::string;
 
 auto lowered_record_type_name(std::string_view record_name) -> std::string;
