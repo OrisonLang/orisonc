@@ -561,6 +561,130 @@ auto main() -> int {
     );
     assert_run_success(run_program(app, emit_maybe_unit_aggregate_path));
 
+    auto emit_maybe_unit_control_flow_path =
+        std::filesystem::temp_directory_path() / "emit_maybe_unit_control_flow.or";
+    write_fixture(
+        emit_maybe_unit_control_flow_path,
+        "demo.unit_control_flow",
+        {
+            "function classify(value: Maybe<Unit>) -> UInt32",
+            "    switch value",
+            "        Some(payload) => 1 as UInt32",
+            "        Empty => 0 as UInt32",
+            "function verify(present: Maybe<Unit>, absent: Maybe<Unit>) -> UInt32",
+            "    switch present",
+            "        Some(payload) => classify(absent)",
+            "        Empty => 1 as UInt32",
+            "function choose_ternary(flag: Bool) -> Maybe<Unit>",
+            "    flag ? Some(unit) : Empty",
+            "function choose_if(flag: Bool) -> Maybe<Unit>",
+            "    if flag",
+            "        Some(unit)",
+            "    else",
+            "        Empty",
+            "function choose_switch(flag: Bool) -> Maybe<Unit>",
+            "    switch flag",
+            "        true => Some(unit)",
+            "        false => Empty",
+            "function assign_if(flag: Bool) -> Maybe<Unit>",
+            "    var result: Maybe<Unit> = Empty",
+            "    if flag",
+            "        result = Some(unit)",
+            "    else",
+            "        result = Empty",
+            "    result",
+            "function assign_switch(flag: Bool) -> Maybe<Unit>",
+            "    var result: Maybe<Unit> = Empty",
+            "    switch flag",
+            "        true =>",
+            "            result = Some(unit)",
+            "        false =>",
+            "            result = Empty",
+            "    result",
+            "function main() -> UInt32",
+            "    return verify(choose_ternary(true), choose_ternary(false)) + verify(choose_if(true), choose_if(false)) + verify(choose_switch(true), choose_switch(false)) + verify(assign_if(true), assign_if(false)) + verify(assign_switch(true), assign_switch(false))",
+        }
+    );
+    auto emit_maybe_unit_control_flow = run_emit_llvm(app, emit_maybe_unit_control_flow_path);
+    assert_success_with_stdout_contains(
+        emit_maybe_unit_control_flow,
+        {
+            "define i1 @choose_ternary(i1 %flag)",
+            "ternary.then.",
+            "ternary.else.",
+            "phi i1",
+            "define i1 @choose_if(i1 %flag)",
+            "if.then.",
+            "if.else.",
+            "define i1 @choose_switch(i1 %flag)",
+            "switch i1 %flag",
+            "define i1 @assign_if(i1 %flag)",
+            "store i1 true, ptr %result.addr",
+            "store i1 false, ptr %result.addr",
+            "define i1 @assign_switch(i1 %flag)",
+            "load i1, ptr %result.addr",
+            "call i32 @verify(i1 %tmp",
+            "ret i32 %tmp",
+        }
+    );
+    assert_run_success(run_program(app, emit_maybe_unit_control_flow_path));
+
+    auto reject_bool_maybe_unit_ternary_path =
+        std::filesystem::temp_directory_path() / "reject_bool_maybe_unit_ternary.or";
+    write_fixture(
+        reject_bool_maybe_unit_ternary_path,
+        "demo.unit_ternary_type",
+        {
+            "function choose(flag: Bool) -> Maybe<Unit>",
+            "    flag ? Some(unit) : false",
+            "function main() -> UInt32",
+            "    return 0 as UInt32",
+        }
+    );
+    assert_failure_with_stderr_contains(
+        run_emit_llvm(app, reject_bool_maybe_unit_ternary_path),
+        "final expression type 'Bool' does not match declared type 'Maybe<Unit>'"
+    );
+
+    auto reject_bool_maybe_unit_final_if_path =
+        std::filesystem::temp_directory_path() / "reject_bool_maybe_unit_final_if.or";
+    write_fixture(
+        reject_bool_maybe_unit_final_if_path,
+        "demo.unit_final_if_type",
+        {
+            "function choose(flag: Bool) -> Maybe<Unit>",
+            "    if flag",
+            "        Some(unit)",
+            "    else",
+            "        false",
+            "function main() -> UInt32",
+            "    return 0 as UInt32",
+        }
+    );
+    assert_failure_with_stderr_contains(
+        run_emit_llvm(app, reject_bool_maybe_unit_final_if_path),
+        "final expression type 'Bool' does not match declared type 'Maybe<Unit>'"
+    );
+
+    auto reject_bool_maybe_unit_final_switch_path =
+        std::filesystem::temp_directory_path() / "reject_bool_maybe_unit_final_switch.or";
+    write_fixture(
+        reject_bool_maybe_unit_final_switch_path,
+        "demo.unit_final_switch_type",
+        {
+            "function choose(flag: Bool) -> Maybe<Unit>",
+            "    switch flag",
+            "        true => Some(unit)",
+            "        false => false",
+            "function main() -> UInt32",
+            "    return 0 as UInt32",
+        }
+    );
+    assert_failure_with_stderr_contains(
+        run_emit_llvm(app, reject_bool_maybe_unit_final_switch_path),
+        "final expression type 'Bool' does not match declared type 'Maybe<Unit>'"
+    );
+
     auto reject_bool_maybe_unit_field_assignment_path =
         std::filesystem::temp_directory_path() / "reject_bool_maybe_unit_field_assignment.or";
     write_fixture(

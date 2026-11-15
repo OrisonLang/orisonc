@@ -128,6 +128,8 @@ analysis, and lowering components.
 - Ternary and final `if` conditional CFG execution lives in a shared emitter over non-owning callbacks; it owns branch
   labels, predecessor tracking, merge planning, phi emission, and current-block transitions while callers retain arm
   lowering, binding-scope policy, and diagnostic translation.
+  Expected source types remain attached to each arm, so tag-only `Maybe<Unit>` merges emit `phi i1` without accepting
+  `Bool` arms that happen to share the same LLVM representation.
 - Final scalar switch case/default validation, pattern lowering, and deterministic block planning live in a dedicated
   component that returns a non-owning plan.
 - Final switch planning retains source type identity when multiple source types share an LLVM representation.
@@ -140,7 +142,8 @@ analysis, and lowering components.
   case labels, predecessor tracking, fallback blocks, merge planning, phi emission, and current-block transitions while
   control-flow lowering retains subject validation, case-body lowering, binding-scope policy, and diagnostics.
 - Ternary, final `if`, and final `switch` result compatibility plus phi-input assembly live in a neutral merge planner;
-  control-flow executors retain caller-specific failure categories.
+  control-flow executors retain caller-specific failure categories. Statement-level `if` and `switch` assignment paths
+  preserve the same `Maybe<Unit>` source identity through mutable `i1` storage.
 - Successful branch merge finalization lives in a shared merge emitter; it owns merge labels, current-block transitions,
   temporary naming, phi emission, and construction of the resulting lowered value.
 - Ordinary function definitions retain their shared lowered signatures in the module context even when a type is

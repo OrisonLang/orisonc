@@ -1,5 +1,8 @@
 # Frontend Parity Audit
 
+- 2026-11-14: Tag-only `Maybe<Unit>` now has production compile-link-run coverage through ternary, final `if`, and
+  final `switch` value merges plus statement-level `if` and `switch` assignment. Mixed `Bool` arms are rejected for all
+  three value forms despite the shared `i1` representation. No source syntax changed.
 - 2026-11-14: Record fields and fixed arrays now have production compile-link-run coverage for tag-only `Maybe<Unit>`.
   Construction, field projection and assignment, indexed projection and assignment, and nested switches retain source
   identity over `i1` storage. Negative CLI regressions reject `Bool` field and element assignments. No syntax changed.

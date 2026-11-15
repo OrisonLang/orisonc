@@ -17,10 +17,12 @@ Date: 2026-11-14
   inferred mutable bindings preserve source identity through initialization, reassignment, loads, returns, and calls.
 - Record fields and fixed arrays preserve `Maybe<Unit>` identity through construction, projection, assignment,
   indexing, nested switch consumption, and linked execution while rejecting `Bool` stores.
+- Ternary and final `if`/`switch` values merge `Maybe<Unit>` through `i1` PHIs, statement-level branches preserve it
+  through mutable assignment, and mixed `Bool` arms remain invalid.
 - Interface existential/dynamic dispatch and general C variadic adaptation need explicit representation metadata before
   implementation. Cross-target linking and richer source-span diagnostics remain broader tooling gaps.
-- Recommended next implementation: validate tag-only `Maybe<Unit>` through ternary and final `if`/`switch` value
-  merges, including branch assignment and downstream consumption.
+- Recommended next implementation: validate tag-only `Maybe<Unit>` in module constants and separate compilation,
+  including package-interface serialization and imported function/constant ABI use.
 
 Date: 2026-09-03
 
