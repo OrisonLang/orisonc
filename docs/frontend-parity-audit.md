@@ -4028,3 +4028,6 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-11-15: Record-valued thread lowering now has matching compile-link-run coverage. A `Transferable` two-field
   record crosses the existing runtime ABI through compiler-owned result storage, then `.join()` restores both fields
   for ordinary expression lowering. No source syntax or runtime ABI changed.
+- 2026-11-15: Record-valued task and thread examples now capture an outer `UInt32`. Focused IR checks pin scalar
+  environment storage, thunk-side capture loading, record construction, typed result storage, and synchronized typed
+  loads; both compile-link-run paths preserve the expected field values. No source syntax or runtime ABI changed.

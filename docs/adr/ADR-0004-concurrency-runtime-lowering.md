@@ -81,6 +81,9 @@ drop/cleanup decisions.
   access without changing the runtime ABI.
 - Record-valued thread lowering now has matching compile, link, and execution coverage. `.join()` restores the typed
   record from compiler-owned result storage, and both fields remain available to ordinary expression lowering.
+- The checked-in record task and thread examples now also capture an outer scalar. IR coverage pins the scalar capture
+  environment, thunk-side load, record construction, typed result store, synchronization, and typed record load; linked
+  execution validates the complete composition.
 - Cleanup thunks now lower cleanup-candidate environment fields to deterministic field addresses, providing the
   insertion point for future owned-capture drop emission while still emitting no drops today.
 - Cleanup candidate plans now include deterministic type-specific drop symbol names; cleanup thunks document those

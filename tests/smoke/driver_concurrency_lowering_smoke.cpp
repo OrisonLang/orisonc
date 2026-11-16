@@ -173,6 +173,20 @@ auto main() -> int {
 
     auto record_task_path = std::filesystem::path(ORISON_SOURCE_DIR) /
         "examples" / "concurrency_record_task_main.or";
+    auto record_task_ir = run_emit_llvm(app, record_task_path);
+    assert_success_with_stdout_contains(
+        record_task_ir,
+        {
+            "%pending.task.env = alloca { i32 }",
+            "store i32 %first, ptr %tmp0",
+            "%pending.task.result = alloca %record.Pair",
+            "call ptr @__orison_task_spawn(ptr @__orison_task_thunk.main.13.0, ptr %pending.task.env, ptr %pending.task.result, i64 8, ptr @__orison_task_cleanup.main.13.0)",
+            "define private void @__orison_task_thunk.main.13.0(ptr %environment, ptr %result_storage)",
+            "%tmp1 = load i32, ptr %tmp0",
+            "store %record.Pair %tmp3, ptr %result_storage",
+            "load %record.Pair, ptr %pending.task.result",
+        }
+    );
     auto record_task = run_program(app, record_task_path);
     assert(record_task.exit_code == 0);
     assert(record_task.stdout_text.empty());
@@ -180,6 +194,20 @@ auto main() -> int {
 
     auto record_thread_path = std::filesystem::path(ORISON_SOURCE_DIR) /
         "examples" / "concurrency_record_thread_main.or";
+    auto record_thread_ir = run_emit_llvm(app, record_thread_path);
+    assert_success_with_stdout_contains(
+        record_thread_ir,
+        {
+            "%worker.thread.env = alloca { i32 }",
+            "store i32 %first, ptr %tmp0",
+            "%worker.thread.result = alloca %record.Pair",
+            "call ptr @__orison_thread_spawn(ptr @__orison_thread_thunk.main.13.0, ptr %worker.thread.env, ptr %worker.thread.result, i64 8, ptr @__orison_thread_cleanup.main.13.0)",
+            "define private void @__orison_thread_thunk.main.13.0(ptr %environment, ptr %result_storage)",
+            "%tmp1 = load i32, ptr %tmp0",
+            "store %record.Pair %tmp3, ptr %result_storage",
+            "load %record.Pair, ptr %worker.thread.result",
+        }
+    );
     auto record_thread = run_program(app, record_thread_path);
     assert(record_thread.exit_code == 0);
     assert(record_thread.stdout_text.empty());

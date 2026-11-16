@@ -35,10 +35,11 @@ Date: 2026-11-15
 - General C variadic adaptation needs explicit target metadata. Cross-target linking and richer source-span diagnostics
   remain broader tooling gaps.
 - Record-valued task and thread results now pass checked-in compile-link-run coverage without changing the runtime ABI.
-  Aggregate capture cleanup remains gated by ownership work; broader async ABI, suspension, cancellation, and executor
-  semantics remain design work rather than unblocked lowering tasks.
-- Recommended next implementation: prove scalar capture plus record result for both task and thread execution. This
-  composes existing environment transfer with aggregate result transfer without entering aggregate cleanup semantics.
+  Scalar capture now composes with both record result paths through pinned environment and result-storage IR. Aggregate
+  capture cleanup remains gated by ownership work; broader async ABI, suspension, cancellation, and executor semantics
+  remain design work rather than unblocked lowering tasks.
+- Recommended next implementation: audit scalar-payload choice values as task and thread results. This tests the
+  existing choice tag/payload ABI through concurrency result storage without adding source semantics.
 
 Date: 2026-09-03
 

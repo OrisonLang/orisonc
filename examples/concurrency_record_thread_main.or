@@ -9,8 +9,9 @@ implements Transferable for Pair
         return
 
 function main() -> UInt32
+    let first = 17 as UInt32
     let worker = thread
-        Pair(17 as UInt32, 25 as UInt32)
+        Pair(first, 25 as UInt32)
 
     let result: Pair = worker.join()
     result.first + result.second == 42 as UInt32 ? 0 as UInt32 : 1 as UInt32

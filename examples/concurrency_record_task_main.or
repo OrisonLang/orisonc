@@ -9,8 +9,9 @@ implements Shareable for Pair
         return
 
 async function main() -> UInt32
+    let first = 19 as UInt32
     let pending = task
-        Pair(19 as UInt32, 23 as UInt32)
+        Pair(first, 23 as UInt32)
 
     let result: Pair = await pending
     result.first + result.second == 42 as UInt32 ? 0 as UInt32 : 1 as UInt32
