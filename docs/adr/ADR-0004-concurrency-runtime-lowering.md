@@ -94,6 +94,8 @@ drop/cleanup decisions.
   result storage uses the target-layout size of 8 bytes, while the runtime ABI remains source-type-agnostic.
 - Nested `Array<Array<UInt32, 2>, 2>` results now cross the same boundaries as inline `[2 x [2 x i32]]` values.
   Recursive construction and target sizing produce 16-byte compiler-owned result storage without runtime ABI changes.
+- Fixed `Array<Pair, 2>` results now preserve named `%record.Pair` elements inside `[2 x %record.Pair]`. Recursive
+  record and array construction produces 16-byte compiler-owned result storage without runtime ABI changes.
 - Cleanup thunks now lower cleanup-candidate environment fields to deterministic field addresses, providing the
   insertion point for future owned-capture drop emission while still emitting no drops today.
 - Cleanup candidate plans now include deterministic type-specific drop symbol names; cleanup thunks document those
@@ -152,6 +154,8 @@ drop/cleanup decisions.
   result transfer and indexed reads after synchronization.
 - `examples/concurrency_nested_array_task_main.or` and `examples/concurrency_nested_array_thread_main.or` cover
   recursive fixed-array result transfer and two-level indexed reads after synchronization.
+- `examples/concurrency_record_array_task_main.or` and `examples/concurrency_record_array_thread_main.or` cover fixed
+  arrays of named records and indexed field reads after synchronization.
 - `examples/concurrency_thread_main.or` is the checked-in runnable smoke source for the current scalar thread runtime
   path.
 - Module emission now validates concurrency runtime prelude declarations plus generated task/thread entry and cleanup

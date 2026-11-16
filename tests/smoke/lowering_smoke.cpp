@@ -13454,6 +13454,74 @@ void test_emit_nested_array_task_result_storage_size() {
     assert(result.ir_text.find("ret [2 x [2 x i32]] %tmp") != std::string::npos);
 }
 
+void test_emit_record_array_thread_result_storage_size() {
+    auto path = std::filesystem::temp_directory_path() / "orison_lowering_record_array_thread_result.or";
+    auto result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "record Pair\n"
+        "    public first: UInt32\n"
+        "    public second: UInt32\n"
+        "\n"
+        "implements Transferable for Array<Pair, 2>\n"
+        "    function placeholder(this: shared This) -> Unit\n"
+        "        return\n"
+        "\n"
+        "function on_thread(first: UInt32, second: UInt32, third: UInt32, fourth: UInt32) -> Array<Pair, 2>\n"
+        "    let worker = thread\n"
+        "        [Pair(first, second), Pair(third, fourth)]\n"
+        "\n"
+        "    worker.join()\n"
+    );
+
+    assert(!result.has_errors());
+    assert(result.ir_text.find("%record.Pair = type { i32, i32 }") != std::string::npos);
+    assert(result.ir_text.find("%worker.thread.env = alloca { i32, i32, i32, i32 }") != std::string::npos);
+    assert(result.ir_text.find("%worker.thread.result = alloca [2 x %record.Pair]") != std::string::npos);
+    assert(result.ir_text.find(", i64 16, ptr @__orison_thread_cleanup.on_thread.12.0)") != std::string::npos);
+    assert(result.ir_text.find("insertvalue %record.Pair undef, i32 %tmp1, 0") != std::string::npos);
+    assert(result.ir_text.find("insertvalue [2 x %record.Pair] undef, %record.Pair %tmp9, 0") != std::string::npos);
+    assert(result.ir_text.find("insertvalue [2 x %record.Pair] %tmp10, %record.Pair %tmp12, 1") != std::string::npos);
+    assert(result.ir_text.find("store [2 x %record.Pair] %tmp13, ptr %result_storage") != std::string::npos);
+    assert(result.ir_text.find("load [2 x %record.Pair], ptr %worker.thread.result") != std::string::npos);
+    assert(result.ir_text.find("ret [2 x %record.Pair] %tmp") != std::string::npos);
+}
+
+void test_emit_record_array_task_result_storage_size() {
+    auto path = std::filesystem::temp_directory_path() / "orison_lowering_record_array_task_result.or";
+    auto result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "record Pair\n"
+        "    public first: UInt32\n"
+        "    public second: UInt32\n"
+        "\n"
+        "implements Shareable for Array<Pair, 2>\n"
+        "    function placeholder(this: shared This) -> Unit\n"
+        "        return\n"
+        "\n"
+        "async function on_task(first: UInt32, second: UInt32, third: UInt32, fourth: UInt32) -> Array<Pair, 2>\n"
+        "    let pending = task\n"
+        "        [Pair(first, second), Pair(third, fourth)]\n"
+        "\n"
+        "    await pending\n"
+    );
+
+    assert(!result.has_errors());
+    assert(result.ir_text.find("%record.Pair = type { i32, i32 }") != std::string::npos);
+    assert(result.ir_text.find("%pending.task.env = alloca { i32, i32, i32, i32 }") != std::string::npos);
+    assert(result.ir_text.find("%pending.task.result = alloca [2 x %record.Pair]") != std::string::npos);
+    assert(result.ir_text.find(", i64 16, ptr @__orison_task_cleanup.on_task.12.0)") != std::string::npos);
+    assert(result.ir_text.find("insertvalue %record.Pair undef, i32 %tmp1, 0") != std::string::npos);
+    assert(result.ir_text.find("insertvalue [2 x %record.Pair] undef, %record.Pair %tmp9, 0") != std::string::npos);
+    assert(result.ir_text.find("insertvalue [2 x %record.Pair] %tmp10, %record.Pair %tmp12, 1") != std::string::npos);
+    assert(result.ir_text.find("store [2 x %record.Pair] %tmp13, ptr %result_storage") != std::string::npos);
+    assert(result.ir_text.find("load [2 x %record.Pair], ptr %pending.task.result") != std::string::npos);
+    assert(result.ir_text.find("ret [2 x %record.Pair] %tmp") != std::string::npos);
+}
+
 void test_emit_record_capture_cleanup_field_address() {
     auto path = std::filesystem::temp_directory_path() / "orison_lowering_record_capture_cleanup.or";
     auto result = lower_source(
@@ -15403,6 +15471,8 @@ auto main() -> int {
     test_emit_array_task_result_storage_size();
     test_emit_nested_array_thread_result_storage_size();
     test_emit_nested_array_task_result_storage_size();
+    test_emit_record_array_thread_result_storage_size();
+    test_emit_record_array_task_result_storage_size();
     test_emit_record_capture_cleanup_field_address();
     test_emit_same_type_record_capture_drop_metadata_dedupes();
     test_emit_allowed_record_capture_drop_abi_calls();

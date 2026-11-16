@@ -402,6 +402,58 @@ auto main() -> int {
     assert(nested_array_thread.stdout_text.empty());
     assert(nested_array_thread.stderr_text.empty());
 
+    auto record_array_task_path = std::filesystem::path(ORISON_SOURCE_DIR) /
+        "examples" / "concurrency_record_array_task_main.or";
+    auto record_array_task_ir = run_emit_llvm(app, record_array_task_path);
+    assert_success_with_stdout_contains(
+        record_array_task_ir,
+        {
+            "%record.Pair = type { i32, i32 }",
+            "%pending.task.env = alloca { i32, i32, i32, i32 }",
+            "%pending.task.result = alloca [2 x %record.Pair]",
+            "call ptr @__orison_task_spawn(ptr @__orison_task_thunk.main.16.0, ptr %pending.task.env, ptr %pending.task.result, i64 16, ptr @__orison_task_cleanup.main.16.0)",
+            "%tmp8 = insertvalue %record.Pair undef, i32 %tmp1, 0",
+            "%tmp10 = insertvalue [2 x %record.Pair] undef, %record.Pair %tmp9, 0",
+            "%tmp13 = insertvalue [2 x %record.Pair] %tmp10, %record.Pair %tmp12, 1",
+            "store [2 x %record.Pair] %tmp13, ptr %result_storage",
+            "load [2 x %record.Pair], ptr %pending.task.result",
+            "getelementptr [2 x %record.Pair], ptr %result.addr, i64 0, i64 0",
+            "getelementptr [2 x %record.Pair], ptr %result.addr, i64 0, i64 1",
+            "getelementptr %record.Pair, ptr %tmp6, i32 0, i32 0",
+            "getelementptr %record.Pair, ptr %tmp17, i32 0, i32 1",
+        }
+    );
+    auto record_array_task = run_program(app, record_array_task_path);
+    assert(record_array_task.exit_code == 0);
+    assert(record_array_task.stdout_text.empty());
+    assert(record_array_task.stderr_text.empty());
+
+    auto record_array_thread_path = std::filesystem::path(ORISON_SOURCE_DIR) /
+        "examples" / "concurrency_record_array_thread_main.or";
+    auto record_array_thread_ir = run_emit_llvm(app, record_array_thread_path);
+    assert_success_with_stdout_contains(
+        record_array_thread_ir,
+        {
+            "%record.Pair = type { i32, i32 }",
+            "%worker.thread.env = alloca { i32, i32, i32, i32 }",
+            "%worker.thread.result = alloca [2 x %record.Pair]",
+            "call ptr @__orison_thread_spawn(ptr @__orison_thread_thunk.main.16.0, ptr %worker.thread.env, ptr %worker.thread.result, i64 16, ptr @__orison_thread_cleanup.main.16.0)",
+            "%tmp8 = insertvalue %record.Pair undef, i32 %tmp1, 0",
+            "%tmp10 = insertvalue [2 x %record.Pair] undef, %record.Pair %tmp9, 0",
+            "%tmp13 = insertvalue [2 x %record.Pair] %tmp10, %record.Pair %tmp12, 1",
+            "store [2 x %record.Pair] %tmp13, ptr %result_storage",
+            "load [2 x %record.Pair], ptr %worker.thread.result",
+            "getelementptr [2 x %record.Pair], ptr %result.addr, i64 0, i64 0",
+            "getelementptr [2 x %record.Pair], ptr %result.addr, i64 0, i64 1",
+            "getelementptr %record.Pair, ptr %tmp6, i32 0, i32 0",
+            "getelementptr %record.Pair, ptr %tmp17, i32 0, i32 1",
+        }
+    );
+    auto record_array_thread = run_program(app, record_array_thread_path);
+    assert(record_array_thread.exit_code == 0);
+    assert(record_array_thread.stdout_text.empty());
+    assert(record_array_thread.stderr_text.empty());
+
     std::filesystem::remove_all(smoke_temp_root);
     return 0;
 }
