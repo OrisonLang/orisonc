@@ -28,12 +28,14 @@ Date: 2026-11-15
 - Ordinary fixed-arity C imports generate declarations and calls from parsed signatures, including renamed symbols,
   pointer parameters, and size-width values. Source calls remain finite and statically checked.
 - Concrete non-generic interface implementations now have declaration-ordered internal dispatch metadata. A borrowed
-  `{ ptr, ptr }` existential ABI, shared scalar/record receiver thunks, and immutable dispatch tables are emitted.
-  Existential construction, indirect calls, and exclusive by-value receiver adaptation remain open.
+  `{ ptr, ptr }` existential ABI, shared scalar/record receiver thunks, immutable dispatch tables, existential
+  construction, and typed indirect calls have verifier-backed internal emitters. Production source integration remains
+  open since current semantic validation does not treat interface declarations as ordinary value types. Exclusive
+  by-value receiver adaptation also remains open.
 - General C variadic adaptation needs explicit target metadata. Cross-target linking and richer source-span diagnostics
   remain broader tooling gaps.
-- Recommended next implementation: lower one borrowed concrete-to-interface conversion and indirect method call for
-  the validated shared-receiver interface slice.
+- Recommended next implementation: extend pointer-native exclusive receiver coverage while borrowed interface value
+  source semantics remain unapproved.
 
 Date: 2026-09-03
 

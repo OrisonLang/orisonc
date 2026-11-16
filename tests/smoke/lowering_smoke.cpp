@@ -3,6 +3,7 @@
 #include "orison/lowering/consumed_descriptor_finalization.hpp"
 #include "orison/lowering/dynamic_array_cleanup_plan.hpp"
 #include "orison/lowering/dynamic_array_runtime.hpp"
+#include "orison/lowering/interface_dispatch_emitter.hpp"
 #include "orison/lowering/llvm_ir_emitter.hpp"
 #include "orison/lowering/llvm_object_emitter.hpp"
 #include "orison/lowering/llvm_ir_verifier.hpp"
@@ -12680,6 +12681,80 @@ void test_emit_interface_dispatch_tables_and_thunks() {
     );
 }
 
+void test_emit_borrowed_interface_existential_and_indirect_call() {
+    auto path = std::filesystem::temp_directory_path() / "orison_lowering_interface_indirect_call.or";
+    auto result = lower_source(
+        path,
+        "package demo.dispatch_call\n"
+        "\n"
+        "interface Readable\n"
+        "    function read(this: shared This, amount: UInt32) -> UInt32\n"
+        "\n"
+        "implements Readable for UInt32\n"
+        "    function read(this: shared This, amount: UInt32) -> UInt32\n"
+        "        this + amount\n"
+        "\n"
+        "function main() -> UInt32\n"
+        "    0 as UInt32\n"
+    );
+    assert(!result.has_errors());
+
+    auto table = orison::lowering::LoweredInterfaceDispatchTable {
+        .interface_type_name = "Readable",
+        .receiver_type_name = "UInt32",
+        .symbol_name = "__orison_interface_dispatch.demo_dispatch_call.Readable.for.UInt32",
+    };
+    table.slots.push_back(orison::lowering::LoweredInterfaceDispatchSlot {
+        .index = 0,
+        .method_name = "read",
+        .receiver_access = orison::lowering::LoweredInterfaceReceiverAccess::shared,
+        .thunk_symbol_name = table.symbol_name + ".read",
+        .thunk_signature = {
+            .return_type = "i32",
+            .parameter_types = {"ptr", "i32"},
+            .symbol_name = table.symbol_name + ".read",
+        },
+        .concrete_method_signature = {
+            .return_type = "i32",
+            .parameter_types = {"i32", "i32"},
+            .symbol_name = "__orison_method.demo.dispatch_call.UInt32.read",
+        },
+    });
+    auto const abi = orison::lowering::LoweredInterfaceExistentialAbi {};
+    auto const existential = orison::lowering::emit_borrowed_interface_existential(
+        abi,
+        table,
+        "%storage",
+        "readable"
+    );
+    auto const call = orison::lowering::emit_borrowed_interface_dispatch_call(
+        abi,
+        table,
+        0,
+        "%readable",
+        {{.type = "i32", .value = "2"}},
+        "dispatch"
+    );
+    assert(!existential.empty());
+    assert(!call.empty());
+
+    result.ir_text +=
+        "\ndefine i32 @__orison_interface_dispatch_smoke(ptr %storage) {\nentry:\n" +
+        existential + call + "  ret i32 %dispatch.result\n}\n";
+    assert_ir_contains(result, "%readable = insertvalue { ptr, ptr } %readable.storage, ptr @");
+    assert_ir_contains(result, "%dispatch.method = load ptr, ptr %dispatch.slot");
+    assert_ir_contains(result, "%dispatch.result = call i32 %dispatch.method(ptr %dispatch.receiver, i32 2)");
+
+    auto verifier = orison::lowering::LlvmIrVerifier {};
+    auto diagnostics = verifier.verify(result.ir_text);
+    if (diagnostics.has_errors()) {
+        for (auto const& diagnostic : diagnostics.entries()) {
+            std::cerr << diagnostic.message << "\n";
+        }
+    }
+    assert(!diagnostics.has_errors());
+}
+
 void test_allow_foreign_alias_matching_unqualified_method_symbol() {
     auto path = std::filesystem::temp_directory_path() / "orison_lowering_foreign_method_symbol_collision.or";
     auto result = lower_source(
@@ -15042,6 +15117,7 @@ auto main() -> int {
     test_reject_printf_adapter_with_invalid_fixed_prefix();
     test_reject_printf_adapter_with_unsupported_trailing_type();
     test_emit_interface_dispatch_tables_and_thunks();
+    test_emit_borrowed_interface_existential_and_indirect_call();
     test_reject_foreign_alias_colliding_with_generic_specialization_symbol();
     test_allow_foreign_alias_matching_unqualified_method_symbol();
     test_reject_source_function_colliding_with_generic_specialization_symbol();

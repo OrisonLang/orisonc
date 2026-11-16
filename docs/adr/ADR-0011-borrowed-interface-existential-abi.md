@@ -29,7 +29,10 @@ value from erased storage. Pointer-native receivers forward the erased pointer d
 remain blocked until their concrete method ABI preserves mutation through a pointer.
 
 Lowering emits one private immutable array of thunk pointers for each table whose complete slot set is emit-ready.
-Existential construction and indirect calls are not emitted yet.
+Lowering also provides internal emitters that construct the borrowed pair from addressable concrete storage and a
+known table, then extract the pair, load a validated slot, and issue a typed indirect call. LLVM verifier coverage
+proves this composition. These emitters are not connected to user source: current semantic validation does not admit
+interface declarations as ordinary value types, and no new source form is inferred here.
 
 ## Consequences
 
@@ -38,5 +41,5 @@ receiver position. Concrete values must have stable addressable storage for the 
 
 ## Follow-up work
 
-- Lower one borrowed concrete-to-interface conversion and indirect method call.
+- Define and approve source semantics for borrowed interface values before production integration.
 - Extend pointer-native exclusive receiver coverage as concrete method lowering supports it.

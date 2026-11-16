@@ -4014,3 +4014,7 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-11-15: LLVM lowering now emits private immutable interface dispatch tables and receiver thunks for shared scalar
   and record implementations. Thunks load concrete values from erased storage, call the existing concrete method, and
   forward its result. Exclusive by-value receivers remain blocked. No existential construction or syntax changed.
+- 2026-11-15: Lowering-only emitters now construct the borrowed `{ ptr, ptr }` interface pair from addressable storage
+  and a known table, then extract it, load a validated method slot, and issue a typed indirect call. LLVM verifier
+  coverage proves the complete internal composition. Production source integration remains gated: interface
+  declarations are not ordinary value types in current semantic validation. No syntax changed.

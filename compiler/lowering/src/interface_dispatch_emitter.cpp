@@ -115,4 +115,68 @@ auto emit_interface_dispatch_definitions(LoweringContext const& context) -> std:
     return output.str();
 }
 
+auto emit_borrowed_interface_existential(
+    LoweredInterfaceExistentialAbi const& abi,
+    LoweredInterfaceDispatchTable const& table,
+    std::string_view concrete_storage_pointer,
+    std::string_view result_name
+) -> std::string {
+    if (!can_emit_interface_dispatch_table(table) || concrete_storage_pointer.empty() || result_name.empty()) {
+        return {};
+    }
+
+    auto output = std::ostringstream {};
+    output << "  %" << result_name << ".storage = insertvalue " << abi.llvm_type
+           << " poison, ptr " << concrete_storage_pointer << ", "
+           << abi.concrete_storage_pointer_index << "\n";
+    output << "  %" << result_name << " = insertvalue " << abi.llvm_type << " %"
+           << result_name << ".storage, ptr @" << table.symbol_name << ", "
+           << abi.dispatch_table_pointer_index << "\n";
+    return output.str();
+}
+
+auto emit_borrowed_interface_dispatch_call(
+    LoweredInterfaceExistentialAbi const& abi,
+    LoweredInterfaceDispatchTable const& table,
+    std::size_t slot_index,
+    std::string_view existential_value,
+    std::vector<LoweredExpression> const& arguments,
+    std::string_view instruction_stem
+) -> std::string {
+    if (!can_emit_interface_dispatch_table(table) || existential_value.empty() || instruction_stem.empty() ||
+        slot_index >= table.slots.size()) {
+        return {};
+    }
+    auto const& slot = table.slots[slot_index];
+    if (slot.index != slot_index || slot.thunk_signature.parameter_types.size() != arguments.size() + 1) {
+        return {};
+    }
+    for (auto index = std::size_t {0}; index < arguments.size(); ++index) {
+        if (arguments[index].type != slot.thunk_signature.parameter_types[index + 1] ||
+            arguments[index].value.empty()) {
+            return {};
+        }
+    }
+
+    auto output = std::ostringstream {};
+    output << "  %" << instruction_stem << ".receiver = extractvalue " << abi.llvm_type << " "
+           << existential_value << ", " << abi.concrete_storage_pointer_index << "\n";
+    output << "  %" << instruction_stem << ".table = extractvalue " << abi.llvm_type << " "
+           << existential_value << ", " << abi.dispatch_table_pointer_index << "\n";
+    output << "  %" << instruction_stem << ".slot = getelementptr inbounds [" << table.slots.size()
+           << " x ptr], ptr %" << instruction_stem << ".table, i64 0, i64 " << slot.index << "\n";
+    output << "  %" << instruction_stem << ".method = load ptr, ptr %" << instruction_stem << ".slot\n";
+    output << "  ";
+    if (slot.thunk_signature.return_type != "void") {
+        output << "%" << instruction_stem << ".result = ";
+    }
+    output << "call " << slot.thunk_signature.return_type << " %" << instruction_stem
+           << ".method(ptr %" << instruction_stem << ".receiver";
+    for (auto const& argument : arguments) {
+        output << ", " << argument.type << " " << argument.value;
+    }
+    output << ")\n";
+    return output.str();
+}
+
 }  // namespace orison::lowering
