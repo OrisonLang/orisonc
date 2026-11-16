@@ -1,5 +1,8 @@
 # Frontend Parity Audit
 
+- 2026-11-16: Unique payload-compatible choice constructors now retain source identity during lowering without an
+  enclosing type annotation. Scalar-payload choices cross task and thread result storage with their nonzero tag and
+  captured `UInt32` payload intact; compile-link-run coverage passes. No source syntax or runtime ABI changed.
 - 2026-11-14: Concrete generic records and choices now compose with tag-only `Maybe<Unit>`. Generic record fields use
   `i1` storage, generic choice constructors preserve substituted payload source context, and payload switches recover
   `Maybe<Unit>` semantics. A negative regression rejects `Bool` assignment to the generic record field. No source

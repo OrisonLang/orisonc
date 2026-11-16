@@ -5143,6 +5143,63 @@ auto source_type_name_for_record_constructor(
     return std::nullopt;
 }
 
+auto source_type_name_for_choice_constructor(
+    syntax::ExpressionSyntax const& expression,
+    LoweringContext const& context,
+    FunctionLoweringState const& state
+) -> std::optional<std::string> {
+    auto constructor_name = std::string_view {};
+    auto const* arguments = static_cast<std::vector<syntax::ExpressionSyntax> const*>(nullptr);
+    if (expression.kind == syntax::ExpressionKind::name) {
+        constructor_name = expression.text;
+    } else if (expression.kind == syntax::ExpressionKind::call && expression.left != nullptr &&
+               expression.left->kind == syntax::ExpressionKind::name) {
+        constructor_name = expression.left->text;
+        arguments = &expression.arguments;
+    } else {
+        return std::nullopt;
+    }
+
+    auto const argument_count = arguments == nullptr ? std::size_t {0} : arguments->size();
+    auto inferred = std::optional<std::string> {};
+    for (auto const& [choice_name, layout] : context.choices) {
+        (void)choice_name;
+        auto variant = std::ranges::find_if(layout.variants, [&](LoweredChoiceVariant const& candidate) {
+            return candidate.name == constructor_name && candidate.payloads.size() == argument_count;
+        });
+        if (variant == layout.variants.end()) {
+            continue;
+        }
+
+        auto matches = true;
+        for (auto index = std::size_t {0}; index < argument_count; ++index) {
+            auto argument_type = source_type_name_for_expression((*arguments)[index], context, state);
+            auto expected_type = resolved_source_type_alias_name(variant->payloads[index].source_type_name, context);
+            auto resolved_argument_type = argument_type.has_value()
+                ? resolved_source_type_alias_name(*argument_type, context)
+                : std::optional<std::string> {};
+            if (!expected_type.has_value() || !resolved_argument_type.has_value() ||
+                *expected_type != *resolved_argument_type) {
+                matches = false;
+                break;
+            }
+        }
+        if (!matches) {
+            continue;
+        }
+
+        auto source_type_name = layout.source_type_name.empty() ? layout.name : layout.source_type_name;
+        if (source_type_name.empty()) {
+            continue;
+        }
+        if (inferred.has_value() && *inferred != source_type_name) {
+            return std::nullopt;
+        }
+        inferred = std::move(source_type_name);
+    }
+    return inferred;
+}
+
 auto generic_record_constructor_inference_failure_detail(
     syntax::ExpressionSyntax const& expression,
     LoweringContext const& context,
@@ -5322,6 +5379,9 @@ auto source_type_name_for_expression(
         auto constant = context.constants.find(expression.text);
         if (constant != context.constants.end()) {
             return constant->second.source_type_name;
+        }
+        if (auto constructor_type = source_type_name_for_choice_constructor(expression, context, state)) {
+            return constructor_type;
         }
     }
 
@@ -5518,6 +5578,9 @@ auto source_type_name_for_expression(
     if (expression.kind == syntax::ExpressionKind::call && expression.left != nullptr &&
         expression.left->kind == syntax::ExpressionKind::name) {
         if (auto constructor_type = source_type_name_for_record_constructor(expression, context, state)) {
+            return constructor_type;
+        }
+        if (auto constructor_type = source_type_name_for_choice_constructor(expression, context, state)) {
             return constructor_type;
         }
 

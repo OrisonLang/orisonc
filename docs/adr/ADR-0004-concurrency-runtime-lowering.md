@@ -84,6 +84,9 @@ drop/cleanup decisions.
 - The checked-in record task and thread examples now also capture an outer scalar. IR coverage pins the scalar capture
   environment, thunk-side load, record construction, typed result store, synchronization, and typed record load; linked
   execution validates the complete composition.
+- Scalar-payload choice results now cross task and thread synchronization through the same compiler-owned result
+  storage. Lowering infers unique payload-compatible choice constructors, preserves the nonzero variant tag and scalar
+  payload in `{ i32, i32 }`, and passes the existing 8-byte result size to the unchanged runtime ABI.
 - Cleanup thunks now lower cleanup-candidate environment fields to deterministic field addresses, providing the
   insertion point for future owned-capture drop emission while still emitting no drops today.
 - Cleanup candidate plans now include deterministic type-specific drop symbol names; cleanup thunks document those
@@ -134,6 +137,8 @@ drop/cleanup decisions.
   transfer through compiler-owned storage.
 - `examples/concurrency_record_thread_main.or` is the checked-in runnable smoke source for record-valued thread result
   transfer through compiler-owned storage.
+- `examples/concurrency_choice_task_main.or` and `examples/concurrency_choice_thread_main.or` are the checked-in
+  runnable smoke sources for scalar-payload choice result transfer.
 - `examples/concurrency_thread_main.or` is the checked-in runnable smoke source for the current scalar thread runtime
   path.
 - Module emission now validates concurrency runtime prelude declarations plus generated task/thread entry and cleanup

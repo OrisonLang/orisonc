@@ -107,6 +107,8 @@ member-derived receivers.
 `local_member_receiver_method_array_for.or` demonstrates method-returned array iteration through member and index receivers.
 `concurrency_task_main.or` demonstrates a runnable `async main` that spawns and awaits a scalar task.
 `concurrency_thread_main.or` demonstrates a runnable `main` that spawns and joins a scalar thread.
+`concurrency_choice_task_main.or` demonstrates a scalar-payload choice returned by a task.
+`concurrency_choice_thread_main.or` demonstrates a scalar-payload choice returned by a thread.
 
 The numbered `tour_*.or` files split `ORISON_TOUR.md` into focused examples:
 

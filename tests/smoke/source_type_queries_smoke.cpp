@@ -1004,6 +1004,39 @@ int main() {
             },
         },
     });
+    context.choices.emplace("Result", orison::lowering::LoweredChoiceLayout {
+        .name = "Result",
+        .source_type_name = "Result",
+        .llvm_type_name = "{ i32, i32 }",
+        .variants = {
+            orison::lowering::LoweredChoiceVariant {
+                .name = "Failure",
+                .lowered_payload_type = "i32",
+                .tag = 0,
+                .payloads = {
+                    orison::lowering::LoweredChoicePayload {
+                        .name = "code",
+                        .source_type_name = "UInt32",
+                        .llvm_type = "i32",
+                        .index = 0,
+                    },
+                },
+            },
+            orison::lowering::LoweredChoiceVariant {
+                .name = "Success",
+                .lowered_payload_type = "i32",
+                .tag = 1,
+                .payloads = {
+                    orison::lowering::LoweredChoicePayload {
+                        .name = "value",
+                        .source_type_name = "UInt32",
+                        .llvm_type = "i32",
+                        .index = 0,
+                    },
+                },
+            },
+        },
+    });
     context.methods.push_back(orison::lowering::LoweredMethodSignature {
         .receiver_type_name = "Box<UInt32>",
         .method_name = "bump",
@@ -7654,6 +7687,41 @@ int main() {
         ) == "Array<UInt32, 2>"
     );
     assert(orison::lowering::source_type_name_for_expression(record_constructor("Bucket"), context, state) == "Bucket");
+    assert(
+        orison::lowering::source_type_name_for_expression(
+            call("Success", cast(integer_literal("42"), "UInt32")),
+            context,
+            state
+        ) == "Result"
+    );
+    auto ambiguous_choice_context = context;
+    ambiguous_choice_context.choices.emplace("OtherResult", orison::lowering::LoweredChoiceLayout {
+        .name = "OtherResult",
+        .source_type_name = "OtherResult",
+        .llvm_type_name = "{ i32, i32 }",
+        .variants = {
+            orison::lowering::LoweredChoiceVariant {
+                .name = "Success",
+                .lowered_payload_type = "i32",
+                .tag = 0,
+                .payloads = {
+                    orison::lowering::LoweredChoicePayload {
+                        .name = "value",
+                        .source_type_name = "UInt32",
+                        .llvm_type = "i32",
+                        .index = 0,
+                    },
+                },
+            },
+        },
+    });
+    assert(
+        !orison::lowering::source_type_name_for_expression(
+            call("Success", cast(integer_literal("42"), "UInt32")),
+            ambiguous_choice_context,
+            state
+        ).has_value()
+    );
     assert(
         orison::lowering::source_type_name_for_expression(
             call("address_of", member(name("wrapper"), "bucket")),

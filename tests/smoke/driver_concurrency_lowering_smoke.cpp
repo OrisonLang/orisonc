@@ -213,6 +213,56 @@ auto main() -> int {
     assert(record_thread.stdout_text.empty());
     assert(record_thread.stderr_text.empty());
 
+    auto choice_task_path = std::filesystem::path(ORISON_SOURCE_DIR) /
+        "examples" / "concurrency_choice_task_main.or";
+    auto choice_task_ir = run_emit_llvm(app, choice_task_path);
+    assert_success_with_stdout_contains(
+        choice_task_ir,
+        {
+            "%pending.task.env = alloca { i32 }",
+            "store i32 %expected, ptr %tmp0",
+            "%pending.task.result = alloca { i32, i32 }",
+            "call ptr @__orison_task_spawn(ptr @__orison_task_thunk.main.13.0, ptr %pending.task.env, ptr %pending.task.result, i64 8, ptr @__orison_task_cleanup.main.13.0)",
+            "define private void @__orison_task_thunk.main.13.0(ptr %environment, ptr %result_storage)",
+            "%tmp1 = load i32, ptr %tmp0",
+            "%tmp2 = insertvalue { i32, i32 } undef, i32 1, 0",
+            "%tmp3 = insertvalue { i32, i32 } %tmp2, i32 %tmp1, 1",
+            "store { i32, i32 } %tmp3, ptr %result_storage",
+            "load { i32, i32 }, ptr %pending.task.result",
+            "extractvalue { i32, i32 } %tmp2, 0",
+            "extractvalue { i32, i32 } %tmp2, 1",
+        }
+    );
+    auto choice_task = run_program(app, choice_task_path);
+    assert(choice_task.exit_code == 0);
+    assert(choice_task.stdout_text.empty());
+    assert(choice_task.stderr_text.empty());
+
+    auto choice_thread_path = std::filesystem::path(ORISON_SOURCE_DIR) /
+        "examples" / "concurrency_choice_thread_main.or";
+    auto choice_thread_ir = run_emit_llvm(app, choice_thread_path);
+    assert_success_with_stdout_contains(
+        choice_thread_ir,
+        {
+            "%worker.thread.env = alloca { i32 }",
+            "store i32 %expected, ptr %tmp0",
+            "%worker.thread.result = alloca { i32, i32 }",
+            "call ptr @__orison_thread_spawn(ptr @__orison_thread_thunk.main.13.0, ptr %worker.thread.env, ptr %worker.thread.result, i64 8, ptr @__orison_thread_cleanup.main.13.0)",
+            "define private void @__orison_thread_thunk.main.13.0(ptr %environment, ptr %result_storage)",
+            "%tmp1 = load i32, ptr %tmp0",
+            "%tmp2 = insertvalue { i32, i32 } undef, i32 1, 0",
+            "%tmp3 = insertvalue { i32, i32 } %tmp2, i32 %tmp1, 1",
+            "store { i32, i32 } %tmp3, ptr %result_storage",
+            "load { i32, i32 }, ptr %worker.thread.result",
+            "extractvalue { i32, i32 } %tmp2, 0",
+            "extractvalue { i32, i32 } %tmp2, 1",
+        }
+    );
+    auto choice_thread = run_program(app, choice_thread_path);
+    assert(choice_thread.exit_code == 0);
+    assert(choice_thread.stdout_text.empty());
+    assert(choice_thread.stderr_text.empty());
+
     std::filesystem::remove_all(smoke_temp_root);
     return 0;
 }

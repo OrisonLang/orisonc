@@ -1,0 +1,19 @@
+package examples.concurrencychoicethread
+
+choice Result
+    Failure(code: UInt32)
+    Success(value: UInt32)
+
+implements Transferable for Result
+    function placeholder(this: shared This) -> Unit
+        return
+
+function main() -> UInt32
+    let expected = 42 as UInt32
+    let worker = thread
+        Success(expected)
+
+    let result: Result = worker.join()
+    switch result
+        Failure(code) => code + 1 as UInt32
+        Success(value) => value == 42 as UInt32 ? 0 as UInt32 : 1 as UInt32

@@ -2,13 +2,14 @@
 
 ## Brief Snapshot
 
-Date: 2026-11-15
+Date: 2026-11-16
 
 - `orisonc` has a complete native pipeline for the validated source matrix: parsing, semantic analysis, LLVM IR,
   object emission, linking, and execution.
 - Mature lowering areas include scalar and aggregate control flow, fixed arrays, concrete generics, package-directed
   generic specialization, module constants and imports, raw/volatile pointer access, substantial `DynamicArray<T>`
-  ownership cleanup, scalar task/thread execution, and record-valued task/thread execution.
+  ownership cleanup, scalar task/thread execution, and aggregate task/thread results for records and direct
+  scalar-payload choices.
 - Backend-validated tour examples prove representative slices, not arbitrary composition of every language feature.
 - Value-level `Maybe<Unit>` now has a tag-only LLVM `i1` ABI. `Empty` and `Some(unit)` constructors lower to `false`
   and `true`, while source typing continues to distinguish `Bool` from `Maybe<Unit>`.
@@ -34,12 +35,12 @@ Date: 2026-11-15
   pointer-native receivers have production-source thunk coverage; exclusive by-value receiver adaptation remains open.
 - General C variadic adaptation needs explicit target metadata. Cross-target linking and richer source-span diagnostics
   remain broader tooling gaps.
-- Record-valued task and thread results now pass checked-in compile-link-run coverage without changing the runtime ABI.
-  Scalar capture now composes with both record result paths through pinned environment and result-storage IR. Aggregate
-  capture cleanup remains gated by ownership work; broader async ABI, suspension, cancellation, and executor semantics
-  remain design work rather than unblocked lowering tasks.
-- Recommended next implementation: audit scalar-payload choice values as task and thread results. This tests the
-  existing choice tag/payload ABI through concurrency result storage without adding source semantics.
+- Record and scalar-payload choice task/thread results now pass checked-in compile-link-run coverage without changing
+  the runtime ABI. Scalar capture composes with both aggregate result paths through pinned environment and result-storage
+  IR. Aggregate capture cleanup remains gated by ownership work; broader async ABI, suspension, cancellation, and
+  executor semantics remain design work rather than unblocked lowering tasks.
+- Recommended next implementation: audit choice results whose variants have distinct scalar payload layouts. This
+  exercises erased payload storage through task and thread synchronization without adding source semantics.
 
 Date: 2026-09-03
 
@@ -188,5 +189,4 @@ This note is an implementation snapshot. It does not define language syntax or s
 
 ## Suggested Next Step
 
-- Resume lowering work by selecting the next narrow `DynamicArray<T>` shape that is still blocked or diagnostic-only,
-  now that the broad production cleanup matrix is isolated for faster feedback.
+- Audit distinct-layout scalar choice payloads through task and thread result storage.
