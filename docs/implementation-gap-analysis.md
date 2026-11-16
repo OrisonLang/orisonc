@@ -8,7 +8,7 @@ Date: 2026-11-15
   object emission, linking, and execution.
 - Mature lowering areas include scalar and aggregate control flow, fixed arrays, concrete generics, package-directed
   generic specialization, module constants and imports, raw/volatile pointer access, substantial `DynamicArray<T>`
-  ownership cleanup, scalar task/thread execution, and record-valued task execution.
+  ownership cleanup, scalar task/thread execution, and record-valued task/thread execution.
 - Backend-validated tour examples prove representative slices, not arbitrary composition of every language feature.
 - Value-level `Maybe<Unit>` now has a tag-only LLVM `i1` ABI. `Empty` and `Some(unit)` constructors lower to `false`
   and `true`, while source typing continues to distinguish `Bool` from `Maybe<Unit>`.
@@ -34,10 +34,11 @@ Date: 2026-11-15
   pointer-native receivers have production-source thunk coverage; exclusive by-value receiver adaptation remains open.
 - General C variadic adaptation needs explicit target metadata. Cross-target linking and richer source-span diagnostics
   remain broader tooling gaps.
-- The remaining concurrency proof gap is the mirrored record-valued thread result path. Broader async ABI, suspension,
-  cancellation, and executor semantics remain design work rather than unblocked lowering tasks.
-- Recommended next implementation: add checked-in compile-link-run coverage for record-valued `thread` and `.join()`
-  result transfer without changing source semantics or the concurrency runtime ABI.
+- Record-valued task and thread results now pass checked-in compile-link-run coverage without changing the runtime ABI.
+  Aggregate capture cleanup remains gated by ownership work; broader async ABI, suspension, cancellation, and executor
+  semantics remain design work rather than unblocked lowering tasks.
+- Recommended next implementation: prove scalar capture plus record result for both task and thread execution. This
+  composes existing environment transfer with aggregate result transfer without entering aggregate cleanup semantics.
 
 Date: 2026-09-03
 

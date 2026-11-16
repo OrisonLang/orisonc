@@ -4025,3 +4025,6 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-11-15: Record-valued task lowering now has a checked-in compile-link-run example. A two-field record crosses the
   existing source-type-agnostic runtime ABI through compiler-owned typed result storage, then `await` restores both
   fields for ordinary expression lowering. Interface value semantics and source syntax remain unchanged.
+- 2026-11-15: Record-valued thread lowering now has matching compile-link-run coverage. A `Transferable` two-field
+  record crosses the existing runtime ABI through compiler-owned result storage, then `.join()` restores both fields
+  for ordinary expression lowering. No source syntax or runtime ABI changed.

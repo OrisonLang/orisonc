@@ -79,6 +79,8 @@ drop/cleanup decisions.
 - Record-valued task lowering now has checked-in compile, link, and execution coverage. The compiler stores the record
   in typed result storage, the runtime remains source-type-agnostic, and `await` restores the record for ordinary field
   access without changing the runtime ABI.
+- Record-valued thread lowering now has matching compile, link, and execution coverage. `.join()` restores the typed
+  record from compiler-owned result storage, and both fields remain available to ordinary expression lowering.
 - Cleanup thunks now lower cleanup-candidate environment fields to deterministic field addresses, providing the
   insertion point for future owned-capture drop emission while still emitting no drops today.
 - Cleanup candidate plans now include deterministic type-specific drop symbol names; cleanup thunks document those
@@ -126,6 +128,8 @@ drop/cleanup decisions.
   command execution plus representative report fragments while dedicated formatter smokes own exact rendering.
 - `examples/concurrency_task_main.or` is the checked-in runnable smoke source for the current scalar task runtime path.
 - `examples/concurrency_record_task_main.or` is the checked-in runnable smoke source for record-valued task result
+  transfer through compiler-owned storage.
+- `examples/concurrency_record_thread_main.or` is the checked-in runnable smoke source for record-valued thread result
   transfer through compiler-owned storage.
 - `examples/concurrency_thread_main.or` is the checked-in runnable smoke source for the current scalar thread runtime
   path.

@@ -178,6 +178,13 @@ auto main() -> int {
     assert(record_task.stdout_text.empty());
     assert(record_task.stderr_text.empty());
 
+    auto record_thread_path = std::filesystem::path(ORISON_SOURCE_DIR) /
+        "examples" / "concurrency_record_thread_main.or";
+    auto record_thread = run_program(app, record_thread_path);
+    assert(record_thread.exit_code == 0);
+    assert(record_thread.stdout_text.empty());
+    assert(record_thread.stderr_text.empty());
+
     std::filesystem::remove_all(smoke_temp_root);
     return 0;
 }
