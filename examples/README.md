@@ -109,6 +109,8 @@ member-derived receivers.
 `concurrency_thread_main.or` demonstrates a runnable `main` that spawns and joins a scalar thread.
 `concurrency_choice_task_main.or` demonstrates a scalar-payload choice returned by a task.
 `concurrency_choice_thread_main.or` demonstrates a scalar-payload choice returned by a thread.
+`concurrency_distinct_choice_task_main.or` demonstrates distinct scalar choice payload layouts returned by a task.
+`concurrency_distinct_choice_thread_main.or` demonstrates distinct scalar choice payload layouts returned by a thread.
 
 The numbered `tour_*.or` files split `ORISON_TOUR.md` into focused examples:
 

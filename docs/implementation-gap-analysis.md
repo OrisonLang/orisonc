@@ -8,7 +8,7 @@ Date: 2026-11-16
   object emission, linking, and execution.
 - Mature lowering areas include scalar and aggregate control flow, fixed arrays, concrete generics, package-directed
   generic specialization, module constants and imports, raw/volatile pointer access, substantial `DynamicArray<T>`
-  ownership cleanup, scalar task/thread execution, and aggregate task/thread results for records and direct
+  ownership cleanup, scalar task/thread execution, and aggregate task/thread results for records plus direct and erased
   scalar-payload choices.
 - Backend-validated tour examples prove representative slices, not arbitrary composition of every language feature.
 - Value-level `Maybe<Unit>` now has a tag-only LLVM `i1` ABI. `Empty` and `Some(unit)` constructors lower to `false`
@@ -36,11 +36,11 @@ Date: 2026-11-16
 - General C variadic adaptation needs explicit target metadata. Cross-target linking and richer source-span diagnostics
   remain broader tooling gaps.
 - Record and scalar-payload choice task/thread results now pass checked-in compile-link-run coverage without changing
-  the runtime ABI. Scalar capture composes with both aggregate result paths through pinned environment and result-storage
-  IR. Aggregate capture cleanup remains gated by ownership work; broader async ABI, suspension, cancellation, and
+  the runtime ABI. Choice coverage includes direct payload storage and erased storage for variants with distinct scalar
+  layouts. Aggregate capture cleanup remains gated by ownership work; broader async ABI, suspension, cancellation, and
   executor semantics remain design work rather than unblocked lowering tasks.
-- Recommended next implementation: audit choice results whose variants have distinct scalar payload layouts. This
-  exercises erased payload storage through task and thread synchronization without adding source semantics.
+- Recommended next implementation: audit fixed-array values as task and thread results. This exercises inline aggregate
+  result sizing and transfer without adding source semantics.
 
 Date: 2026-09-03
 
@@ -189,4 +189,4 @@ This note is an implementation snapshot. It does not define language syntax or s
 
 ## Suggested Next Step
 
-- Audit distinct-layout scalar choice payloads through task and thread result storage.
+- Audit fixed-array values through task and thread result storage.

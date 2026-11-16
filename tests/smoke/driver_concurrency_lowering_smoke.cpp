@@ -263,6 +263,53 @@ auto main() -> int {
     assert(choice_thread.stdout_text.empty());
     assert(choice_thread.stderr_text.empty());
 
+    auto distinct_choice_task_path = std::filesystem::path(ORISON_SOURCE_DIR) /
+        "examples" / "concurrency_distinct_choice_task_main.or";
+    auto distinct_choice_task_ir = run_emit_llvm(app, distinct_choice_task_path);
+    assert_success_with_stdout_contains(
+        distinct_choice_task_ir,
+        {
+            "%pending.task.result = alloca { i32, [4 x i8] }",
+            "call ptr @__orison_task_spawn(ptr @__orison_task_thunk.main.13.0, ptr %pending.task.env, ptr %pending.task.result, i64 8, ptr @__orison_task_cleanup.main.13.0)",
+            "%tmp2 = insertvalue { i32, [4 x i8] } undef, i32 1, 0",
+            "store i32 %tmp1, ptr %tmp3, align 8",
+            "%tmp4 = load [4 x i8], ptr %tmp3, align 8",
+            "%tmp5 = insertvalue { i32, [4 x i8] } %tmp2, [4 x i8] %tmp4, 1",
+            "store { i32, [4 x i8] } %tmp5, ptr %result_storage",
+            "load { i32, [4 x i8] }, ptr %pending.task.result",
+            "load i1, ptr %tmp5, align 8",
+            "load i32, ptr %tmp9, align 8",
+        }
+    );
+    auto distinct_choice_task = run_program(app, distinct_choice_task_path);
+    assert(distinct_choice_task.exit_code == 0);
+    assert(distinct_choice_task.stdout_text.empty());
+    assert(distinct_choice_task.stderr_text.empty());
+
+    auto distinct_choice_thread_path = std::filesystem::path(ORISON_SOURCE_DIR) /
+        "examples" / "concurrency_distinct_choice_thread_main.or";
+    auto distinct_choice_thread_ir = run_emit_llvm(app, distinct_choice_thread_path);
+    assert_success_with_stdout_contains(
+        distinct_choice_thread_ir,
+        {
+            "%worker.thread.env = alloca { i1 }",
+            "%worker.thread.result = alloca { i32, [4 x i8] }",
+            "call ptr @__orison_thread_spawn(ptr @__orison_thread_thunk.main.13.0, ptr %worker.thread.env, ptr %worker.thread.result, i64 8, ptr @__orison_thread_cleanup.main.13.0)",
+            "%tmp2 = insertvalue { i32, [4 x i8] } undef, i32 0, 0",
+            "store i1 %tmp1, ptr %tmp3, align 8",
+            "%tmp4 = load [4 x i8], ptr %tmp3, align 8",
+            "%tmp5 = insertvalue { i32, [4 x i8] } %tmp2, [4 x i8] %tmp4, 1",
+            "store { i32, [4 x i8] } %tmp5, ptr %result_storage",
+            "load { i32, [4 x i8] }, ptr %worker.thread.result",
+            "load i1, ptr %tmp5, align 8",
+            "load i32, ptr %tmp9, align 8",
+        }
+    );
+    auto distinct_choice_thread = run_program(app, distinct_choice_thread_path);
+    assert(distinct_choice_thread.exit_code == 0);
+    assert(distinct_choice_thread.stdout_text.empty());
+    assert(distinct_choice_thread.stderr_text.empty());
+
     std::filesystem::remove_all(smoke_temp_root);
     return 0;
 }

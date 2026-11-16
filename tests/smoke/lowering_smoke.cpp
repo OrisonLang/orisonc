@@ -13276,6 +13276,70 @@ void test_emit_choice_task_result_storage_size() {
     assert(result.ir_text.find("ret { i32, i32 } %tmp") != std::string::npos);
 }
 
+void test_emit_distinct_choice_thread_result_storage_size() {
+    auto path = std::filesystem::temp_directory_path() / "orison_lowering_distinct_choice_thread_result.or";
+    auto result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "choice Result\n"
+        "    Failure(active: Bool)\n"
+        "    Success(value: UInt32)\n"
+        "\n"
+        "implements Transferable for Result\n"
+        "    function placeholder(this: shared This) -> Unit\n"
+        "        return\n"
+        "\n"
+        "function on_thread(value: Bool) -> Result\n"
+        "    let worker = thread\n"
+        "        Failure(value)\n"
+        "\n"
+        "    worker.join()\n"
+    );
+
+    assert(!result.has_errors());
+    assert(result.ir_text.find("%worker.thread.result = alloca { i32, [4 x i8] }") != std::string::npos);
+    assert(result.ir_text.find(", i64 8, ptr @__orison_thread_cleanup.on_thread.12.0)") != std::string::npos);
+    assert(result.ir_text.find("insertvalue { i32, [4 x i8] } undef, i32 0, 0") != std::string::npos);
+    assert(result.ir_text.find("store i1 %tmp1, ptr %tmp3, align 8") != std::string::npos);
+    assert(result.ir_text.find("load [4 x i8], ptr %tmp3, align 8") != std::string::npos);
+    assert(result.ir_text.find("store { i32, [4 x i8] } %tmp5, ptr %result_storage") != std::string::npos);
+    assert(result.ir_text.find("load { i32, [4 x i8] }, ptr %worker.thread.result") != std::string::npos);
+    assert(result.ir_text.find("ret { i32, [4 x i8] } %tmp") != std::string::npos);
+}
+
+void test_emit_distinct_choice_task_result_storage_size() {
+    auto path = std::filesystem::temp_directory_path() / "orison_lowering_distinct_choice_task_result.or";
+    auto result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "choice Result\n"
+        "    Failure(active: Bool)\n"
+        "    Success(value: UInt32)\n"
+        "\n"
+        "implements Shareable for Result\n"
+        "    function placeholder(this: shared This) -> Unit\n"
+        "        return\n"
+        "\n"
+        "async function on_task(value: UInt32) -> Result\n"
+        "    let pending = task\n"
+        "        Success(value)\n"
+        "\n"
+        "    await pending\n"
+    );
+
+    assert(!result.has_errors());
+    assert(result.ir_text.find("%pending.task.result = alloca { i32, [4 x i8] }") != std::string::npos);
+    assert(result.ir_text.find(", i64 8, ptr @__orison_task_cleanup.on_task.12.0)") != std::string::npos);
+    assert(result.ir_text.find("insertvalue { i32, [4 x i8] } undef, i32 1, 0") != std::string::npos);
+    assert(result.ir_text.find("store i32 %tmp1, ptr %tmp3, align 8") != std::string::npos);
+    assert(result.ir_text.find("load [4 x i8], ptr %tmp3, align 8") != std::string::npos);
+    assert(result.ir_text.find("store { i32, [4 x i8] } %tmp5, ptr %result_storage") != std::string::npos);
+    assert(result.ir_text.find("load { i32, [4 x i8] }, ptr %pending.task.result") != std::string::npos);
+    assert(result.ir_text.find("ret { i32, [4 x i8] } %tmp") != std::string::npos);
+}
+
 void test_emit_record_capture_cleanup_field_address() {
     auto path = std::filesystem::temp_directory_path() / "orison_lowering_record_capture_cleanup.or";
     auto result = lower_source(
@@ -15219,6 +15283,8 @@ auto main() -> int {
     test_emit_record_task_result_storage_size();
     test_emit_choice_thread_result_storage_size();
     test_emit_choice_task_result_storage_size();
+    test_emit_distinct_choice_thread_result_storage_size();
+    test_emit_distinct_choice_task_result_storage_size();
     test_emit_record_capture_cleanup_field_address();
     test_emit_same_type_record_capture_drop_metadata_dedupes();
     test_emit_allowed_record_capture_drop_abi_calls();

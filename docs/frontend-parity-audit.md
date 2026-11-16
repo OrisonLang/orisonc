@@ -1,5 +1,8 @@
 # Frontend Parity Audit
 
+- 2026-11-16: Distinct-layout scalar choice payloads now have task and thread compile-link-run coverage. A tag-1
+  `UInt32` task result and tag-0 `Bool` thread result each cross compiler-owned `{ i32, [4 x i8] }` storage and are
+  reconstructed after synchronization. No source syntax, production lowering, or runtime ABI changed.
 - 2026-11-16: Unique payload-compatible choice constructors now retain source identity during lowering without an
   enclosing type annotation. Scalar-payload choices cross task and thread result storage with their nonzero tag and
   captured `UInt32` payload intact; compile-link-run coverage passes. No source syntax or runtime ABI changed.

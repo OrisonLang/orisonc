@@ -1,0 +1,19 @@
+package examples.concurrencydistinctchoicetask
+
+choice Result
+    Failure(active: Bool)
+    Success(value: UInt32)
+
+implements Shareable for Result
+    function placeholder(this: shared This) -> Unit
+        return
+
+async function main() -> UInt32
+    let expected = 42 as UInt32
+    let pending = task
+        Success(expected)
+
+    let result: Result = await pending
+    switch result
+        Failure(active) => active ? 2 as UInt32 : 3 as UInt32
+        Success(value) => value == 42 as UInt32 ? 0 as UInt32 : 1 as UInt32

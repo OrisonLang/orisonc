@@ -1,0 +1,19 @@
+package examples.concurrencydistinctchoicethread
+
+choice Result
+    Failure(active: Bool)
+    Success(value: UInt32)
+
+implements Transferable for Result
+    function placeholder(this: shared This) -> Unit
+        return
+
+function main() -> UInt32
+    let expected = true
+    let worker = thread
+        Failure(expected)
+
+    let result: Result = worker.join()
+    switch result
+        Failure(active) => active ? 0 as UInt32 : 1 as UInt32
+        Success(value) => value == 42 as UInt32 ? 2 as UInt32 : 3 as UInt32
