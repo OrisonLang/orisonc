@@ -25,8 +25,9 @@ parameters, while replacing the first concrete receiver parameter with `ptr`. Sl
 receiver is `shared This` or `exclusive This`. Bare owned `This` receivers are outside this ABI slice.
 
 The thunk adapts erased storage to the concrete method receiver ABI. Shared scalar and record receivers load their
-value from erased storage. Pointer-native receivers forward the erased pointer directly. Exclusive by-value receivers
-remain blocked until their concrete method ABI preserves mutation through a pointer.
+value from erased storage. Pointer-native receivers forward the erased pointer directly. Production coverage proves
+this path for an exclusive `Pointer<UInt32>` implementation. Exclusive by-value receivers remain blocked until their
+concrete method ABI preserves mutation through a pointer.
 
 Lowering emits one private immutable array of thunk pointers for each table whose complete slot set is emit-ready.
 Lowering also provides internal emitters that construct the borrowed pair from addressable concrete storage and a
@@ -42,4 +43,4 @@ receiver position. Concrete values must have stable addressable storage for the 
 ## Follow-up work
 
 - Define and approve source semantics for borrowed interface values before production integration.
-- Extend pointer-native exclusive receiver coverage as concrete method lowering supports it.
+- Preserve the exclusive by-value gate until concrete method lowering uses a mutation-preserving pointer ABI.

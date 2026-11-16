@@ -12625,6 +12625,9 @@ void test_emit_interface_dispatch_tables_and_thunks() {
         "interface Mutable\n"
         "    function reset(this: exclusive This) -> Unit\n"
         "\n"
+        "interface PointerMutable\n"
+        "    function reset(this: exclusive This) -> Unit\n"
+        "\n"
         "record Meter\n"
         "    value: UInt32\n"
         "\n"
@@ -12637,6 +12640,10 @@ void test_emit_interface_dispatch_tables_and_thunks() {
         "        this.value + amount\n"
         "\n"
         "implements Mutable for UInt32\n"
+        "    function reset(this: exclusive This) -> Unit\n"
+        "        return\n"
+        "\n"
+        "implements PointerMutable for Pointer<UInt32>\n"
         "    function reset(this: exclusive This) -> Unit\n"
         "        return\n"
         "\n"
@@ -12678,6 +12685,21 @@ void test_emit_interface_dispatch_tables_and_thunks() {
     assert(
         result.ir_text.find("__orison_interface_dispatch.demo_dispatch.Mutable.for.UInt32") ==
         std::string::npos
+    );
+    assert_ir_contains(
+        result,
+        "@__orison_interface_dispatch.demo_dispatch.PointerMutable.for.Pointer_UInt32_ = private constant "
+        "[1 x ptr] [ptr @__orison_interface_dispatch.demo_dispatch.PointerMutable.for.Pointer_UInt32_.reset]"
+    );
+    assert_ir_contains(
+        result,
+        "define internal void "
+        "@__orison_interface_dispatch.demo_dispatch.PointerMutable.for.Pointer_UInt32_.reset"
+        "(ptr %erased_receiver) {\n"
+        "entry:\n"
+        "  call void @__orison_method.demo.dispatch.Pointer_UInt32_.reset(ptr %erased_receiver)\n"
+        "  ret void\n"
+        "}"
     );
 }
 

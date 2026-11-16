@@ -4018,3 +4018,7 @@ This file tracks which source-language frontend slices are reflected in the curr
   and a known table, then extract it, load a validated method slot, and issue a typed indirect call. LLVM verifier
   coverage proves the complete internal composition. Production source integration remains gated: interface
   declarations are not ordinary value types in current semantic validation. No syntax changed.
+- 2026-11-15: Interface dispatch now has production-source proof for an exclusive pointer-native receiver. An
+  `implements` method on `Pointer<UInt32>` lowers its receiver to `ptr`; the generated thunk forwards the erased
+  receiver directly without loading or copying the pointee. Exclusive by-value receiver tables remain suppressed.
+  No syntax changed.
