@@ -4022,3 +4022,6 @@ This file tracks which source-language frontend slices are reflected in the curr
   `implements` method on `Pointer<UInt32>` lowers its receiver to `ptr`; the generated thunk forwards the erased
   receiver directly without loading or copying the pointee. Exclusive by-value receiver tables remain suppressed.
   No syntax changed.
+- 2026-11-15: Record-valued task lowering now has a checked-in compile-link-run example. A two-field record crosses the
+  existing source-type-agnostic runtime ABI through compiler-owned typed result storage, then `await` restores both
+  fields for ordinary expression lowering. Interface value semantics and source syntax remain unchanged.

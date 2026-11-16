@@ -36,6 +36,17 @@ auto run_emit_llvm(orison::driver::CompilerApp const& app, std::filesystem::path
     return app.run(std::span<char const* const>(argv.data(), argv.size()));
 }
 
+auto run_program(orison::driver::CompilerApp const& app, std::filesystem::path const& path)
+    -> orison::driver::CompileResult {
+    auto path_text = path.string();
+    std::array<char const*, 3> argv {
+        "orisonc",
+        "run",
+        path_text.c_str()
+    };
+    return app.run(std::span<char const* const>(argv.data(), argv.size()));
+}
+
 void assert_success_with_stdout_contains(
     orison::driver::CompileResult const& result,
     std::initializer_list<std::string_view> expected_fragments
@@ -159,6 +170,13 @@ auto main() -> int {
             "call void @__orison_concurrency_handle_destroy(ptr %pending)",
         }
     );
+
+    auto record_task_path = std::filesystem::path(ORISON_SOURCE_DIR) /
+        "examples" / "concurrency_record_task_main.or";
+    auto record_task = run_program(app, record_task_path);
+    assert(record_task.exit_code == 0);
+    assert(record_task.stdout_text.empty());
+    assert(record_task.stderr_text.empty());
 
     std::filesystem::remove_all(smoke_temp_root);
     return 0;

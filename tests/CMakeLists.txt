@@ -460,6 +460,11 @@ target_link_libraries(orison_driver_concurrency_lowering_smoke
 
 target_compile_features(orison_driver_concurrency_lowering_smoke PRIVATE cxx_std_23)
 
+target_compile_definitions(orison_driver_concurrency_lowering_smoke
+    PRIVATE
+        ORISON_SOURCE_DIR="${CMAKE_SOURCE_DIR}"
+)
+
 add_test(
     NAME orison_driver_concurrency_lowering_smoke
     COMMAND orison_driver_concurrency_lowering_smoke

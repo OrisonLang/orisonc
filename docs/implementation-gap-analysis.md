@@ -8,7 +8,7 @@ Date: 2026-11-15
   object emission, linking, and execution.
 - Mature lowering areas include scalar and aggregate control flow, fixed arrays, concrete generics, package-directed
   generic specialization, module constants and imports, raw/volatile pointer access, substantial `DynamicArray<T>`
-  ownership cleanup, and scalar task/thread execution.
+  ownership cleanup, scalar task/thread execution, and record-valued task execution.
 - Backend-validated tour examples prove representative slices, not arbitrary composition of every language feature.
 - Value-level `Maybe<Unit>` now has a tag-only LLVM `i1` ABI. `Empty` and `Some(unit)` constructors lower to `false`
   and `true`, while source typing continues to distinguish `Bool` from `Maybe<Unit>`.
@@ -34,8 +34,10 @@ Date: 2026-11-15
   pointer-native receivers have production-source thunk coverage; exclusive by-value receiver adaptation remains open.
 - General C variadic adaptation needs explicit target metadata. Cross-target linking and richer source-span diagnostics
   remain broader tooling gaps.
-- Recommended next implementation: select the next unblocked lowering gap while borrowed interface value source
-  semantics remain unapproved.
+- The remaining concurrency proof gap is the mirrored record-valued thread result path. Broader async ABI, suspension,
+  cancellation, and executor semantics remain design work rather than unblocked lowering tasks.
+- Recommended next implementation: add checked-in compile-link-run coverage for record-valued `thread` and `.join()`
+  result transfer without changing source semantics or the concurrency runtime ABI.
 
 Date: 2026-09-03
 

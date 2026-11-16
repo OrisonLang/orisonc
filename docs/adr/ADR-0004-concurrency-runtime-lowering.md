@@ -76,6 +76,9 @@ drop/cleanup decisions.
   environments to report concrete byte sizes when their record field layouts are known.
 - Scalar task/thread lowering now has smoke coverage for record result storage, including context-sized `%record.*`
   result buffers passed through the runtime ABI.
+- Record-valued task lowering now has checked-in compile, link, and execution coverage. The compiler stores the record
+  in typed result storage, the runtime remains source-type-agnostic, and `await` restores the record for ordinary field
+  access without changing the runtime ABI.
 - Cleanup thunks now lower cleanup-candidate environment fields to deterministic field addresses, providing the
   insertion point for future owned-capture drop emission while still emitting no drops today.
 - Cleanup candidate plans now include deterministic type-specific drop symbol names; cleanup thunks document those
@@ -122,6 +125,8 @@ drop/cleanup decisions.
 - Driver smoke now treats drop-readiness and drop-cleanup report commands as CLI wiring checks, asserting successful
   command execution plus representative report fragments while dedicated formatter smokes own exact rendering.
 - `examples/concurrency_task_main.or` is the checked-in runnable smoke source for the current scalar task runtime path.
+- `examples/concurrency_record_task_main.or` is the checked-in runnable smoke source for record-valued task result
+  transfer through compiler-owned storage.
 - `examples/concurrency_thread_main.or` is the checked-in runnable smoke source for the current scalar thread runtime
   path.
 - Module emission now validates concurrency runtime prelude declarations plus generated task/thread entry and cleanup
