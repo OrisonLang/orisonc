@@ -109,6 +109,8 @@ member-derived receivers.
 `concurrency_thread_main.or` demonstrates a runnable `main` that spawns and joins a scalar thread.
 `concurrency_array_task_main.or` demonstrates a fixed-array value returned by a task.
 `concurrency_array_thread_main.or` demonstrates a fixed-array value returned by a thread.
+`concurrency_nested_array_task_main.or` demonstrates a nested fixed-array value returned by a task.
+`concurrency_nested_array_thread_main.or` demonstrates a nested fixed-array value returned by a thread.
 `concurrency_choice_task_main.or` demonstrates a scalar-payload choice returned by a task.
 `concurrency_choice_thread_main.or` demonstrates a scalar-payload choice returned by a thread.
 `concurrency_distinct_choice_task_main.or` demonstrates distinct scalar choice payload layouts returned by a task.

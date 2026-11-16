@@ -354,6 +354,54 @@ auto main() -> int {
     assert(array_thread.stdout_text.empty());
     assert(array_thread.stderr_text.empty());
 
+    auto nested_array_task_path = std::filesystem::path(ORISON_SOURCE_DIR) /
+        "examples" / "concurrency_nested_array_task_main.or";
+    auto nested_array_task_ir = run_emit_llvm(app, nested_array_task_path);
+    assert_success_with_stdout_contains(
+        nested_array_task_ir,
+        {
+            "%pending.task.env = alloca { i32, i32, i32, i32 }",
+            "%pending.task.result = alloca [2 x [2 x i32]]",
+            "call ptr @__orison_task_spawn(ptr @__orison_task_thunk.main.12.0, ptr %pending.task.env, ptr %pending.task.result, i64 16, ptr @__orison_task_cleanup.main.12.0)",
+            "%tmp10 = insertvalue [2 x [2 x i32]] undef, [2 x i32] %tmp9, 0",
+            "%tmp13 = insertvalue [2 x [2 x i32]] %tmp10, [2 x i32] %tmp12, 1",
+            "store [2 x [2 x i32]] %tmp13, ptr %result_storage",
+            "load [2 x [2 x i32]], ptr %pending.task.result",
+            "getelementptr [2 x [2 x i32]], ptr %result.addr, i64 0, i64 0",
+            "getelementptr [2 x [2 x i32]], ptr %result.addr, i64 0, i64 1",
+            "getelementptr [2 x i32], ptr %tmp6, i64 0, i64 0",
+            "getelementptr [2 x i32], ptr %tmp17, i64 0, i64 1",
+        }
+    );
+    auto nested_array_task = run_program(app, nested_array_task_path);
+    assert(nested_array_task.exit_code == 0);
+    assert(nested_array_task.stdout_text.empty());
+    assert(nested_array_task.stderr_text.empty());
+
+    auto nested_array_thread_path = std::filesystem::path(ORISON_SOURCE_DIR) /
+        "examples" / "concurrency_nested_array_thread_main.or";
+    auto nested_array_thread_ir = run_emit_llvm(app, nested_array_thread_path);
+    assert_success_with_stdout_contains(
+        nested_array_thread_ir,
+        {
+            "%worker.thread.env = alloca { i32, i32, i32, i32 }",
+            "%worker.thread.result = alloca [2 x [2 x i32]]",
+            "call ptr @__orison_thread_spawn(ptr @__orison_thread_thunk.main.12.0, ptr %worker.thread.env, ptr %worker.thread.result, i64 16, ptr @__orison_thread_cleanup.main.12.0)",
+            "%tmp10 = insertvalue [2 x [2 x i32]] undef, [2 x i32] %tmp9, 0",
+            "%tmp13 = insertvalue [2 x [2 x i32]] %tmp10, [2 x i32] %tmp12, 1",
+            "store [2 x [2 x i32]] %tmp13, ptr %result_storage",
+            "load [2 x [2 x i32]], ptr %worker.thread.result",
+            "getelementptr [2 x [2 x i32]], ptr %result.addr, i64 0, i64 0",
+            "getelementptr [2 x [2 x i32]], ptr %result.addr, i64 0, i64 1",
+            "getelementptr [2 x i32], ptr %tmp6, i64 0, i64 0",
+            "getelementptr [2 x i32], ptr %tmp17, i64 0, i64 1",
+        }
+    );
+    auto nested_array_thread = run_program(app, nested_array_thread_path);
+    assert(nested_array_thread.exit_code == 0);
+    assert(nested_array_thread.stdout_text.empty());
+    assert(nested_array_thread.stderr_text.empty());
+
     std::filesystem::remove_all(smoke_temp_root);
     return 0;
 }

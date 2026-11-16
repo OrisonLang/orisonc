@@ -1,5 +1,8 @@
 # Frontend Parity Audit
 
+- 2026-11-16: Nested `Array<Array<UInt32, 2>, 2>` values now have task and thread compile-link-run coverage. Both
+  paths preserve recursive `[2 x [2 x i32]]` construction, 16-byte result sizing, typed synchronization loads, and
+  two-level indexed reads. No source syntax, production lowering, or runtime ABI changed.
 - 2026-11-16: Fixed `Array<UInt32, 2>` values now have task and thread compile-link-run coverage. Both paths
   allocate 8-byte compiler-owned result storage, transfer the inline `[2 x i32]` value through the existing runtime
   ABI, and preserve indexed reads after synchronization. No source syntax, production lowering, or runtime ABI changed.
