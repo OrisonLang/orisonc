@@ -310,6 +310,50 @@ auto main() -> int {
     assert(distinct_choice_thread.stdout_text.empty());
     assert(distinct_choice_thread.stderr_text.empty());
 
+    auto array_task_path = std::filesystem::path(ORISON_SOURCE_DIR) /
+        "examples" / "concurrency_array_task_main.or";
+    auto array_task_ir = run_emit_llvm(app, array_task_path);
+    assert_success_with_stdout_contains(
+        array_task_ir,
+        {
+            "%pending.task.env = alloca { i32, i32 }",
+            "%pending.task.result = alloca [2 x i32]",
+            "call ptr @__orison_task_spawn(ptr @__orison_task_thunk.main.10.0, ptr %pending.task.env, ptr %pending.task.result, i64 8, ptr @__orison_task_cleanup.main.10.0)",
+            "%tmp4 = insertvalue [2 x i32] undef, i32 %tmp1, 0",
+            "%tmp5 = insertvalue [2 x i32] %tmp4, i32 %tmp3, 1",
+            "store [2 x i32] %tmp5, ptr %result_storage",
+            "load [2 x i32], ptr %pending.task.result",
+            "getelementptr [2 x i32], ptr %result.addr, i64 0, i64 0",
+            "getelementptr [2 x i32], ptr %result.addr, i64 0, i64 1",
+        }
+    );
+    auto array_task = run_program(app, array_task_path);
+    assert(array_task.exit_code == 0);
+    assert(array_task.stdout_text.empty());
+    assert(array_task.stderr_text.empty());
+
+    auto array_thread_path = std::filesystem::path(ORISON_SOURCE_DIR) /
+        "examples" / "concurrency_array_thread_main.or";
+    auto array_thread_ir = run_emit_llvm(app, array_thread_path);
+    assert_success_with_stdout_contains(
+        array_thread_ir,
+        {
+            "%worker.thread.env = alloca { i32, i32 }",
+            "%worker.thread.result = alloca [2 x i32]",
+            "call ptr @__orison_thread_spawn(ptr @__orison_thread_thunk.main.10.0, ptr %worker.thread.env, ptr %worker.thread.result, i64 8, ptr @__orison_thread_cleanup.main.10.0)",
+            "%tmp4 = insertvalue [2 x i32] undef, i32 %tmp1, 0",
+            "%tmp5 = insertvalue [2 x i32] %tmp4, i32 %tmp3, 1",
+            "store [2 x i32] %tmp5, ptr %result_storage",
+            "load [2 x i32], ptr %worker.thread.result",
+            "getelementptr [2 x i32], ptr %result.addr, i64 0, i64 0",
+            "getelementptr [2 x i32], ptr %result.addr, i64 0, i64 1",
+        }
+    );
+    auto array_thread = run_program(app, array_thread_path);
+    assert(array_thread.exit_code == 0);
+    assert(array_thread.stdout_text.empty());
+    assert(array_thread.stderr_text.empty());
+
     std::filesystem::remove_all(smoke_temp_root);
     return 0;
 }

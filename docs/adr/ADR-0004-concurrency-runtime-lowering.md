@@ -90,6 +90,8 @@ drop/cleanup decisions.
 - Choices with distinct scalar payload layouts now cross the same task and thread boundary as
   `{ i32, [4 x i8] }`. The task copies a captured `UInt32` and the thread copies a captured `Bool` into erased payload
   bytes; result storage preserves both forms through synchronization and switch lowering reconstructs each source type.
+- Fixed `Array<UInt32, 2>` results now cross task and thread boundaries as inline `[2 x i32]` values. Compiler-owned
+  result storage uses the target-layout size of 8 bytes, while the runtime ABI remains source-type-agnostic.
 - Cleanup thunks now lower cleanup-candidate environment fields to deterministic field addresses, providing the
   insertion point for future owned-capture drop emission while still emitting no drops today.
 - Cleanup candidate plans now include deterministic type-specific drop symbol names; cleanup thunks document those
@@ -144,6 +146,8 @@ drop/cleanup decisions.
   runnable smoke sources for scalar-payload choice result transfer.
 - `examples/concurrency_distinct_choice_task_main.or` and
   `examples/concurrency_distinct_choice_thread_main.or` cover erased distinct-layout scalar payload transfer.
+- `examples/concurrency_array_task_main.or` and `examples/concurrency_array_thread_main.or` cover inline fixed-array
+  result transfer and indexed reads after synchronization.
 - `examples/concurrency_thread_main.or` is the checked-in runnable smoke source for the current scalar thread runtime
   path.
 - Module emission now validates concurrency runtime prelude declarations plus generated task/thread entry and cleanup

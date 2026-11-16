@@ -1,5 +1,8 @@
 # Frontend Parity Audit
 
+- 2026-11-16: Fixed `Array<UInt32, 2>` values now have task and thread compile-link-run coverage. Both paths
+  allocate 8-byte compiler-owned result storage, transfer the inline `[2 x i32]` value through the existing runtime
+  ABI, and preserve indexed reads after synchronization. No source syntax, production lowering, or runtime ABI changed.
 - 2026-11-16: Distinct-layout scalar choice payloads now have task and thread compile-link-run coverage. A tag-1
   `UInt32` task result and tag-0 `Bool` thread result each cross compiler-owned `{ i32, [4 x i8] }` storage and are
   reconstructed after synchronization. No source syntax, production lowering, or runtime ABI changed.
