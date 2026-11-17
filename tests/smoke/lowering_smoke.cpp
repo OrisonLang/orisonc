@@ -13562,6 +13562,78 @@ void test_emit_multi_payload_choice_task_result_storage_size() {
     assert(result.ir_text.find("ret { i32, [8 x i8] } %tmp") != std::string::npos);
 }
 
+void test_emit_mixed_payload_choice_thread_result_storage_size() {
+    auto path = std::filesystem::temp_directory_path() /
+        "orison_lowering_mixed_payload_choice_thread_result.or";
+    auto result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "choice Result\n"
+        "    Failure(code: UInt32)\n"
+        "    Success(value: UInt32, accepted: Bool)\n"
+        "\n"
+        "implements Transferable for Result\n"
+        "    function placeholder(this: shared This) -> Unit\n"
+        "        return\n"
+        "\n"
+        "function on_thread(value: UInt32, accepted: Bool) -> Result\n"
+        "    let worker = thread\n"
+        "        Success(value, accepted)\n"
+        "\n"
+        "    worker.join()\n"
+    );
+
+    assert(!result.has_errors());
+    assert(result.ir_text.find("%worker.thread.env = alloca { i32, i1 }") != std::string::npos);
+    assert(result.ir_text.find("%worker.thread.result = alloca { i32, [8 x i8] }") != std::string::npos);
+    assert(result.ir_text.find(", i64 12, ptr @__orison_thread_cleanup.on_thread.12.0)") != std::string::npos);
+    assert(result.ir_text.find("insertvalue { i32, [8 x i8] } undef, i32 1, 0") != std::string::npos);
+    assert(result.ir_text.find("insertvalue { i32, i1 } undef, i32 %tmp1, 0") != std::string::npos);
+    assert(result.ir_text.find("insertvalue { i32, i1 } %tmp5, i1 %tmp3, 1") != std::string::npos);
+    assert(result.ir_text.find("store { i32, i1 } %tmp6, ptr %tmp7, align 8") != std::string::npos);
+    assert(result.ir_text.find("load [8 x i8], ptr %tmp7, align 8") != std::string::npos);
+    assert(result.ir_text.find("store { i32, [8 x i8] } %tmp9, ptr %result_storage") != std::string::npos);
+    assert(result.ir_text.find("load { i32, [8 x i8] }, ptr %worker.thread.result") != std::string::npos);
+    assert(result.ir_text.find("ret { i32, [8 x i8] } %tmp") != std::string::npos);
+}
+
+void test_emit_mixed_payload_choice_task_result_storage_size() {
+    auto path = std::filesystem::temp_directory_path() /
+        "orison_lowering_mixed_payload_choice_task_result.or";
+    auto result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "choice Result\n"
+        "    Failure(code: UInt32)\n"
+        "    Success(value: UInt32, accepted: Bool)\n"
+        "\n"
+        "implements Shareable for Result\n"
+        "    function placeholder(this: shared This) -> Unit\n"
+        "        return\n"
+        "\n"
+        "async function on_task(value: UInt32, accepted: Bool) -> Result\n"
+        "    let pending = task\n"
+        "        Success(value, accepted)\n"
+        "\n"
+        "    await pending\n"
+    );
+
+    assert(!result.has_errors());
+    assert(result.ir_text.find("%pending.task.env = alloca { i32, i1 }") != std::string::npos);
+    assert(result.ir_text.find("%pending.task.result = alloca { i32, [8 x i8] }") != std::string::npos);
+    assert(result.ir_text.find(", i64 12, ptr @__orison_task_cleanup.on_task.12.0)") != std::string::npos);
+    assert(result.ir_text.find("insertvalue { i32, [8 x i8] } undef, i32 1, 0") != std::string::npos);
+    assert(result.ir_text.find("insertvalue { i32, i1 } undef, i32 %tmp1, 0") != std::string::npos);
+    assert(result.ir_text.find("insertvalue { i32, i1 } %tmp5, i1 %tmp3, 1") != std::string::npos);
+    assert(result.ir_text.find("store { i32, i1 } %tmp6, ptr %tmp7, align 8") != std::string::npos);
+    assert(result.ir_text.find("load [8 x i8], ptr %tmp7, align 8") != std::string::npos);
+    assert(result.ir_text.find("store { i32, [8 x i8] } %tmp9, ptr %result_storage") != std::string::npos);
+    assert(result.ir_text.find("load { i32, [8 x i8] }, ptr %pending.task.result") != std::string::npos);
+    assert(result.ir_text.find("ret { i32, [8 x i8] } %tmp") != std::string::npos);
+}
+
 void test_emit_array_thread_result_storage_size() {
     auto path = std::filesystem::temp_directory_path() / "orison_lowering_array_thread_result.or";
     auto result = lower_source(
@@ -15763,6 +15835,8 @@ auto main() -> int {
     test_emit_record_choice_task_result_storage_size();
     test_emit_multi_payload_choice_thread_result_storage_size();
     test_emit_multi_payload_choice_task_result_storage_size();
+    test_emit_mixed_payload_choice_thread_result_storage_size();
+    test_emit_mixed_payload_choice_task_result_storage_size();
     test_emit_array_thread_result_storage_size();
     test_emit_array_task_result_storage_size();
     test_emit_nested_array_thread_result_storage_size();
