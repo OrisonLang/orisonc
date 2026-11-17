@@ -1,0 +1,19 @@
+package examples.concurrencyarrayfieldrecordthread
+
+record Batch
+    public values: Array<UInt32, 2>
+    public total: UInt32
+
+implements Transferable for Batch
+    function placeholder(this: shared This) -> Unit
+        return
+
+function main() -> UInt32
+    let first = 6 as UInt32
+    let second = 9 as UInt32
+    let total = 27 as UInt32
+    let worker = thread
+        Batch([first, second], total)
+
+    let result: Batch = worker.join()
+    result.values[0] + result.values[1] + result.total == 42 as UInt32 ? 0 as UInt32 : 1 as UInt32

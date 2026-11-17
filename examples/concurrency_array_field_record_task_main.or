@@ -1,0 +1,19 @@
+package examples.concurrencyarrayfieldrecordtask
+
+record Batch
+    public values: Array<UInt32, 2>
+    public total: UInt32
+
+implements Shareable for Batch
+    function placeholder(this: shared This) -> Unit
+        return
+
+async function main() -> UInt32
+    let first = 9 as UInt32
+    let second = 10 as UInt32
+    let total = 23 as UInt32
+    let pending = task
+        Batch([first, second], total)
+
+    let result: Batch = await pending
+    result.values[0] + result.values[1] + result.total == 42 as UInt32 ? 0 as UInt32 : 1 as UInt32

@@ -9,7 +9,7 @@ Date: 2026-11-16
 - Mature lowering areas include scalar and aggregate control flow, fixed arrays, concrete generics, package-directed
   generic specialization, module constants and imports, raw/volatile pointer access, substantial `DynamicArray<T>`
   ownership cleanup, scalar task/thread execution, and aggregate task/thread results for records, fixed arrays, nested
-  fixed arrays, fixed arrays of records, and direct or erased scalar-payload choices.
+  fixed arrays, fixed arrays of records, records containing fixed arrays, and direct or erased scalar-payload choices.
 - Backend-validated tour examples prove representative slices, not arbitrary composition of every language feature.
 - Value-level `Maybe<Unit>` now has a tag-only LLVM `i1` ABI. `Empty` and `Some(unit)` constructors lower to `false`
   and `true`, while source typing continues to distinguish `Bool` from `Maybe<Unit>`.
@@ -189,4 +189,4 @@ This note is an implementation snapshot. It does not define language syntax or s
 
 ## Suggested Next Step
 
-- Audit records containing fixed arrays through task and thread result storage to verify reciprocal aggregate layout.
+- Audit choices carrying fixed-array payloads through task and thread result storage.
