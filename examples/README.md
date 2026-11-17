@@ -117,6 +117,8 @@ member-derived receivers.
 `concurrency_array_field_record_thread_main.or` demonstrates an array-containing record returned by a thread.
 `concurrency_array_choice_task_main.or` demonstrates a fixed-array choice payload returned by a task.
 `concurrency_array_choice_thread_main.or` demonstrates a fixed-array choice payload returned by a thread.
+`concurrency_record_choice_task_main.or` demonstrates a named-record choice payload returned by a task.
+`concurrency_record_choice_thread_main.or` demonstrates a named-record choice payload returned by a thread.
 `concurrency_choice_task_main.or` demonstrates a scalar-payload choice returned by a task.
 `concurrency_choice_thread_main.or` demonstrates a scalar-payload choice returned by a thread.
 `concurrency_distinct_choice_task_main.or` demonstrates distinct scalar choice payload layouts returned by a task.

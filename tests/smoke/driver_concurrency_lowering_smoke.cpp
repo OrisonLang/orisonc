@@ -362,6 +362,60 @@ auto main() -> int {
     assert(array_choice_thread.stdout_text.empty());
     assert(array_choice_thread.stderr_text.empty());
 
+    auto record_choice_task_path = std::filesystem::path(ORISON_SOURCE_DIR) /
+        "examples" / "concurrency_record_choice_task_main.or";
+    auto record_choice_task_ir = run_emit_llvm(app, record_choice_task_path);
+    assert_success_with_stdout_contains(
+        record_choice_task_ir,
+        {
+            "%record.Pair = type { i32, i32 }",
+            "%pending.task.env = alloca { i32, i32 }",
+            "%pending.task.result = alloca { i32, [8 x i8] }",
+            "call ptr @__orison_task_spawn(ptr @__orison_task_thunk.main.18.0, ptr %pending.task.env, ptr %pending.task.result, i64 12, ptr @__orison_task_cleanup.main.18.0)",
+            "%tmp4 = insertvalue { i32, [8 x i8] } undef, i32 1, 0",
+            "%tmp5 = insertvalue %record.Pair undef, i32 %tmp1, 0",
+            "store %record.Pair %tmp6, ptr %tmp7, align 8",
+            "%tmp8 = load [8 x i8], ptr %tmp7, align 8",
+            "%tmp9 = insertvalue { i32, [8 x i8] } %tmp4, [8 x i8] %tmp8, 1",
+            "store { i32, [8 x i8] } %tmp9, ptr %result_storage",
+            "load { i32, [8 x i8] }, ptr %pending.task.result",
+            "load %record.Pair, ptr %tmp10, align 8",
+            "getelementptr %record.Pair, ptr %value.addr, i32 0, i32 0",
+            "getelementptr %record.Pair, ptr %value.addr, i32 0, i32 1",
+        }
+    );
+    auto record_choice_task = run_program(app, record_choice_task_path);
+    assert(record_choice_task.exit_code == 0);
+    assert(record_choice_task.stdout_text.empty());
+    assert(record_choice_task.stderr_text.empty());
+
+    auto record_choice_thread_path = std::filesystem::path(ORISON_SOURCE_DIR) /
+        "examples" / "concurrency_record_choice_thread_main.or";
+    auto record_choice_thread_ir = run_emit_llvm(app, record_choice_thread_path);
+    assert_success_with_stdout_contains(
+        record_choice_thread_ir,
+        {
+            "%record.Pair = type { i32, i32 }",
+            "%worker.thread.env = alloca { i32, i32 }",
+            "%worker.thread.result = alloca { i32, [8 x i8] }",
+            "call ptr @__orison_thread_spawn(ptr @__orison_thread_thunk.main.18.0, ptr %worker.thread.env, ptr %worker.thread.result, i64 12, ptr @__orison_thread_cleanup.main.18.0)",
+            "%tmp4 = insertvalue { i32, [8 x i8] } undef, i32 1, 0",
+            "%tmp5 = insertvalue %record.Pair undef, i32 %tmp1, 0",
+            "store %record.Pair %tmp6, ptr %tmp7, align 8",
+            "%tmp8 = load [8 x i8], ptr %tmp7, align 8",
+            "%tmp9 = insertvalue { i32, [8 x i8] } %tmp4, [8 x i8] %tmp8, 1",
+            "store { i32, [8 x i8] } %tmp9, ptr %result_storage",
+            "load { i32, [8 x i8] }, ptr %worker.thread.result",
+            "load %record.Pair, ptr %tmp10, align 8",
+            "getelementptr %record.Pair, ptr %value.addr, i32 0, i32 0",
+            "getelementptr %record.Pair, ptr %value.addr, i32 0, i32 1",
+        }
+    );
+    auto record_choice_thread = run_program(app, record_choice_thread_path);
+    assert(record_choice_thread.exit_code == 0);
+    assert(record_choice_thread.stdout_text.empty());
+    assert(record_choice_thread.stderr_text.empty());
+
     auto array_task_path = std::filesystem::path(ORISON_SOURCE_DIR) /
         "examples" / "concurrency_array_task_main.or";
     auto array_task_ir = run_emit_llvm(app, array_task_path);
