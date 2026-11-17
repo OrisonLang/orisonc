@@ -4055,3 +4055,6 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-11-15: Record-valued task and thread examples now capture an outer `UInt32`. Focused IR checks pin scalar
   environment storage, thunk-side capture loading, record construction, typed result storage, and synchronized typed
   loads; both compile-link-run paths preserve the expected field values. No source syntax or runtime ABI changed.
+- 2026-11-16: Fixed-arity two-field choice payloads now have checked-in task and thread proof. Both paths pack two
+  captured `UInt32` values into `{ i32, i32 }`, erase that aggregate into `{ i32, [8 x i8] }`, use 12-byte result
+  storage, and reconstruct both switch bindings after synchronization. No source syntax or runtime ABI changed.

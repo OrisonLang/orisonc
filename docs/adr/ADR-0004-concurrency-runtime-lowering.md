@@ -102,6 +102,9 @@ drop/cleanup decisions.
   payload erasure and reconstruction compose through 12-byte compiler-owned result storage without runtime ABI changes.
 - Choice results carrying named `Pair` records preserve `%record.Pair` through the same `{ i32, [8 x i8] }` layout.
   Target-layout resolution and typed record reconstruction compose without runtime ABI changes.
+- Fixed-arity choice variants with two `UInt32` payloads cross task and thread boundaries through the same
+  `{ i32, [8 x i8] }` layout. Lowering packs the fields into `{ i32, i32 }`, preserves the 12-byte result storage,
+  and reconstructs both switch bindings after synchronization without runtime ABI changes.
 - Cleanup thunks now lower cleanup-candidate environment fields to deterministic field addresses, providing the
   insertion point for future owned-capture drop emission while still emitting no drops today.
 - Cleanup candidate plans now include deterministic type-specific drop symbol names; cleanup thunks document those
@@ -168,6 +171,8 @@ drop/cleanup decisions.
   fixed-array choice payload transfer and typed switch-case reconstruction.
 - `examples/concurrency_record_choice_task_main.or` and `examples/concurrency_record_choice_thread_main.or` cover
   erased named-record choice payload transfer and typed switch-case reconstruction.
+- `examples/concurrency_multi_payload_choice_task_main.or` and
+  `examples/concurrency_multi_payload_choice_thread_main.or` cover erased fixed-arity multi-payload choice transfer.
 - `examples/concurrency_thread_main.or` is the checked-in runnable smoke source for the current scalar thread runtime
   path.
 - Module emission now validates concurrency runtime prelude declarations plus generated task/thread entry and cleanup
