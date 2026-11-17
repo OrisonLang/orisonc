@@ -1,0 +1,21 @@
+package examples.concurrencyaggregatescalarchoicetask
+
+choice Result
+    Failure(code: UInt32)
+    Success(values: Array<UInt32, 2>, marker: UInt32)
+
+implements Shareable for Result
+    function placeholder(this: shared This) -> Unit
+        return
+
+async function main() -> UInt32
+    let first = 19 as UInt32
+    let second = 20 as UInt32
+    let marker = 3 as UInt32
+    let pending = task
+        Success([first, second], marker)
+
+    let result: Result = await pending
+    switch result
+        Failure(code) => code + 1 as UInt32
+        Success(values, received_marker) => values[0] + values[1] + received_marker == 42 as UInt32 ? 0 as UInt32 : 1 as UInt32

@@ -4061,3 +4061,6 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-11-16: Mixed-layout two-field choice payloads now have checked-in task and thread proof. Both paths pack captured
   `UInt32` and `Bool` values into `{ i32, i1 }`, preserve target padding through `[8 x i8]` payload erasure, and
   reconstruct both typed switch bindings. No source syntax or runtime ABI changed.
+- 2026-11-16: Aggregate-plus-scalar choice payloads now have checked-in task and thread proof. Both paths pack
+  `Array<UInt32, 2>` and `UInt32` into `{ [2 x i32], i32 }`, expand the choice to `{ i32, [12 x i8] }`, use 16-byte
+  result storage, and reconstruct indexed array values plus the scalar marker. No source syntax or runtime ABI changed.

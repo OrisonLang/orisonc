@@ -520,6 +520,64 @@ auto main() -> int {
     assert(mixed_payload_choice_thread.stdout_text.empty());
     assert(mixed_payload_choice_thread.stderr_text.empty());
 
+    auto aggregate_scalar_choice_task_path = std::filesystem::path(ORISON_SOURCE_DIR) /
+        "examples" / "concurrency_aggregate_scalar_choice_task_main.or";
+    auto aggregate_scalar_choice_task_ir = run_emit_llvm(app, aggregate_scalar_choice_task_path);
+    assert_success_with_stdout_contains(
+        aggregate_scalar_choice_task_ir,
+        {
+            "%pending.task.env = alloca { i32, i32, i32 }",
+            "%pending.task.result = alloca { i32, [12 x i8] }",
+            "call ptr @__orison_task_spawn(ptr @__orison_task_thunk.main.15.0, ptr %pending.task.env, ptr %pending.task.result, i64 16, ptr @__orison_task_cleanup.main.15.0)",
+            "%tmp6 = insertvalue { i32, [12 x i8] } undef, i32 1, 0",
+            "%tmp7 = insertvalue [2 x i32] undef, i32 %tmp1, 0",
+            "%tmp9 = insertvalue { [2 x i32], i32 } undef, [2 x i32] %tmp8, 0",
+            "%tmp10 = insertvalue { [2 x i32], i32 } %tmp9, i32 %tmp5, 1",
+            "store { [2 x i32], i32 } %tmp10, ptr %tmp11, align 8",
+            "%tmp12 = load [12 x i8], ptr %tmp11, align 8",
+            "store { i32, [12 x i8] } %tmp13, ptr %result_storage",
+            "load { i32, [12 x i8] }, ptr %pending.task.result",
+            "load { [2 x i32], i32 }, ptr %tmp11, align 8",
+            "extractvalue { [2 x i32], i32 } %tmp12, 0",
+            "extractvalue { [2 x i32], i32 } %tmp12, 1",
+            "getelementptr [2 x i32], ptr %values.addr, i64 0, i64 0",
+            "getelementptr [2 x i32], ptr %values.addr, i64 0, i64 1",
+        }
+    );
+    auto aggregate_scalar_choice_task = run_program(app, aggregate_scalar_choice_task_path);
+    assert(aggregate_scalar_choice_task.exit_code == 0);
+    assert(aggregate_scalar_choice_task.stdout_text.empty());
+    assert(aggregate_scalar_choice_task.stderr_text.empty());
+
+    auto aggregate_scalar_choice_thread_path = std::filesystem::path(ORISON_SOURCE_DIR) /
+        "examples" / "concurrency_aggregate_scalar_choice_thread_main.or";
+    auto aggregate_scalar_choice_thread_ir = run_emit_llvm(app, aggregate_scalar_choice_thread_path);
+    assert_success_with_stdout_contains(
+        aggregate_scalar_choice_thread_ir,
+        {
+            "%worker.thread.env = alloca { i32, i32, i32 }",
+            "%worker.thread.result = alloca { i32, [12 x i8] }",
+            "call ptr @__orison_thread_spawn(ptr @__orison_thread_thunk.main.15.0, ptr %worker.thread.env, ptr %worker.thread.result, i64 16, ptr @__orison_thread_cleanup.main.15.0)",
+            "%tmp6 = insertvalue { i32, [12 x i8] } undef, i32 1, 0",
+            "%tmp7 = insertvalue [2 x i32] undef, i32 %tmp1, 0",
+            "%tmp9 = insertvalue { [2 x i32], i32 } undef, [2 x i32] %tmp8, 0",
+            "%tmp10 = insertvalue { [2 x i32], i32 } %tmp9, i32 %tmp5, 1",
+            "store { [2 x i32], i32 } %tmp10, ptr %tmp11, align 8",
+            "%tmp12 = load [12 x i8], ptr %tmp11, align 8",
+            "store { i32, [12 x i8] } %tmp13, ptr %result_storage",
+            "load { i32, [12 x i8] }, ptr %worker.thread.result",
+            "load { [2 x i32], i32 }, ptr %tmp11, align 8",
+            "extractvalue { [2 x i32], i32 } %tmp12, 0",
+            "extractvalue { [2 x i32], i32 } %tmp12, 1",
+            "getelementptr [2 x i32], ptr %values.addr, i64 0, i64 0",
+            "getelementptr [2 x i32], ptr %values.addr, i64 0, i64 1",
+        }
+    );
+    auto aggregate_scalar_choice_thread = run_program(app, aggregate_scalar_choice_thread_path);
+    assert(aggregate_scalar_choice_thread.exit_code == 0);
+    assert(aggregate_scalar_choice_thread.stdout_text.empty());
+    assert(aggregate_scalar_choice_thread.stderr_text.empty());
+
     auto array_task_path = std::filesystem::path(ORISON_SOURCE_DIR) /
         "examples" / "concurrency_array_task_main.or";
     auto array_task_ir = run_emit_llvm(app, array_task_path);

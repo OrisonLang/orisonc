@@ -107,6 +107,8 @@ drop/cleanup decisions.
   and reconstructs both switch bindings after synchronization without runtime ABI changes.
 - Mixed-layout choice variants with `UInt32` and `Bool` payloads also use `{ i32, [8 x i8] }`. Lowering packs the
   fields into `{ i32, i1 }`, preserves target padding through payload erasure, and reconstructs both typed bindings.
+- Aggregate-plus-scalar choice variants pack `Array<UInt32, 2>` and `UInt32` into `{ [2 x i32], i32 }`. The choice
+  expands to `{ i32, [12 x i8] }`, uses 16-byte result storage, and reconstructs both payload fields after synchronization.
 - Cleanup thunks now lower cleanup-candidate environment fields to deterministic field addresses, providing the
   insertion point for future owned-capture drop emission while still emitting no drops today.
 - Cleanup candidate plans now include deterministic type-specific drop symbol names; cleanup thunks document those
@@ -177,6 +179,8 @@ drop/cleanup decisions.
   `examples/concurrency_multi_payload_choice_thread_main.or` cover erased fixed-arity multi-payload choice transfer.
 - `examples/concurrency_mixed_payload_choice_task_main.or` and
   `examples/concurrency_mixed_payload_choice_thread_main.or` cover mixed-layout multi-payload choice transfer.
+- `examples/concurrency_aggregate_scalar_choice_task_main.or` and
+  `examples/concurrency_aggregate_scalar_choice_thread_main.or` cover aggregate-plus-scalar choice transfer.
 - `examples/concurrency_thread_main.or` is the checked-in runnable smoke source for the current scalar thread runtime
   path.
 - Module emission now validates concurrency runtime prelude declarations plus generated task/thread entry and cleanup
