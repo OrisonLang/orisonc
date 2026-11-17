@@ -4067,3 +4067,6 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-11-16: Named-record-plus-scalar choice payloads now have checked-in task and thread proof. Both paths pack
   `Pair` and `UInt32` into `{ %record.Pair, i32 }`, retain `{ i32, [12 x i8] }` with 16-byte result storage, and
   reconstruct both record fields plus the scalar marker. No source syntax or runtime ABI changed.
+- 2026-11-17: Concrete generic multi-payload choices now have checked-in task and thread proof. `Result<UInt32>`
+  specializes two `T` payload fields to `{ i32, i32 }`, retains `{ i32, [8 x i8] }` with 12-byte result storage,
+  reconstructs both bindings, and emits concrete `Result_UInt32_` implementation symbols. No syntax or ABI changed.

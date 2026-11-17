@@ -1,0 +1,20 @@
+package examples.concurrencygenericchoicetask
+
+choice Result<T>
+    Failure(code: UInt32)
+    Success(left: T, right: T)
+
+implements Shareable for Result<UInt32>
+    function placeholder(this: shared This) -> Unit
+        return
+
+async function main() -> UInt32
+    let first = 19 as UInt32
+    let second = 23 as UInt32
+    let pending = task
+        Success(first, second)
+
+    let result: Result<UInt32> = await pending
+    switch result
+        Failure(code) => code + 1 as UInt32
+        Success(left, right) => left + right == 42 as UInt32 ? 0 as UInt32 : 1 as UInt32

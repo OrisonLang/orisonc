@@ -638,6 +638,60 @@ auto main() -> int {
     assert(record_scalar_choice_thread.stdout_text.empty());
     assert(record_scalar_choice_thread.stderr_text.empty());
 
+    auto generic_choice_task_path = std::filesystem::path(ORISON_SOURCE_DIR) /
+        "examples" / "concurrency_generic_choice_task_main.or";
+    auto generic_choice_task_ir = run_emit_llvm(app, generic_choice_task_path);
+    assert_success_with_stdout_contains(
+        generic_choice_task_ir,
+        {
+            "%pending.task.env = alloca { i32, i32 }",
+            "%pending.task.result = alloca { i32, [8 x i8] }",
+            "call ptr @__orison_task_spawn(ptr @__orison_task_thunk.main.14.0, ptr %pending.task.env, ptr %pending.task.result, i64 12, ptr @__orison_task_cleanup.main.14.0)",
+            "%tmp4 = insertvalue { i32, [8 x i8] } undef, i32 1, 0",
+            "%tmp5 = insertvalue { i32, i32 } undef, i32 %tmp1, 0",
+            "%tmp6 = insertvalue { i32, i32 } %tmp5, i32 %tmp3, 1",
+            "store { i32, i32 } %tmp6, ptr %tmp7, align 8",
+            "%tmp8 = load [8 x i8], ptr %tmp7, align 8",
+            "store { i32, [8 x i8] } %tmp9, ptr %result_storage",
+            "load { i32, [8 x i8] }, ptr %pending.task.result",
+            "load { i32, i32 }, ptr %tmp10, align 8",
+            "extractvalue { i32, i32 } %tmp11, 0",
+            "extractvalue { i32, i32 } %tmp11, 1",
+            "@__orison_method.examples.concurrencygenericchoicetask.Result_UInt32_.placeholder",
+        }
+    );
+    auto generic_choice_task = run_program(app, generic_choice_task_path);
+    assert(generic_choice_task.exit_code == 0);
+    assert(generic_choice_task.stdout_text.empty());
+    assert(generic_choice_task.stderr_text.empty());
+
+    auto generic_choice_thread_path = std::filesystem::path(ORISON_SOURCE_DIR) /
+        "examples" / "concurrency_generic_choice_thread_main.or";
+    auto generic_choice_thread_ir = run_emit_llvm(app, generic_choice_thread_path);
+    assert_success_with_stdout_contains(
+        generic_choice_thread_ir,
+        {
+            "%worker.thread.env = alloca { i32, i32 }",
+            "%worker.thread.result = alloca { i32, [8 x i8] }",
+            "call ptr @__orison_thread_spawn(ptr @__orison_thread_thunk.main.14.0, ptr %worker.thread.env, ptr %worker.thread.result, i64 12, ptr @__orison_thread_cleanup.main.14.0)",
+            "%tmp4 = insertvalue { i32, [8 x i8] } undef, i32 1, 0",
+            "%tmp5 = insertvalue { i32, i32 } undef, i32 %tmp1, 0",
+            "%tmp6 = insertvalue { i32, i32 } %tmp5, i32 %tmp3, 1",
+            "store { i32, i32 } %tmp6, ptr %tmp7, align 8",
+            "%tmp8 = load [8 x i8], ptr %tmp7, align 8",
+            "store { i32, [8 x i8] } %tmp9, ptr %result_storage",
+            "load { i32, [8 x i8] }, ptr %worker.thread.result",
+            "load { i32, i32 }, ptr %tmp10, align 8",
+            "extractvalue { i32, i32 } %tmp11, 0",
+            "extractvalue { i32, i32 } %tmp11, 1",
+            "@__orison_method.examples.concurrencygenericchoicethread.Result_UInt32_.placeholder",
+        }
+    );
+    auto generic_choice_thread = run_program(app, generic_choice_thread_path);
+    assert(generic_choice_thread.exit_code == 0);
+    assert(generic_choice_thread.stdout_text.empty());
+    assert(generic_choice_thread.stderr_text.empty());
+
     auto array_task_path = std::filesystem::path(ORISON_SOURCE_DIR) /
         "examples" / "concurrency_array_task_main.or";
     auto array_task_ir = run_emit_llvm(app, array_task_path);

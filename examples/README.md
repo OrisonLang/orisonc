@@ -127,6 +127,8 @@ member-derived receivers.
 `concurrency_aggregate_scalar_choice_thread_main.or` demonstrates aggregate-plus-scalar choice payloads returned by a thread.
 `concurrency_record_scalar_choice_task_main.or` demonstrates record-plus-scalar choice payloads returned by a task.
 `concurrency_record_scalar_choice_thread_main.or` demonstrates record-plus-scalar choice payloads returned by a thread.
+`concurrency_generic_choice_task_main.or` demonstrates a concrete generic multi-payload choice returned by a task.
+`concurrency_generic_choice_thread_main.or` demonstrates a concrete generic multi-payload choice returned by a thread.
 `concurrency_choice_task_main.or` demonstrates a scalar-payload choice returned by a task.
 `concurrency_choice_thread_main.or` demonstrates a scalar-payload choice returned by a thread.
 `concurrency_distinct_choice_task_main.or` demonstrates distinct scalar choice payload layouts returned by a task.
