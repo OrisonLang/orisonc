@@ -190,4 +190,4 @@ This note is an implementation snapshot. It does not define language syntax or s
 
 ## Suggested Next Step
 
-- Audit named-record-plus-scalar multi-payload choices through task and thread result storage.
+- Audit concrete generic multi-payload choices through task and thread result storage.
