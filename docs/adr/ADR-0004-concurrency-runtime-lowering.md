@@ -98,6 +98,8 @@ drop/cleanup decisions.
   record and array construction produces 16-byte compiler-owned result storage without runtime ABI changes.
 - `Batch` record results containing `[2 x i32]` plus an `i32` scalar now use a 12-byte `%record.Batch` layout. Nested
   construction and field/index reads compose through compiler-owned result storage without runtime ABI changes.
+- Choice results carrying `Array<UInt32, 2>` preserve the tag and aggregate payload in `{ i32, [8 x i8] }`. Typed
+  payload erasure and reconstruction compose through 12-byte compiler-owned result storage without runtime ABI changes.
 - Cleanup thunks now lower cleanup-candidate environment fields to deterministic field addresses, providing the
   insertion point for future owned-capture drop emission while still emitting no drops today.
 - Cleanup candidate plans now include deterministic type-specific drop symbol names; cleanup thunks document those
@@ -160,6 +162,8 @@ drop/cleanup decisions.
   arrays of named records and indexed field reads after synchronization.
 - `examples/concurrency_array_field_record_task_main.or` and
   `examples/concurrency_array_field_record_thread_main.or` cover named records containing fixed arrays plus scalars.
+- `examples/concurrency_array_choice_task_main.or` and `examples/concurrency_array_choice_thread_main.or` cover erased
+  fixed-array choice payload transfer and typed switch-case reconstruction.
 - `examples/concurrency_thread_main.or` is the checked-in runnable smoke source for the current scalar thread runtime
   path.
 - Module emission now validates concurrency runtime prelude declarations plus generated task/thread entry and cleanup

@@ -1,5 +1,8 @@
 # Frontend Parity Audit
 
+- 2026-11-16: Choice results carrying `Array<UInt32, 2>` now have task and thread compile-link-run coverage. Both paths
+  preserve the tag plus 8-byte aggregate payload in `{ i32, [8 x i8] }`, use 12-byte result storage, and reconstruct
+  typed array bindings for indexed switch-case reads. No source syntax, production lowering, or runtime ABI changed.
 - 2026-11-16: `Batch` records containing `Array<UInt32, 2>` plus a scalar now have task and thread compile-link-run
   coverage. Both paths preserve `%record.Batch = type { [2 x i32], i32 }`, 12-byte result sizing, nested construction,
   array-field indexing, and scalar-field reads. No source syntax, production lowering, or runtime ABI changed.

@@ -1,0 +1,20 @@
+package examples.concurrencyarraychoicethread
+
+choice Result
+    Failure(code: UInt32)
+    Success(values: Array<UInt32, 2>)
+
+implements Transferable for Result
+    function placeholder(this: shared This) -> Unit
+        return
+
+function main() -> UInt32
+    let first = 17 as UInt32
+    let second = 25 as UInt32
+    let worker = thread
+        Success([first, second])
+
+    let result: Result = worker.join()
+    switch result
+        Failure(code) => code + 1 as UInt32
+        Success(values) => values[0] + values[1] == 42 as UInt32 ? 0 as UInt32 : 1 as UInt32
