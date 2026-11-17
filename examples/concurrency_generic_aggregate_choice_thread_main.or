@@ -1,0 +1,26 @@
+package examples.concurrencygenericaggregatechoicethread
+
+record Pair
+    public first: UInt32
+    public second: UInt32
+
+choice Result<T>
+    Failure(code: UInt32)
+    Success(left: T, right: T)
+
+implements Transferable for Result<Pair>
+    function placeholder(this: shared This) -> Unit
+        return
+
+function main() -> UInt32
+    let first = 8 as UInt32
+    let second = 10 as UInt32
+    let third = 11 as UInt32
+    let fourth = 13 as UInt32
+    let worker = thread
+        Success(Pair(first, second), Pair(third, fourth))
+
+    let result: Result<Pair> = worker.join()
+    switch result
+        Failure(code) => code + 1 as UInt32
+        Success(left, right) => left.first + left.second + right.first + right.second == 42 as UInt32 ? 0 as UInt32 : 1 as UInt32

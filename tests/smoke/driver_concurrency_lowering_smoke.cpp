@@ -692,6 +692,70 @@ auto main() -> int {
     assert(generic_choice_thread.stdout_text.empty());
     assert(generic_choice_thread.stderr_text.empty());
 
+    auto generic_aggregate_choice_task_path = std::filesystem::path(ORISON_SOURCE_DIR) /
+        "examples" / "concurrency_generic_aggregate_choice_task_main.or";
+    auto generic_aggregate_choice_task_ir = run_emit_llvm(app, generic_aggregate_choice_task_path);
+    assert_success_with_stdout_contains(
+        generic_aggregate_choice_task_ir,
+        {
+            "%record.Pair = type { i32, i32 }",
+            "%pending.task.env = alloca { i32, i32, i32, i32 }",
+            "%pending.task.result = alloca { i32, [16 x i8] }",
+            "call ptr @__orison_task_spawn(ptr @__orison_task_thunk.main.20.0, ptr %pending.task.env, ptr %pending.task.result, i64 20, ptr @__orison_task_cleanup.main.20.0)",
+            "%tmp8 = insertvalue { i32, [16 x i8] } undef, i32 1, 0",
+            "%tmp11 = insertvalue { %record.Pair, %record.Pair } undef, %record.Pair %tmp10, 0",
+            "%tmp14 = insertvalue { %record.Pair, %record.Pair } %tmp11, %record.Pair %tmp13, 1",
+            "store { %record.Pair, %record.Pair } %tmp14, ptr %tmp15, align 8",
+            "%tmp16 = load [16 x i8], ptr %tmp15, align 8",
+            "store { i32, [16 x i8] } %tmp17, ptr %result_storage",
+            "load { i32, [16 x i8] }, ptr %pending.task.result",
+            "load { %record.Pair, %record.Pair }, ptr %tmp12, align 8",
+            "extractvalue { %record.Pair, %record.Pair } %tmp13, 0",
+            "extractvalue { %record.Pair, %record.Pair } %tmp13, 1",
+            "getelementptr %record.Pair, ptr %left.addr, i32 0, i32 0",
+            "getelementptr %record.Pair, ptr %left.addr, i32 0, i32 1",
+            "getelementptr %record.Pair, ptr %right.addr, i32 0, i32 0",
+            "getelementptr %record.Pair, ptr %right.addr, i32 0, i32 1",
+            "@__orison_method.examples.concurrencygenericaggregatechoicetask.Result_Pair_.placeholder",
+        }
+    );
+    auto generic_aggregate_choice_task = run_program(app, generic_aggregate_choice_task_path);
+    assert(generic_aggregate_choice_task.exit_code == 0);
+    assert(generic_aggregate_choice_task.stdout_text.empty());
+    assert(generic_aggregate_choice_task.stderr_text.empty());
+
+    auto generic_aggregate_choice_thread_path = std::filesystem::path(ORISON_SOURCE_DIR) /
+        "examples" / "concurrency_generic_aggregate_choice_thread_main.or";
+    auto generic_aggregate_choice_thread_ir = run_emit_llvm(app, generic_aggregate_choice_thread_path);
+    assert_success_with_stdout_contains(
+        generic_aggregate_choice_thread_ir,
+        {
+            "%record.Pair = type { i32, i32 }",
+            "%worker.thread.env = alloca { i32, i32, i32, i32 }",
+            "%worker.thread.result = alloca { i32, [16 x i8] }",
+            "call ptr @__orison_thread_spawn(ptr @__orison_thread_thunk.main.20.0, ptr %worker.thread.env, ptr %worker.thread.result, i64 20, ptr @__orison_thread_cleanup.main.20.0)",
+            "%tmp8 = insertvalue { i32, [16 x i8] } undef, i32 1, 0",
+            "%tmp11 = insertvalue { %record.Pair, %record.Pair } undef, %record.Pair %tmp10, 0",
+            "%tmp14 = insertvalue { %record.Pair, %record.Pair } %tmp11, %record.Pair %tmp13, 1",
+            "store { %record.Pair, %record.Pair } %tmp14, ptr %tmp15, align 8",
+            "%tmp16 = load [16 x i8], ptr %tmp15, align 8",
+            "store { i32, [16 x i8] } %tmp17, ptr %result_storage",
+            "load { i32, [16 x i8] }, ptr %worker.thread.result",
+            "load { %record.Pair, %record.Pair }, ptr %tmp12, align 8",
+            "extractvalue { %record.Pair, %record.Pair } %tmp13, 0",
+            "extractvalue { %record.Pair, %record.Pair } %tmp13, 1",
+            "getelementptr %record.Pair, ptr %left.addr, i32 0, i32 0",
+            "getelementptr %record.Pair, ptr %left.addr, i32 0, i32 1",
+            "getelementptr %record.Pair, ptr %right.addr, i32 0, i32 0",
+            "getelementptr %record.Pair, ptr %right.addr, i32 0, i32 1",
+            "@__orison_method.examples.concurrencygenericaggregatechoicethread.Result_Pair_.placeholder",
+        }
+    );
+    auto generic_aggregate_choice_thread = run_program(app, generic_aggregate_choice_thread_path);
+    assert(generic_aggregate_choice_thread.exit_code == 0);
+    assert(generic_aggregate_choice_thread.stdout_text.empty());
+    assert(generic_aggregate_choice_thread.stderr_text.empty());
+
     auto array_task_path = std::filesystem::path(ORISON_SOURCE_DIR) /
         "examples" / "concurrency_array_task_main.or";
     auto array_task_ir = run_emit_llvm(app, array_task_path);

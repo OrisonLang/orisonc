@@ -4070,3 +4070,7 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-11-17: Concrete generic multi-payload choices now have checked-in task and thread proof. `Result<UInt32>`
   specializes two `T` payload fields to `{ i32, i32 }`, retains `{ i32, [8 x i8] }` with 12-byte result storage,
   reconstructs both bindings, and emits concrete `Result_UInt32_` implementation symbols. No syntax or ABI changed.
+- 2026-11-17: Concrete generic named-record multi-payload choices now have checked-in task and thread proof.
+  `Result<Pair>` specializes two `T` payload fields to `{ %record.Pair, %record.Pair }`, retains
+  `{ i32, [16 x i8] }` with 20-byte result storage, reconstructs all four record fields, and emits concrete
+  `Result_Pair_` implementation symbols. No syntax or ABI changed.

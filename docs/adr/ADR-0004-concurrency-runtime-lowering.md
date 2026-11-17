@@ -189,6 +189,9 @@ drop/cleanup decisions.
   `examples/concurrency_record_scalar_choice_thread_main.or` cover named-record-plus-scalar choice transfer.
 - `examples/concurrency_generic_choice_task_main.or` and `examples/concurrency_generic_choice_thread_main.or` cover
   concrete generic multi-payload choice transfer.
+- `examples/concurrency_generic_aggregate_choice_task_main.or` and
+  `examples/concurrency_generic_aggregate_choice_thread_main.or` cover concrete generic named-record multi-payload
+  choice transfer.
 - `examples/concurrency_thread_main.or` is the checked-in runnable smoke source for the current scalar thread runtime
   path.
 - Module emission now validates concurrency runtime prelude declarations plus generated task/thread entry and cleanup
