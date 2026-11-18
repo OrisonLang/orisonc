@@ -4083,3 +4083,8 @@ This file tracks which source-language frontend slices are reflected in the curr
   `{ [2 x [2 x i32]], [2 x [2 x i32]] }`, retains `{ i32, [32 x i8] }` with 36-byte result storage, reconstructs
   all eight indexed values, and emits concrete `Result_Array_Array_UInt32__2___2__` implementation symbols. No
   syntax or ABI changed.
+- 2026-11-17: Concrete generic record-array multi-payload choices now have checked-in task and thread proof.
+  `Result<Array<Pair, 2>>` specializes two `T` payload fields to
+  `{ [2 x %record.Pair], [2 x %record.Pair] }`, retains `{ i32, [32 x i8] }` with 36-byte result storage,
+  reconstructs all eight record fields, and emits concrete `Result_Array_Pair__2__` implementation symbols. No
+  syntax or ABI changed.

@@ -1,0 +1,30 @@
+package examples.concurrencygenericrecordarraychoicetask
+
+record Pair
+    public first: UInt32
+    public second: UInt32
+
+choice Result<T>
+    Failure(code: UInt32)
+    Success(left: T, right: T)
+
+implements Shareable for Result<Array<Pair, 2>>
+    function placeholder(this: shared This) -> Unit
+        return
+
+async function main() -> UInt32
+    let first = 1 as UInt32
+    let second = 2 as UInt32
+    let third = 3 as UInt32
+    let fourth = 4 as UInt32
+    let fifth = 5 as UInt32
+    let sixth = 6 as UInt32
+    let seventh = 9 as UInt32
+    let eighth = 12 as UInt32
+    let pending = task
+        Success([Pair(first, second), Pair(third, fourth)], [Pair(fifth, sixth), Pair(seventh, eighth)])
+
+    let result: Result<Array<Pair, 2>> = await pending
+    switch result
+        Failure(code) => code + 1 as UInt32
+        Success(left, right) => left[0].first + left[0].second + left[1].first + left[1].second + right[0].first + right[0].second + right[1].first + right[1].second == 42 as UInt32 ? 0 as UInt32 : 1 as UInt32

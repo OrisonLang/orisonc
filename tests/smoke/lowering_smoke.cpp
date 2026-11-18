@@ -14090,6 +14090,86 @@ void test_emit_generic_nested_array_choice_task_result_storage_size() {
     assert(result.ir_text.find("@__orison_method.demo.lowering.Result_Array_Array_UInt32__2___2__.placeholder") != std::string::npos);
 }
 
+void test_emit_generic_record_array_choice_thread_result_storage_size() {
+    auto path = std::filesystem::temp_directory_path() /
+        "orison_lowering_generic_record_array_choice_thread_result.or";
+    auto result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "record Pair\n"
+        "    public first: UInt32\n"
+        "    public second: UInt32\n"
+        "\n"
+        "choice Result<T>\n"
+        "    Failure(code: UInt32)\n"
+        "    Success(left: T, right: T)\n"
+        "\n"
+        "implements Transferable for Result<Array<Pair, 2>>\n"
+        "    function placeholder(this: shared This) -> Unit\n"
+        "        return\n"
+        "\n"
+        "function on_thread(a: UInt32, b: UInt32, c: UInt32, d: UInt32, e: UInt32, f: UInt32, g: UInt32, h: UInt32) -> Result<Array<Pair, 2>>\n"
+        "    let worker = thread\n"
+        "        Success([Pair(a, b), Pair(c, d)], [Pair(e, f), Pair(g, h)])\n"
+        "\n"
+        "    worker.join()\n"
+    );
+
+    assert(!result.has_errors());
+    assert(result.ir_text.find("%record.Pair = type { i32, i32 }") != std::string::npos);
+    assert(result.ir_text.find("%worker.thread.env = alloca { i32, i32, i32, i32, i32, i32, i32, i32 }") != std::string::npos);
+    assert(result.ir_text.find("%worker.thread.result = alloca { i32, [32 x i8] }") != std::string::npos);
+    assert(result.ir_text.find(", i64 36, ptr @__orison_thread_cleanup.on_thread.16.0)") != std::string::npos);
+    assert(result.ir_text.find("insertvalue { [2 x %record.Pair], [2 x %record.Pair] } undef, [2 x %record.Pair] %tmp22, 0") != std::string::npos);
+    assert(result.ir_text.find("insertvalue { [2 x %record.Pair], [2 x %record.Pair] } %tmp23, [2 x %record.Pair] %tmp29, 1") != std::string::npos);
+    assert(result.ir_text.find("store { [2 x %record.Pair], [2 x %record.Pair] } %tmp30, ptr %tmp31, align 8") != std::string::npos);
+    assert(result.ir_text.find("load [32 x i8], ptr %tmp31, align 8") != std::string::npos);
+    assert(result.ir_text.find("store { i32, [32 x i8] } %tmp33, ptr %result_storage") != std::string::npos);
+    assert(result.ir_text.find("load { i32, [32 x i8] }, ptr %worker.thread.result") != std::string::npos);
+    assert(result.ir_text.find("@__orison_method.demo.lowering.Result_Array_Pair__2__.placeholder") != std::string::npos);
+}
+
+void test_emit_generic_record_array_choice_task_result_storage_size() {
+    auto path = std::filesystem::temp_directory_path() /
+        "orison_lowering_generic_record_array_choice_task_result.or";
+    auto result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "record Pair\n"
+        "    public first: UInt32\n"
+        "    public second: UInt32\n"
+        "\n"
+        "choice Result<T>\n"
+        "    Failure(code: UInt32)\n"
+        "    Success(left: T, right: T)\n"
+        "\n"
+        "implements Shareable for Result<Array<Pair, 2>>\n"
+        "    function placeholder(this: shared This) -> Unit\n"
+        "        return\n"
+        "\n"
+        "async function on_task(a: UInt32, b: UInt32, c: UInt32, d: UInt32, e: UInt32, f: UInt32, g: UInt32, h: UInt32) -> Result<Array<Pair, 2>>\n"
+        "    let pending = task\n"
+        "        Success([Pair(a, b), Pair(c, d)], [Pair(e, f), Pair(g, h)])\n"
+        "\n"
+        "    await pending\n"
+    );
+
+    assert(!result.has_errors());
+    assert(result.ir_text.find("%record.Pair = type { i32, i32 }") != std::string::npos);
+    assert(result.ir_text.find("%pending.task.env = alloca { i32, i32, i32, i32, i32, i32, i32, i32 }") != std::string::npos);
+    assert(result.ir_text.find("%pending.task.result = alloca { i32, [32 x i8] }") != std::string::npos);
+    assert(result.ir_text.find(", i64 36, ptr @__orison_task_cleanup.on_task.16.0)") != std::string::npos);
+    assert(result.ir_text.find("insertvalue { [2 x %record.Pair], [2 x %record.Pair] } undef, [2 x %record.Pair] %tmp22, 0") != std::string::npos);
+    assert(result.ir_text.find("insertvalue { [2 x %record.Pair], [2 x %record.Pair] } %tmp23, [2 x %record.Pair] %tmp29, 1") != std::string::npos);
+    assert(result.ir_text.find("store { [2 x %record.Pair], [2 x %record.Pair] } %tmp30, ptr %tmp31, align 8") != std::string::npos);
+    assert(result.ir_text.find("load [32 x i8], ptr %tmp31, align 8") != std::string::npos);
+    assert(result.ir_text.find("store { i32, [32 x i8] } %tmp33, ptr %result_storage") != std::string::npos);
+    assert(result.ir_text.find("load { i32, [32 x i8] }, ptr %pending.task.result") != std::string::npos);
+    assert(result.ir_text.find("@__orison_method.demo.lowering.Result_Array_Pair__2__.placeholder") != std::string::npos);
+}
+
 void test_emit_array_thread_result_storage_size() {
     auto path = std::filesystem::temp_directory_path() / "orison_lowering_array_thread_result.or";
     auto result = lower_source(
@@ -16305,6 +16385,8 @@ auto main() -> int {
     test_emit_generic_array_choice_task_result_storage_size();
     test_emit_generic_nested_array_choice_thread_result_storage_size();
     test_emit_generic_nested_array_choice_task_result_storage_size();
+    test_emit_generic_record_array_choice_thread_result_storage_size();
+    test_emit_generic_record_array_choice_task_result_storage_size();
     test_emit_array_thread_result_storage_size();
     test_emit_array_task_result_storage_size();
     test_emit_nested_array_thread_result_storage_size();

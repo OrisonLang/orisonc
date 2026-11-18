@@ -119,6 +119,9 @@ drop/cleanup decisions.
 - Concrete `Result<Array<Array<UInt32, 2>, 2>>` choice values recursively specialize the same fields to
   `{ [2 x [2 x i32]], [2 x [2 x i32]] }`, retain `{ i32, [32 x i8] }` and 36-byte result storage, and emit the
   concrete `Result_Array_Array_UInt32__2___2__` implementation symbol.
+- Concrete `Result<Array<Pair, 2>>` choice values compose named records and fixed arrays as
+  `{ [2 x %record.Pair], [2 x %record.Pair] }`, retain `{ i32, [32 x i8] }` and 36-byte result storage, and emit the
+  concrete `Result_Array_Pair__2__` implementation symbol.
 - Cleanup thunks now lower cleanup-candidate environment fields to deterministic field addresses, providing the
   insertion point for future owned-capture drop emission while still emitting no drops today.
 - Cleanup candidate plans now include deterministic type-specific drop symbol names; cleanup thunks document those
@@ -203,6 +206,9 @@ drop/cleanup decisions.
   transfer.
 - `examples/concurrency_generic_nested_array_choice_task_main.or` and
   `examples/concurrency_generic_nested_array_choice_thread_main.or` cover concrete generic nested-array multi-payload
+  choice transfer.
+- `examples/concurrency_generic_record_array_choice_task_main.or` and
+  `examples/concurrency_generic_record_array_choice_thread_main.or` cover concrete generic record-array multi-payload
   choice transfer.
 - `examples/concurrency_thread_main.or` is the checked-in runnable smoke source for the current scalar thread runtime
   path.
