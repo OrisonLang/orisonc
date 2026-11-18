@@ -113,6 +113,9 @@ drop/cleanup decisions.
   `{ i32, [12 x i8] }` and 16-byte result storage while restoring typed record fields and the scalar marker.
 - Concrete `Result<UInt32>` choice values specialize `Success(left: T, right: T)` to `{ i32, i32 }`, retain
   `{ i32, [8 x i8] }` and 12-byte result storage, and emit the concrete `Result_UInt32_` implementation symbol.
+- Concrete `Result<Array<UInt32, 2>>` choice values specialize the same fields to
+  `{ [2 x i32], [2 x i32] }`, retain `{ i32, [16 x i8] }` and 20-byte result storage, and emit the concrete
+  `Result_Array_UInt32__2__` implementation symbol.
 - Cleanup thunks now lower cleanup-candidate environment fields to deterministic field addresses, providing the
   insertion point for future owned-capture drop emission while still emitting no drops today.
 - Cleanup candidate plans now include deterministic type-specific drop symbol names; cleanup thunks document those
@@ -192,6 +195,9 @@ drop/cleanup decisions.
 - `examples/concurrency_generic_aggregate_choice_task_main.or` and
   `examples/concurrency_generic_aggregate_choice_thread_main.or` cover concrete generic named-record multi-payload
   choice transfer.
+- `examples/concurrency_generic_array_choice_task_main.or` and
+  `examples/concurrency_generic_array_choice_thread_main.or` cover concrete generic fixed-array multi-payload choice
+  transfer.
 - `examples/concurrency_thread_main.or` is the checked-in runnable smoke source for the current scalar thread runtime
   path.
 - Module emission now validates concurrency runtime prelude declarations plus generated task/thread entry and cleanup

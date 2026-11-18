@@ -4074,3 +4074,7 @@ This file tracks which source-language frontend slices are reflected in the curr
   `Result<Pair>` specializes two `T` payload fields to `{ %record.Pair, %record.Pair }`, retains
   `{ i32, [16 x i8] }` with 20-byte result storage, reconstructs all four record fields, and emits concrete
   `Result_Pair_` implementation symbols. No syntax or ABI changed.
+- 2026-11-17: Concrete generic fixed-array multi-payload choices now have checked-in task and thread proof.
+  `Result<Array<UInt32, 2>>` specializes two `T` payload fields to `{ [2 x i32], [2 x i32] }`, retains
+  `{ i32, [16 x i8] }` with 20-byte result storage, reconstructs all four indexed values, and emits concrete
+  `Result_Array_UInt32__2__` implementation symbols. No syntax or ABI changed.
