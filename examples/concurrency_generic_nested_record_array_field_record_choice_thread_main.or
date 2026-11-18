@@ -1,0 +1,41 @@
+package examples.concurrencygenericnestedrecordarrayfieldrecordchoicethread
+
+record Pair
+    public first: UInt32
+    public second: UInt32
+
+record Batch
+    public values: Array<Array<Pair, 2>, 2>
+
+choice Result<T>
+    Failure(code: UInt32)
+    Success(left: T, right: T)
+
+implements Transferable for Result<Batch>
+    function placeholder(this: shared This) -> Unit
+        return
+
+function main() -> UInt32
+    let first = 2 as UInt32
+    let second = 3 as UInt32
+    let third = 4 as UInt32
+    let fourth = 1 as UInt32
+    let fifth = 2 as UInt32
+    let sixth = 3 as UInt32
+    let seventh = 1 as UInt32
+    let eighth = 5 as UInt32
+    let ninth = 2 as UInt32
+    let tenth = 3 as UInt32
+    let eleventh = 4 as UInt32
+    let twelfth = 1 as UInt32
+    let thirteenth = 2 as UInt32
+    let fourteenth = 3 as UInt32
+    let fifteenth = 1 as UInt32
+    let sixteenth = 5 as UInt32
+    let worker = thread
+        Success(Batch([[Pair(first, second), Pair(third, fourth)], [Pair(fifth, sixth), Pair(seventh, eighth)]]), Batch([[Pair(ninth, tenth), Pair(eleventh, twelfth)], [Pair(thirteenth, fourteenth), Pair(fifteenth, sixteenth)]]))
+
+    let result: Result<Batch> = worker.join()
+    switch result
+        Failure(code) => code + 1 as UInt32
+        Success(left, right) => left.values[0][0].first + left.values[0][0].second + left.values[0][1].first + left.values[0][1].second + left.values[1][0].first + left.values[1][0].second + left.values[1][1].first + left.values[1][1].second + right.values[0][0].first + right.values[0][0].second + right.values[0][1].first + right.values[0][1].second + right.values[1][0].first + right.values[1][0].second + right.values[1][1].first + right.values[1][1].second == 42 as UInt32 ? 0 as UInt32 : 1 as UInt32

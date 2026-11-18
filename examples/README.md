@@ -141,6 +141,8 @@ member-derived receivers.
 `concurrency_generic_record_array_choice_thread_main.or` demonstrates concrete generic record-array payloads returned by a thread.
 `concurrency_generic_record_array_field_record_choice_task_main.or` demonstrates concrete generic record payloads containing fixed arrays of records returned by a task.
 `concurrency_generic_record_array_field_record_choice_thread_main.or` demonstrates concrete generic record payloads containing fixed arrays of records returned by a thread.
+`concurrency_generic_nested_record_array_field_record_choice_task_main.or` demonstrates concrete generic record payloads containing nested fixed arrays of records returned by a task.
+`concurrency_generic_nested_record_array_field_record_choice_thread_main.or` demonstrates concrete generic record payloads containing nested fixed arrays of records returned by a thread.
 `concurrency_choice_task_main.or` demonstrates a scalar-payload choice returned by a task.
 `concurrency_choice_thread_main.or` demonstrates a scalar-payload choice returned by a thread.
 `concurrency_distinct_choice_task_main.or` demonstrates distinct scalar choice payload layouts returned by a task.

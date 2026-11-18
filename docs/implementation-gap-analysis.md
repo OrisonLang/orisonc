@@ -190,4 +190,4 @@ This note is an implementation snapshot. It does not define language syntax or s
 
 ## Suggested Next Step
 
-- Audit concrete generic records containing nested fixed arrays of named records through task and thread result storage.
+- Audit concurrency capture planning for repeated identifiers and remove duplicate environment slots if confirmed.
