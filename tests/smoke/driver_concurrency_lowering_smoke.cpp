@@ -948,6 +948,74 @@ auto main() -> int {
     assert(generic_record_array_choice_thread.stdout_text.empty());
     assert(generic_record_array_choice_thread.stderr_text.empty());
 
+    auto generic_array_field_record_choice_task_path = std::filesystem::path(ORISON_SOURCE_DIR) /
+        "examples" / "concurrency_generic_array_field_record_choice_task_main.or";
+    auto generic_array_field_record_choice_task_ir = run_emit_llvm(app, generic_array_field_record_choice_task_path);
+    assert_success_with_stdout_contains(
+        generic_array_field_record_choice_task_ir,
+        {
+            "%record.Batch = type { [2 x i32], i32 }",
+            "%pending.task.env = alloca { i32, i32, i32, i32, i32, i32 }",
+            "%pending.task.result = alloca { i32, [24 x i8] }",
+            "call ptr @__orison_task_spawn(ptr @__orison_task_thunk.main.22.0, ptr %pending.task.env, ptr %pending.task.result, i64 28, ptr @__orison_task_cleanup.main.22.0)",
+            "%tmp15 = insertvalue %record.Batch undef, [2 x i32] %tmp14, 0",
+            "%tmp17 = insertvalue { %record.Batch, %record.Batch } undef, %record.Batch %tmp16, 0",
+            "%tmp22 = insertvalue { %record.Batch, %record.Batch } %tmp17, %record.Batch %tmp21, 1",
+            "store { %record.Batch, %record.Batch } %tmp22, ptr %tmp23, align 8",
+            "%tmp24 = load [24 x i8], ptr %tmp23, align 8",
+            "store { i32, [24 x i8] } %tmp25, ptr %result_storage",
+            "load { i32, [24 x i8] }, ptr %pending.task.result",
+            "load { %record.Batch, %record.Batch }, ptr %tmp14, align 8",
+            "extractvalue { %record.Batch, %record.Batch } %tmp15, 0",
+            "extractvalue { %record.Batch, %record.Batch } %tmp15, 1",
+            "getelementptr %record.Batch, ptr %left.addr, i32 0, i32 0",
+            "getelementptr [2 x i32], ptr %tmp18, i64 0, i64 0",
+            "getelementptr %record.Batch, ptr %left.addr, i32 0, i32 1",
+            "getelementptr %record.Batch, ptr %right.addr, i32 0, i32 0",
+            "getelementptr [2 x i32], ptr %tmp32, i64 0, i64 1",
+            "getelementptr %record.Batch, ptr %right.addr, i32 0, i32 1",
+            "@__orison_method.examples.concurrencygenericarrayfieldrecordchoicetask.Result_Batch_.placeholder",
+        }
+    );
+    auto generic_array_field_record_choice_task = run_program(app, generic_array_field_record_choice_task_path);
+    assert(generic_array_field_record_choice_task.exit_code == 0);
+    assert(generic_array_field_record_choice_task.stdout_text.empty());
+    assert(generic_array_field_record_choice_task.stderr_text.empty());
+
+    auto generic_array_field_record_choice_thread_path = std::filesystem::path(ORISON_SOURCE_DIR) /
+        "examples" / "concurrency_generic_array_field_record_choice_thread_main.or";
+    auto generic_array_field_record_choice_thread_ir = run_emit_llvm(app, generic_array_field_record_choice_thread_path);
+    assert_success_with_stdout_contains(
+        generic_array_field_record_choice_thread_ir,
+        {
+            "%record.Batch = type { [2 x i32], i32 }",
+            "%worker.thread.env = alloca { i32, i32, i32, i32, i32, i32 }",
+            "%worker.thread.result = alloca { i32, [24 x i8] }",
+            "call ptr @__orison_thread_spawn(ptr @__orison_thread_thunk.main.22.0, ptr %worker.thread.env, ptr %worker.thread.result, i64 28, ptr @__orison_thread_cleanup.main.22.0)",
+            "%tmp15 = insertvalue %record.Batch undef, [2 x i32] %tmp14, 0",
+            "%tmp17 = insertvalue { %record.Batch, %record.Batch } undef, %record.Batch %tmp16, 0",
+            "%tmp22 = insertvalue { %record.Batch, %record.Batch } %tmp17, %record.Batch %tmp21, 1",
+            "store { %record.Batch, %record.Batch } %tmp22, ptr %tmp23, align 8",
+            "%tmp24 = load [24 x i8], ptr %tmp23, align 8",
+            "store { i32, [24 x i8] } %tmp25, ptr %result_storage",
+            "load { i32, [24 x i8] }, ptr %worker.thread.result",
+            "load { %record.Batch, %record.Batch }, ptr %tmp14, align 8",
+            "extractvalue { %record.Batch, %record.Batch } %tmp15, 0",
+            "extractvalue { %record.Batch, %record.Batch } %tmp15, 1",
+            "getelementptr %record.Batch, ptr %left.addr, i32 0, i32 0",
+            "getelementptr [2 x i32], ptr %tmp18, i64 0, i64 0",
+            "getelementptr %record.Batch, ptr %left.addr, i32 0, i32 1",
+            "getelementptr %record.Batch, ptr %right.addr, i32 0, i32 0",
+            "getelementptr [2 x i32], ptr %tmp32, i64 0, i64 1",
+            "getelementptr %record.Batch, ptr %right.addr, i32 0, i32 1",
+            "@__orison_method.examples.concurrencygenericarrayfieldrecordchoicethread.Result_Batch_.placeholder",
+        }
+    );
+    auto generic_array_field_record_choice_thread = run_program(app, generic_array_field_record_choice_thread_path);
+    assert(generic_array_field_record_choice_thread.exit_code == 0);
+    assert(generic_array_field_record_choice_thread.stdout_text.empty());
+    assert(generic_array_field_record_choice_thread.stderr_text.empty());
+
     auto array_task_path = std::filesystem::path(ORISON_SOURCE_DIR) /
         "examples" / "concurrency_array_task_main.or";
     auto array_task_ir = run_emit_llvm(app, array_task_path);

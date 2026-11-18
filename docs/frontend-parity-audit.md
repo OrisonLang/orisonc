@@ -4088,3 +4088,7 @@ This file tracks which source-language frontend slices are reflected in the curr
   `{ [2 x %record.Pair], [2 x %record.Pair] }`, retains `{ i32, [32 x i8] }` with 36-byte result storage,
   reconstructs all eight record fields, and emits concrete `Result_Array_Pair__2__` implementation symbols. No
   syntax or ABI changed.
+- 2026-11-17: Concrete generic record payloads containing fixed arrays now have checked-in task and thread proof.
+  `Result<Batch>` specializes two `T` payload fields to `{ %record.Batch, %record.Batch }`, where `%record.Batch` is
+  `{ [2 x i32], i32 }`; it uses `{ i32, [24 x i8] }` with 28-byte result storage, reconstructs both array fields and
+  scalar fields, and emits concrete `Result_Batch_` implementation symbols. No syntax or ABI changed.
