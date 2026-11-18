@@ -149,6 +149,8 @@ member-derived receivers.
 `concurrency_distinct_choice_thread_main.or` demonstrates distinct scalar choice payload layouts returned by a thread.
 `concurrency_repeated_capture_task_main.or` demonstrates one outer binding reused by a task without duplicate capture storage.
 `concurrency_repeated_capture_thread_main.or` demonstrates one outer binding reused by a thread without duplicate capture storage.
+`concurrency_statement_body_task_main.or` demonstrates straight-line local statements inside a task body.
+`concurrency_statement_body_thread_main.or` demonstrates straight-line local statements inside a thread body.
 
 The numbered `tour_*.or` files split `ORISON_TOUR.md` into focused examples:
 

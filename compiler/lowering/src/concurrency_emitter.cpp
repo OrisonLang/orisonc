@@ -2,12 +2,15 @@
 
 #include "orison/lowering/concurrency_plan.hpp"
 #include "orison/lowering/concurrency_runtime.hpp"
+#include "orison/lowering/control_flow_emitter.hpp"
 #include "orison/lowering/expression_emitter.hpp"
 #include "orison/lowering/llvm_cfg.hpp"
 #include "orison/lowering/llvm_names.hpp"
 #include "orison/lowering/lowering_diagnostics.hpp"
 #include "orison/lowering/lowering_failure_lifecycle.hpp"
 #include "orison/lowering/source_type_queries.hpp"
+#include "orison/lowering/statement_emitter.hpp"
+#include "orison/lowering/unit_deferred_cleanup.hpp"
 
 #include <utility>
 
@@ -29,6 +32,21 @@ auto thread_body_result_expression(
         return &final_statement.expression;
     }
     return nullptr;
+}
+
+auto is_supported_concurrency_body_prefix(
+    syntax::StatementSyntax const& statement
+) -> bool {
+    if (statement.kind == syntax::StatementKind::let_binding ||
+        statement.kind == syntax::StatementKind::var_binding) {
+        return statement.expression.kind != syntax::ExpressionKind::task &&
+               statement.expression.kind != syntax::ExpressionKind::thread;
+    }
+    if (statement.kind == syntax::StatementKind::assignment_statement) {
+        return true;
+    }
+    return statement.kind == syntax::StatementKind::expression_statement &&
+           statement.expression.kind == syntax::ExpressionKind::call;
 }
 
 }  // namespace
@@ -276,13 +294,27 @@ auto emit_concurrency_entry_thunk(
         thunk_state.source_type_names[capture.name] = capture.source_type_name;
     }
 
-    auto lowered_result = lower_expression(
-        *result_expression,
+    for (auto index = std::size_t {0}; index + 1 < expression.nested_statements.size(); ++index) {
+        auto const& statement = expression.nested_statements[index];
+        if (statement == nullptr || !is_supported_concurrency_body_prefix(*statement)) {
+            diagnostics.error(
+                statement != nullptr ? statement->line : expression.line,
+                "lowering does not yet support this " + std::string(expression_name) + " body statement"
+            );
+            return std::nullopt;
+        }
+    }
+
+    auto lowered_result = lower_value_statement_block(
+        expression.nested_statements,
         plan.result_type.type,
         plan.result_type.signedness,
         context,
         thunk_session,
-        output
+        diagnostics,
+        output,
+        lower_final_control_flow_statement,
+        lower_unit_deferred_cleanup_block
     );
     if (!lowered_result.has_value()) {
         diagnostics.error(

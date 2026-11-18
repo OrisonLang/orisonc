@@ -1,0 +1,16 @@
+package examples.concurrencystatementbodytask
+
+function observe(value: UInt32) -> Unit
+    return
+
+async function main() -> UInt32
+    let base = 20 as UInt32
+    let pending = task
+        let doubled = base + base
+        var result = doubled
+        result = result + 2 as UInt32
+        observe(result)
+        result
+
+    let value: UInt32 = await pending
+    value == 42 as UInt32 ? 0 as UInt32 : 1 as UInt32

@@ -1404,6 +1404,64 @@ auto main() -> int {
     assert(repeated_capture_thread.stdout_text.empty());
     assert(repeated_capture_thread.stderr_text.empty());
 
+    auto statement_body_task_path = std::filesystem::path(ORISON_SOURCE_DIR) /
+        "examples" / "concurrency_statement_body_task_main.or";
+    auto statement_body_task_ir = run_emit_llvm(app, statement_body_task_path);
+    assert_success_with_stdout_contains(
+        statement_body_task_ir,
+        {
+            "define private void @__orison_task_thunk.main.8.0(ptr %environment, ptr %result_storage)",
+            "%doubled = add i32 0, %tmp2",
+            "%result.addr = alloca i32",
+            "store i32 %doubled, ptr %result.addr",
+            "call void @observe(i32 %tmp5)",
+            "store i32 %tmp6, ptr %result_storage",
+        }
+    );
+    auto statement_body_task = run_program(app, statement_body_task_path);
+    assert(statement_body_task.exit_code == 0);
+    assert(statement_body_task.stdout_text.empty());
+    assert(statement_body_task.stderr_text.empty());
+
+    auto statement_body_thread_path = std::filesystem::path(ORISON_SOURCE_DIR) /
+        "examples" / "concurrency_statement_body_thread_main.or";
+    auto statement_body_thread_ir = run_emit_llvm(app, statement_body_thread_path);
+    assert_success_with_stdout_contains(
+        statement_body_thread_ir,
+        {
+            "define private void @__orison_thread_thunk.main.8.0(ptr %environment, ptr %result_storage)",
+            "%doubled = add i32 0, %tmp2",
+            "%result.addr = alloca i32",
+            "store i32 %doubled, ptr %result.addr",
+            "call void @observe(i32 %tmp5)",
+            "store i32 %tmp6, ptr %result_storage",
+        }
+    );
+    auto statement_body_thread = run_program(app, statement_body_thread_path);
+    assert(statement_body_thread.exit_code == 0);
+    assert(statement_body_thread.stdout_text.empty());
+    assert(statement_body_thread.stderr_text.empty());
+
+    auto nested_task_body_path = std::filesystem::temp_directory_path() / "nested_task_body.or";
+    write_fixture(
+        nested_task_body_path,
+        "demo.nestedtaskbody",
+        {
+            "async function launch(value: UInt32) -> UInt32",
+            "    let pending = task",
+            "        let nested = task",
+            "            value",
+            "        value",
+            "    await pending",
+        }
+    );
+    auto nested_task_body = run_emit_llvm(app, nested_task_body_path);
+    assert(nested_task_body.exit_code != 0);
+    assert(
+        nested_task_body.stderr_text.find("lowering does not yet support this task body statement") !=
+        std::string::npos
+    );
+
     std::filesystem::remove_all(smoke_temp_root);
     return 0;
 }

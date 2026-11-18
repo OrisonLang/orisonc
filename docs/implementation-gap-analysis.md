@@ -190,5 +190,5 @@ This note is an implementation snapshot. It does not define language syntax or s
 
 ## Suggested Next Step
 
-- Lower straight-line statements before the final task/thread body expression, establishing the entry-thunk block model
-  needed before nested concurrency spawn and transitive capture propagation.
+- Model transitive captures for nested task/thread expressions and propagate nested generated thunk definitions and
+  symbols into the enclosing module before admitting nested concurrency body bindings.

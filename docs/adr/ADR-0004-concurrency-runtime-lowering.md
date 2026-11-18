@@ -61,6 +61,11 @@ drop/cleanup decisions.
   later join or abandoned-handle cleanup.
 - Scalar `task` bindings now reuse the thread lowering machinery for capture environment allocation, result storage
   allocation, entry thunk emission, spawn failure checks, and abandoned-handle cleanup.
+- Task and thread entry thunks lower straight-line body prefixes through the shared statement-block lowerer before
+  storing the final value. The admitted prefixes are local `let`, local `var`, assignment, and call statements.
+  Semantic expression summaries provide result types when the final value is a thunk-local binding.
+- Nested task/thread bindings remain rejected as body prefixes until transitive captures and nested generated-function
+  propagation are implemented.
 - Scalar `await` expressions for lowered task bindings call `__orison_task_await(handle)`, load the typed result from
   compiler-owned result storage, and destroy the handle after the load.
 - `async function` lowering is currently a narrow backend admission rule for scalar task/await bodies; it does not yet

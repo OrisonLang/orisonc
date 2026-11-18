@@ -1,0 +1,16 @@
+package examples.concurrencystatementbodythread
+
+function observe(value: UInt32) -> Unit
+    return
+
+function main() -> UInt32
+    let base = 20 as UInt32
+    let worker = thread
+        let doubled = base + base
+        var result = doubled
+        result = result + 2 as UInt32
+        observe(result)
+        result
+
+    let value: UInt32 = worker.join()
+    value == 42 as UInt32 ? 0 as UInt32 : 1 as UInt32

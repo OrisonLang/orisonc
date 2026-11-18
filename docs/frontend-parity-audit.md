@@ -1,5 +1,9 @@
 # Frontend Parity Audit
 
+- 2026-11-18: Task and thread entry thunks now lower straight-line `let`, `var`, assignment, and call statements before
+  their final value expression. Semantic expression summaries recover final local result types during planning. Checked-in
+  task/thread programs pin emitted local storage, mutation, calls, result transfer, link, and runtime behavior. Nested
+  concurrency prefixes remain explicitly rejected. No source syntax or runtime ABI changed.
 - 2026-11-18: Concurrency capture metadata now records the owning task/thread expression line. Environment and cleanup
   planning match that exact identity, so nested same-kind captures no longer enter an outer plan through inclusive line
   ranges. Semantic and planner regressions cover nested origin restoration and owned-capture isolation. No source syntax
