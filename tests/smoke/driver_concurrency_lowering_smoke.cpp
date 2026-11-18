@@ -818,6 +818,68 @@ auto main() -> int {
     assert(generic_array_choice_thread.stdout_text.empty());
     assert(generic_array_choice_thread.stderr_text.empty());
 
+    auto generic_nested_array_choice_task_path = std::filesystem::path(ORISON_SOURCE_DIR) /
+        "examples" / "concurrency_generic_nested_array_choice_task_main.or";
+    auto generic_nested_array_choice_task_ir = run_emit_llvm(app, generic_nested_array_choice_task_path);
+    assert_success_with_stdout_contains(
+        generic_nested_array_choice_task_ir,
+        {
+            "%pending.task.env = alloca { i32, i32, i32, i32, i32, i32, i32, i32 }",
+            "%pending.task.result = alloca { i32, [32 x i8] }",
+            "call ptr @__orison_task_spawn(ptr @__orison_task_thunk.main.20.0, ptr %pending.task.env, ptr %pending.task.result, i64 36, ptr @__orison_task_cleanup.main.20.0)",
+            "%tmp19 = insertvalue [2 x [2 x i32]] undef, [2 x i32] %tmp18, 0",
+            "%tmp23 = insertvalue { [2 x [2 x i32]], [2 x [2 x i32]] } undef, [2 x [2 x i32]] %tmp22, 0",
+            "%tmp30 = insertvalue { [2 x [2 x i32]], [2 x [2 x i32]] } %tmp23, [2 x [2 x i32]] %tmp29, 1",
+            "store { [2 x [2 x i32]], [2 x [2 x i32]] } %tmp30, ptr %tmp31, align 8",
+            "%tmp32 = load [32 x i8], ptr %tmp31, align 8",
+            "store { i32, [32 x i8] } %tmp33, ptr %result_storage",
+            "load { i32, [32 x i8] }, ptr %pending.task.result",
+            "load { [2 x [2 x i32]], [2 x [2 x i32]] }, ptr %tmp16, align 8",
+            "extractvalue { [2 x [2 x i32]], [2 x [2 x i32]] } %tmp17, 0",
+            "extractvalue { [2 x [2 x i32]], [2 x [2 x i32]] } %tmp17, 1",
+            "getelementptr [2 x [2 x i32]], ptr %left.addr, i64 0, i64 0",
+            "getelementptr [2 x [2 x i32]], ptr %left.addr, i64 0, i64 1",
+            "getelementptr [2 x [2 x i32]], ptr %right.addr, i64 0, i64 0",
+            "getelementptr [2 x [2 x i32]], ptr %right.addr, i64 0, i64 1",
+            "@__orison_method.examples.concurrencygenericnestedarraychoicetask.Result_Array_Array_UInt32__2___2__.placeholder",
+        }
+    );
+    auto generic_nested_array_choice_task = run_program(app, generic_nested_array_choice_task_path);
+    assert(generic_nested_array_choice_task.exit_code == 0);
+    assert(generic_nested_array_choice_task.stdout_text.empty());
+    assert(generic_nested_array_choice_task.stderr_text.empty());
+
+    auto generic_nested_array_choice_thread_path = std::filesystem::path(ORISON_SOURCE_DIR) /
+        "examples" / "concurrency_generic_nested_array_choice_thread_main.or";
+    auto generic_nested_array_choice_thread_ir = run_emit_llvm(app, generic_nested_array_choice_thread_path);
+    assert_success_with_stdout_contains(
+        generic_nested_array_choice_thread_ir,
+        {
+            "%worker.thread.env = alloca { i32, i32, i32, i32, i32, i32, i32, i32 }",
+            "%worker.thread.result = alloca { i32, [32 x i8] }",
+            "call ptr @__orison_thread_spawn(ptr @__orison_thread_thunk.main.20.0, ptr %worker.thread.env, ptr %worker.thread.result, i64 36, ptr @__orison_thread_cleanup.main.20.0)",
+            "%tmp19 = insertvalue [2 x [2 x i32]] undef, [2 x i32] %tmp18, 0",
+            "%tmp23 = insertvalue { [2 x [2 x i32]], [2 x [2 x i32]] } undef, [2 x [2 x i32]] %tmp22, 0",
+            "%tmp30 = insertvalue { [2 x [2 x i32]], [2 x [2 x i32]] } %tmp23, [2 x [2 x i32]] %tmp29, 1",
+            "store { [2 x [2 x i32]], [2 x [2 x i32]] } %tmp30, ptr %tmp31, align 8",
+            "%tmp32 = load [32 x i8], ptr %tmp31, align 8",
+            "store { i32, [32 x i8] } %tmp33, ptr %result_storage",
+            "load { i32, [32 x i8] }, ptr %worker.thread.result",
+            "load { [2 x [2 x i32]], [2 x [2 x i32]] }, ptr %tmp16, align 8",
+            "extractvalue { [2 x [2 x i32]], [2 x [2 x i32]] } %tmp17, 0",
+            "extractvalue { [2 x [2 x i32]], [2 x [2 x i32]] } %tmp17, 1",
+            "getelementptr [2 x [2 x i32]], ptr %left.addr, i64 0, i64 0",
+            "getelementptr [2 x [2 x i32]], ptr %left.addr, i64 0, i64 1",
+            "getelementptr [2 x [2 x i32]], ptr %right.addr, i64 0, i64 0",
+            "getelementptr [2 x [2 x i32]], ptr %right.addr, i64 0, i64 1",
+            "@__orison_method.examples.concurrencygenericnestedarraychoicethread.Result_Array_Array_UInt32__2___2__.placeholder",
+        }
+    );
+    auto generic_nested_array_choice_thread = run_program(app, generic_nested_array_choice_thread_path);
+    assert(generic_nested_array_choice_thread.exit_code == 0);
+    assert(generic_nested_array_choice_thread.stdout_text.empty());
+    assert(generic_nested_array_choice_thread.stderr_text.empty());
+
     auto array_task_path = std::filesystem::path(ORISON_SOURCE_DIR) /
         "examples" / "concurrency_array_task_main.or";
     auto array_task_ir = run_emit_llvm(app, array_task_path);

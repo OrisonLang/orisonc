@@ -190,4 +190,4 @@ This note is an implementation snapshot. It does not define language syntax or s
 
 ## Suggested Next Step
 
-- Audit concrete generic nested fixed-array multi-payload choices through task and thread result storage.
+- Audit concrete generic fixed arrays of named records through task and thread result storage.
