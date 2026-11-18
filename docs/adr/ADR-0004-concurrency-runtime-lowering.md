@@ -125,6 +125,9 @@ drop/cleanup decisions.
 - Concrete `Result<Batch>` choice values compose records containing fixed arrays as
   `{ %record.Batch, %record.Batch }`, where `%record.Batch` is `{ [2 x i32], i32 }`; they use
   `{ i32, [24 x i8] }`, 28-byte result storage, and the concrete `Result_Batch_` implementation symbol.
+- Concrete `Result<Batch>` choice values also compose records containing fixed arrays of named records as
+  `{ %record.Batch, %record.Batch }`, where `%record.Batch` is `{ [2 x %record.Pair], i32 }`; they use
+  `{ i32, [40 x i8] }`, 44-byte result storage, and preserve the concrete `Result_Batch_` implementation symbol.
 - Cleanup thunks now lower cleanup-candidate environment fields to deterministic field addresses, providing the
   insertion point for future owned-capture drop emission while still emitting no drops today.
 - Cleanup candidate plans now include deterministic type-specific drop symbol names; cleanup thunks document those
@@ -216,6 +219,9 @@ drop/cleanup decisions.
 - `examples/concurrency_generic_array_field_record_choice_task_main.or` and
   `examples/concurrency_generic_array_field_record_choice_thread_main.or` cover concrete generic record payloads
   containing fixed arrays.
+- `examples/concurrency_generic_record_array_field_record_choice_task_main.or` and
+  `examples/concurrency_generic_record_array_field_record_choice_thread_main.or` cover concrete generic record
+  payloads containing fixed arrays of named records.
 - `examples/concurrency_thread_main.or` is the checked-in runnable smoke source for the current scalar thread runtime
   path.
 - Module emission now validates concurrency runtime prelude declarations plus generated task/thread entry and cleanup
