@@ -1,5 +1,9 @@
 # Frontend Parity Audit
 
+- 2026-11-18: Concurrency capture metadata now records the owning task/thread expression line. Environment and cleanup
+  planning match that exact identity, so nested same-kind captures no longer enter an outer plan through inclusive line
+  ranges. Semantic and planner regressions cover nested origin restoration and owned-capture isolation. No source syntax
+  or runtime ABI changed.
 - 2026-11-18: Repeated references to one outer binding in task and thread bodies now lower to one capture environment
   field. Semantic occurrence records remain intact, while environment storage, thunk loading, and owned-capture cleanup
   planning deduplicate by binding name in first-use order. Focused planner, example, driver, link, and runtime coverage

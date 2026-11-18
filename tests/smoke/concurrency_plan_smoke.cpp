@@ -154,6 +154,7 @@ int main() {
     auto record_semantics = orison::semantics::SemanticAnalysisResult {};
     record_semantics.concurrency_captures.push_back(orison::semantics::ConcurrencyCapture {
         .line = 21,
+        .expression_line = 20,
         .name = "payload",
         .type_name = "Payload",
         .expression_kind = orison::semantics::ConcurrencyExpressionKind::thread,
@@ -161,7 +162,16 @@ int main() {
     });
     record_semantics.concurrency_captures.push_back(orison::semantics::ConcurrencyCapture {
         .line = 21,
+        .expression_line = 20,
         .name = "payload",
+        .type_name = "Payload",
+        .expression_kind = orison::semantics::ConcurrencyExpressionKind::thread,
+        .capture_kind = orison::semantics::ConcurrencyCaptureKind::immutable_outer_local,
+    });
+    record_semantics.concurrency_captures.push_back(orison::semantics::ConcurrencyCapture {
+        .line = 23,
+        .expression_line = 22,
+        .name = "nested_payload",
         .type_name = "Payload",
         .expression_kind = orison::semantics::ConcurrencyExpressionKind::thread,
         .capture_kind = orison::semantics::ConcurrencyCaptureKind::immutable_outer_local,

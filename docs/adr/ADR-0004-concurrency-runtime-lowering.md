@@ -40,9 +40,13 @@ drop/cleanup decisions.
   result type, and semantic captures before any runtime call or thunk IR is emitted.
 - The concurrency plan carries concrete LLVM type strings, field indexes, and target-sized byte counts for capture
   environments plus result storage.
-- Semantic analysis retains one concurrency-capture record per source occurrence. Lowering converts those occurrences
-  into one environment field per captured binding, preserving first-use order and sharing the loaded SSA value across
-  repeated references. Cleanup planning uses the same deduplicated field layout.
+- Semantic analysis retains one concurrency-capture record per source occurrence, including the owning concurrency
+  expression's source line. Lowering selects captures by expression kind and exact owner line, then converts those
+  occurrences into one environment field per captured binding in first-use order. Cleanup planning uses the same
+  owner-specific deduplicated field layout.
+- Nested concurrency expressions restore the enclosing capture context after semantic analysis. Their direct captures
+  remain assigned to the inner expression rather than entering an enclosing environment through line-range matching.
+  Transitive capture propagation remains future work alongside nested concurrency body lowering.
 - Scalar `thread` bindings can now lower their capture environment allocation, result storage allocation, capture
   stores, private entry thunk, and runtime spawn call shape with the planned result byte size. The thunk loads captures
   from the environment, lowers the final scalar body expression, and writes the result into compiler-owned result

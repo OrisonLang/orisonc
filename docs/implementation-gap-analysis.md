@@ -190,5 +190,5 @@ This note is an implementation snapshot. It does not define language syntax or s
 
 ## Suggested Next Step
 
-- Audit nested task/thread capture association so line-range matching cannot leak inner-expression captures into an
-  outer concurrency environment.
+- Lower straight-line statements before the final task/thread body expression, establishing the entry-thunk block model
+  needed before nested concurrency spawn and transitive capture propagation.

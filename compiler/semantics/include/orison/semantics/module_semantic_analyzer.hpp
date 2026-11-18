@@ -25,6 +25,7 @@ enum class ConcurrencyCaptureKind {
 
 struct ConcurrencyCapture {
     std::size_t line = 0;
+    std::size_t expression_line = 0;
     std::string name;
     std::string type_name;
     ConcurrencyExpressionKind expression_kind = ConcurrencyExpressionKind::task;

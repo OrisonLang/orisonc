@@ -170,15 +170,13 @@ auto infer_concurrency_result_type(
     return std::nullopt;
 }
 
-auto is_capture_in_expression_range(
+auto is_capture_for_expression(
     semantics::ConcurrencyCapture const& capture,
     semantics::ConcurrencyExpressionKind expected_kind,
-    std::size_t first_line,
-    std::size_t last_line
+    std::size_t expression_line
 ) -> bool {
     return capture.expression_kind == expected_kind &&
-           capture.line >= first_line &&
-           capture.line <= last_line;
+           capture.expression_line == expression_line;
 }
 
 auto capture_plans_for_expression(
@@ -188,9 +186,8 @@ auto capture_plans_for_expression(
 ) -> std::vector<ConcurrencyCapturePlan> {
     auto captures = std::vector<ConcurrencyCapturePlan> {};
     auto semantic_kind = semantic_kind_for(expression_plan_kind(expression));
-    auto expression_last_line = max_expression_line(expression);
     for (auto const& capture : semantics.concurrency_captures) {
-        if (!is_capture_in_expression_range(capture, semantic_kind, expression.line, expression_last_line)) {
+        if (!is_capture_for_expression(capture, semantic_kind, expression.line)) {
             continue;
         }
 

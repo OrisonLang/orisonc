@@ -7329,8 +7329,10 @@ private:
 
             auto saved_capture_depth = capture_scope_depth_;
             auto saved_capture_expression_kind = current_capture_expression_kind_;
+            auto saved_capture_expression_line = current_capture_expression_line_;
             capture_scope_depth_ = scope_stack_.size();
             current_capture_expression_kind_ = expression_kind;
+            current_capture_expression_line_ = expression.line;
 
             push_scope();
             for (auto const& nested_statement : expression.nested_statements) {
@@ -7351,6 +7353,7 @@ private:
 
             capture_scope_depth_ = saved_capture_depth;
             current_capture_expression_kind_ = saved_capture_expression_kind;
+            current_capture_expression_line_ = saved_capture_expression_line;
             record_expression_summary(expression);
             return;
         }
@@ -7882,6 +7885,7 @@ private:
 
         concurrency_captures.push_back(ConcurrencyCapture {
             .line = expression.line,
+            .expression_line = current_capture_expression_line_,
             .name = expression.text,
             .type_name = binding->type_name,
             .expression_kind = current_capture_expression_kind_,
@@ -7959,6 +7963,7 @@ private:
     static constexpr std::size_t no_capture_scope_depth = static_cast<std::size_t>(-1);
     std::size_t capture_scope_depth_ = no_capture_scope_depth;
     ConcurrencyExpressionKind current_capture_expression_kind_ = ConcurrencyExpressionKind::task;
+    std::size_t current_capture_expression_line_ = 0;
 };
 
 }  // namespace

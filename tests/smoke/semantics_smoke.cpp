@@ -14486,6 +14486,7 @@ void test_concurrency_capture_classification_success() {
     assert(!analysis.has_errors());
     assert(analysis.concurrency_captures.size() == 2);
     assert(analysis.concurrency_captures[0].line == 5);
+    assert(analysis.concurrency_captures[0].expression_line == 4);
     assert(analysis.concurrency_captures[0].name == "cached");
     assert(analysis.concurrency_captures[0].type_name == "Text");
     assert(analysis.concurrency_captures[0].expression_kind ==
@@ -14493,12 +14494,40 @@ void test_concurrency_capture_classification_success() {
     assert(analysis.concurrency_captures[0].capture_kind ==
            orison::semantics::ConcurrencyCaptureKind::immutable_outer_local);
     assert(analysis.concurrency_captures[1].line == 9);
+    assert(analysis.concurrency_captures[1].expression_line == 8);
     assert(analysis.concurrency_captures[1].name == "data");
     assert(analysis.concurrency_captures[1].type_name == "shared.View<Int64>");
     assert(analysis.concurrency_captures[1].expression_kind ==
            orison::semantics::ConcurrencyExpressionKind::thread);
     assert(analysis.concurrency_captures[1].capture_kind ==
            orison::semantics::ConcurrencyCaptureKind::parameter);
+}
+
+void test_nested_concurrency_capture_origin_success() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_nested_capture_origin_success.or";
+    write_concurrency_fixture(
+        path,
+        "demo.capture",
+        {
+            "async function nested(outer: UInt32, inner: UInt32) -> UInt32",
+            "    let pending = task",
+            "        let outer_copy = outer",
+            "        let nested_pending = task",
+            "            inner",
+            "        outer_copy",
+            "    await pending",
+        }
+    );
+
+    auto analysis = analyze_orison_fixture(path);
+    assert(!analysis.has_errors());
+    assert(analysis.concurrency_captures.size() == 2);
+    assert(analysis.concurrency_captures[0].name == "outer");
+    assert(analysis.concurrency_captures[0].line == 4);
+    assert(analysis.concurrency_captures[0].expression_line == 3);
+    assert(analysis.concurrency_captures[1].name == "inner");
+    assert(analysis.concurrency_captures[1].line == 6);
+    assert(analysis.concurrency_captures[1].expression_line == 5);
 }
 
 void test_thread_capture_owned_parameter_type_failure() {
@@ -15835,6 +15864,7 @@ int main() {
     test_join_async_call_receiver_failure();
     test_thread_value_without_join_failure();
     test_concurrency_capture_classification_success();
+    test_nested_concurrency_capture_origin_success();
     test_thread_capture_owned_parameter_type_failure();
     test_thread_capture_transferable_generic_success();
     test_thread_capture_unconstrained_generic_failure();
