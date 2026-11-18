@@ -33,13 +33,13 @@ int main() {
                   "\n"
                   "async function compute(value: Int64) -> Int64\n"
                   "    let pending = task\n"
-                  "        value + 1\n"
+                  "        value + value\n"
                   "\n"
                   "    await pending\n"
                   "\n"
                   "function on_thread(value: Int64) -> Int64\n"
                   "    let worker = thread\n"
-                  "        value + 1\n"
+                  "        value + value\n"
                   "\n"
                   "    worker.join()\n";
     }
@@ -152,6 +152,13 @@ int main() {
     record_thread_expression.nested_statements.push_back(std::move(record_thread_result));
 
     auto record_semantics = orison::semantics::SemanticAnalysisResult {};
+    record_semantics.concurrency_captures.push_back(orison::semantics::ConcurrencyCapture {
+        .line = 21,
+        .name = "payload",
+        .type_name = "Payload",
+        .expression_kind = orison::semantics::ConcurrencyExpressionKind::thread,
+        .capture_kind = orison::semantics::ConcurrencyCaptureKind::immutable_outer_local,
+    });
     record_semantics.concurrency_captures.push_back(orison::semantics::ConcurrencyCapture {
         .line = 21,
         .name = "payload",

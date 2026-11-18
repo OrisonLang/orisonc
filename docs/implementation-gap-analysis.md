@@ -190,4 +190,5 @@ This note is an implementation snapshot. It does not define language syntax or s
 
 ## Suggested Next Step
 
-- Audit concurrency capture planning for repeated identifiers and remove duplicate environment slots if confirmed.
+- Audit nested task/thread capture association so line-range matching cannot leak inner-expression captures into an
+  outer concurrency environment.

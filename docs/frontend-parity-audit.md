@@ -1,5 +1,9 @@
 # Frontend Parity Audit
 
+- 2026-11-18: Repeated references to one outer binding in task and thread bodies now lower to one capture environment
+  field. Semantic occurrence records remain intact, while environment storage, thunk loading, and owned-capture cleanup
+  planning deduplicate by binding name in first-use order. Focused planner, example, driver, link, and runtime coverage
+  passes without source syntax or runtime ABI changes.
 - 2026-11-16: Choice results carrying named `Pair` records now have task and thread compile-link-run coverage. Both
   paths preserve `%record.Pair` through `{ i32, [8 x i8] }`, use 12-byte result storage, and reconstruct typed record
   bindings for switch-case field reads. No source syntax, production lowering, or runtime ABI changed.

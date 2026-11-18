@@ -1,0 +1,9 @@
+package examples.concurrencyrepeatedcapturetask
+
+async function main() -> UInt32
+    let value = 21 as UInt32
+    let pending = task
+        value + value
+
+    let result: UInt32 = await pending
+    result == 42 as UInt32 ? 0 as UInt32 : 1 as UInt32

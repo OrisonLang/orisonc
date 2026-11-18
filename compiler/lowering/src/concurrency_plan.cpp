@@ -181,6 +181,38 @@ auto is_capture_in_expression_range(
            capture.line <= last_line;
 }
 
+auto capture_plans_for_expression(
+    syntax::ExpressionSyntax const& expression,
+    LoweringEmissionContext const& context,
+    semantics::SemanticAnalysisResult const& semantics
+) -> std::vector<ConcurrencyCapturePlan> {
+    auto captures = std::vector<ConcurrencyCapturePlan> {};
+    auto semantic_kind = semantic_kind_for(expression_plan_kind(expression));
+    auto expression_last_line = max_expression_line(expression);
+    for (auto const& capture : semantics.concurrency_captures) {
+        if (!is_capture_in_expression_range(capture, semantic_kind, expression.line, expression_last_line)) {
+            continue;
+        }
+
+        auto duplicate = std::ranges::find_if(captures, [&](ConcurrencyCapturePlan const& planned_capture) {
+            return planned_capture.name == capture.name;
+        });
+        if (duplicate != captures.end()) {
+            continue;
+        }
+
+        auto lowered_capture_type = lowered_type_for_source_type_name(capture.type_name, context.lowering);
+        captures.push_back(ConcurrencyCapturePlan {
+            .name = capture.name,
+            .source_type_name = capture.type_name,
+            .llvm_type = lowered_capture_type.has_value() ? lowered_capture_type->type : std::string {},
+            .field_index = captures.size(),
+            .capture_kind = capture.capture_kind,
+        });
+    }
+    return captures;
+}
+
 auto environment_llvm_type_for(
     std::vector<ConcurrencyCapturePlan> const& captures
 ) -> std::string {
@@ -268,26 +300,7 @@ void collect_owned_cleanup_actions_from_expression(
     std::vector<ConcurrencyDropCleanupPlan>& drop_cleanups
 ) {
     if (is_concurrency_expression(expression)) {
-        auto captures = std::vector<ConcurrencyCapturePlan> {};
-        auto semantic_kind = semantic_kind_for(expression_plan_kind(expression));
-        auto expression_last_line = max_expression_line(expression);
-        for (auto const& capture : semantics.concurrency_captures) {
-            if (!is_capture_in_expression_range(capture, semantic_kind, expression.line, expression_last_line)) {
-                continue;
-            }
-
-            auto lowered_capture_type = lowered_type_for_source_type_name(
-                capture.type_name,
-                context.lowering
-            );
-            captures.push_back(ConcurrencyCapturePlan {
-                .name = capture.name,
-                .source_type_name = capture.type_name,
-                .llvm_type = lowered_capture_type.has_value() ? lowered_capture_type->type : std::string {},
-                .field_index = captures.size(),
-                .capture_kind = capture.capture_kind,
-            });
-        }
+        auto captures = capture_plans_for_expression(expression, context, semantics);
 
         auto cleanup = cleanup_plan_for(captures, context.lowering.package_name);
         auto drop_cleanup = drop_cleanup_plan_for(
@@ -829,7 +842,6 @@ auto plan_concurrency_expression(
     }
 
     auto kind = expression_plan_kind(expression);
-    auto expression_last_line = max_expression_line(expression);
     auto plan = ConcurrencyExpressionPlan {
         .kind = kind,
         .spawn_operation = spawn_operation_for(kind),
@@ -848,22 +860,7 @@ auto plan_concurrency_expression(
         .result_type = *result_type,
     };
 
-    auto semantic_kind = semantic_kind_for(kind);
-    for (auto const& capture : semantics.concurrency_captures) {
-        if (!is_capture_in_expression_range(capture, semantic_kind, expression.line, expression_last_line)) {
-            continue;
-        }
-
-        auto lowered_capture_type = lowered_type_for_source_type_name(capture.type_name, context.lowering);
-        auto field_index = plan.captures.size();
-        plan.captures.push_back(ConcurrencyCapturePlan {
-            .name = capture.name,
-            .source_type_name = capture.type_name,
-            .llvm_type = lowered_capture_type.has_value() ? lowered_capture_type->type : std::string {},
-            .field_index = field_index,
-            .capture_kind = capture.capture_kind,
-        });
-    }
+    plan.captures = capture_plans_for_expression(expression, context, semantics);
 
     plan.environment_layout = ConcurrencyEnvironmentLayout {
         .llvm_type = environment_llvm_type_for(plan.captures),

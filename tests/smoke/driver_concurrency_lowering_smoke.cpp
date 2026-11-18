@@ -1368,6 +1368,42 @@ auto main() -> int {
     assert(array_field_record_thread.stdout_text.empty());
     assert(array_field_record_thread.stderr_text.empty());
 
+    auto repeated_capture_task_path = std::filesystem::path(ORISON_SOURCE_DIR) /
+        "examples" / "concurrency_repeated_capture_task_main.or";
+    auto repeated_capture_task_ir = run_emit_llvm(app, repeated_capture_task_path);
+    assert_success_with_stdout_contains(
+        repeated_capture_task_ir,
+        {
+            "%pending.task.env = alloca { i32 }",
+            "store i32 %value, ptr %tmp",
+            "%tmp1 = load i32, ptr %tmp0",
+            "add i32 %tmp1, %tmp1",
+        }
+    );
+    assert(repeated_capture_task_ir.stdout_text.find("%pending.task.env = alloca { i32, i32 }") == std::string::npos);
+    auto repeated_capture_task = run_program(app, repeated_capture_task_path);
+    assert(repeated_capture_task.exit_code == 0);
+    assert(repeated_capture_task.stdout_text.empty());
+    assert(repeated_capture_task.stderr_text.empty());
+
+    auto repeated_capture_thread_path = std::filesystem::path(ORISON_SOURCE_DIR) /
+        "examples" / "concurrency_repeated_capture_thread_main.or";
+    auto repeated_capture_thread_ir = run_emit_llvm(app, repeated_capture_thread_path);
+    assert_success_with_stdout_contains(
+        repeated_capture_thread_ir,
+        {
+            "%worker.thread.env = alloca { i32 }",
+            "store i32 %value, ptr %tmp",
+            "%tmp1 = load i32, ptr %tmp0",
+            "add i32 %tmp1, %tmp1",
+        }
+    );
+    assert(repeated_capture_thread_ir.stdout_text.find("%worker.thread.env = alloca { i32, i32 }") == std::string::npos);
+    auto repeated_capture_thread = run_program(app, repeated_capture_thread_path);
+    assert(repeated_capture_thread.exit_code == 0);
+    assert(repeated_capture_thread.stdout_text.empty());
+    assert(repeated_capture_thread.stderr_text.empty());
+
     std::filesystem::remove_all(smoke_temp_root);
     return 0;
 }

@@ -1,0 +1,9 @@
+package examples.concurrencyrepeatedcapturethread
+
+function main() -> UInt32
+    let value = 21 as UInt32
+    let worker = thread
+        value + value
+
+    let result: UInt32 = worker.join()
+    result == 42 as UInt32 ? 0 as UInt32 : 1 as UInt32
