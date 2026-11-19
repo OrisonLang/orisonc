@@ -15043,7 +15043,7 @@ void test_emit_semantic_authorized_nested_task_capture_cleanup_calls() {
         "        let outer_value = outer_payload.value\n"
         "        let inner = task\n"
         "            inner_payload.value\n"
-        "        await inner\n"
+        "        outer_value + await inner\n"
         "    await outer\n"
     };
     auto normal_result = lower_source(path, source);
@@ -15146,6 +15146,8 @@ void test_emit_semantic_authorized_nested_task_capture_cleanup_calls() {
         "ptr %inner.task.result, i64 8, "
         "ptr @__orison_task_cleanup.__orison_task_thunk_nested_11_0.13.0)"
     );
+    assert_ir_contains(result, "call void @__orison_task_await(ptr %inner)");
+    assert_ir_contains(result, " = add i64 ");
 
     auto verifier = orison::lowering::LlvmIrVerifier {};
     auto diagnostics = verifier.verify(result.ir_text);

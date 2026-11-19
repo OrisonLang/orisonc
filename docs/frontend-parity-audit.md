@@ -1,5 +1,9 @@
 # Frontend Parity Audit
 
+- 2026-11-19: `await` now retains its task result type inside larger semantic expressions. A nested outer task can
+  combine a thunk-local scalar with `await inner`; lowering emits the inner await, typed load, handle destruction, and
+  scalar arithmetic before storing the outer result. Semantic and verifier-backed lowering coverage pass without
+  source syntax or runtime ABI changes.
 - 2026-11-19: Paired normal-options nested-task coverage now proves both cleanup thunks retain boundary-local candidate
   metadata while readiness reports two blocked plans. No concrete `Payload` cleanup definition or call is emitted, and
   the metadata-only module passes LLVM verification. No source syntax or runtime ABI changed.

@@ -1907,6 +1907,10 @@ private:
             if (!expression.left) {
                 return {};
             }
+            if (expression.text == "await" &&
+                is_async_boundary_value_origin(infer_expression_value_origin(*expression.left))) {
+                return infer_expression_type_name(*expression.left);
+            }
             if (expression.text == "-"
                 || expression.text == "bit_not") {
                 auto operand_type_name = infer_expression_type_name(*expression.left);

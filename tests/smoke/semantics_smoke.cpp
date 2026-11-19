@@ -14470,7 +14470,7 @@ void test_concurrency_capture_classification_success() {
         path,
         "demo.capture",
         {
-            "async function fetch(url: Text) -> Outcome<Text, UInt32>",
+            "async function fetch(url: Text) -> Text",
             "    let cached = url",
             "    let request_task = task",
             "        cached",
@@ -14549,7 +14549,7 @@ void test_nested_concurrency_local_capture_origin_success() {
             "        let local = seed + 1 as UInt32",
             "        let nested_pending = task",
             "            local + local",
-            "        await nested_pending",
+            "        local + await nested_pending",
             "    await pending",
         }
     );
@@ -15151,7 +15151,7 @@ void test_task_capture_mutable_outer_local_failure() {
         path,
         "demo.task",
         {
-            "async function fetch(url: Text) -> Outcome<Text, UInt32>",
+            "async function fetch(url: Text) -> Int64",
             "    var attempts = 0",
             "    let request_task = task",
             "        attempts",

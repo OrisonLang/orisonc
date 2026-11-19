@@ -63,8 +63,10 @@ Date: 2026-11-18
   boundary-local cleanup pointer.
 - Paired normal-options proof retains both nested cleanup plans and their candidate metadata while reporting both as
   blocked and emitting no concrete cleanup definition or call. The nested concurrency cleanup gate audit is complete.
-- Recommended next implementation: support a nested outer task whose final scalar expression combines a thunk-local
-  value with an awaited inner-task result, such as `outer_value + await inner`.
+- Nested outer tasks now support final scalar expressions that combine a thunk-local value with an awaited inner-task
+  result. Semantic typing and LLVM lowering are proven for `outer_value + await inner`.
+- Recommended next implementation: audit the generalized `await` expression path in scalar comparisons, ternaries,
+  and function-call arguments before broadening nested concurrency result composition further.
 
 Date: 2026-09-03
 
@@ -213,5 +215,5 @@ This note is an implementation snapshot. It does not define language syntax or s
 
 ## Suggested Next Step
 
-- Support a nested outer task whose final scalar expression combines a thunk-local value with an awaited inner-task
-  result, such as `outer_value + await inner`.
+- Audit the generalized `await` expression path in scalar comparisons, ternaries, and function-call arguments before
+  broadening nested concurrency result composition further.
