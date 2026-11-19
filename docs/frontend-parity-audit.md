@@ -1,5 +1,8 @@
 # Frontend Parity Audit
 
+- 2026-11-18: Nested task/thread local-only capture now has semantic, IR, link, and runtime proof. An outer thunk
+  computes its local binding and stores it only in the inner environment; the outer environment retains only its
+  function-scope capture. No compiler behavior, source syntax, or runtime ABI changed.
 - 2026-11-18: Nested scalar task and thread bindings now lower through transitive immutable capture environments.
   Semantic analysis records every crossed concurrency boundary, result summaries preserve nested payload types, and
   lowering propagates inner entry/cleanup definitions plus generated symbols into the module. Checked-in task/thread

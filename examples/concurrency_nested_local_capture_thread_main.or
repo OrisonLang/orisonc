@@ -1,0 +1,12 @@
+package examples.concurrencynestedlocalcapturethread
+
+function main() -> UInt32
+    let seed = 20 as UInt32
+    let outer = thread
+        let local = seed + 1 as UInt32
+        let inner = thread
+            local + local
+        inner.join()
+
+    let result: UInt32 = outer.join()
+    result == 42 as UInt32 ? 0 as UInt32 : 1 as UInt32

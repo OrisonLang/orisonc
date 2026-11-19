@@ -1482,6 +1482,46 @@ auto main() -> int {
     assert(nested_thread.stdout_text.empty());
     assert(nested_thread.stderr_text.empty());
 
+    auto nested_local_task_path = std::filesystem::path(ORISON_SOURCE_DIR) /
+        "examples" / "concurrency_nested_local_capture_task_main.or";
+    auto nested_local_task_ir = run_emit_llvm(app, nested_local_task_path);
+    assert_success_with_stdout_contains(
+        nested_local_task_ir,
+        {
+            "%outer.task.env = alloca { i32 }",
+            "%local = add i32 0, %tmp2",
+            "%inner.task.env = alloca { i32 }",
+            "store i32 %local, ptr %tmp3",
+            "define private void @__orison_task_thunk.__orison_task_thunk_main_5_0.7.0(ptr %environment, ptr %result_storage)",
+            "call void @__orison_task_await(ptr %inner)",
+        }
+    );
+    assert(nested_local_task_ir.stdout_text.find("%outer.task.env = alloca { i32, i32 }") == std::string::npos);
+    auto nested_local_task = run_program(app, nested_local_task_path);
+    assert(nested_local_task.exit_code == 0);
+    assert(nested_local_task.stdout_text.empty());
+    assert(nested_local_task.stderr_text.empty());
+
+    auto nested_local_thread_path = std::filesystem::path(ORISON_SOURCE_DIR) /
+        "examples" / "concurrency_nested_local_capture_thread_main.or";
+    auto nested_local_thread_ir = run_emit_llvm(app, nested_local_thread_path);
+    assert_success_with_stdout_contains(
+        nested_local_thread_ir,
+        {
+            "%outer.thread.env = alloca { i32 }",
+            "%local = add i32 0, %tmp2",
+            "%inner.thread.env = alloca { i32 }",
+            "store i32 %local, ptr %tmp3",
+            "define private void @__orison_thread_thunk.__orison_thread_thunk_main_5_0.7.0(ptr %environment, ptr %result_storage)",
+            "call void @__orison_thread_join(ptr %inner)",
+        }
+    );
+    assert(nested_local_thread_ir.stdout_text.find("%outer.thread.env = alloca { i32, i32 }") == std::string::npos);
+    auto nested_local_thread = run_program(app, nested_local_thread_path);
+    assert(nested_local_thread.exit_code == 0);
+    assert(nested_local_thread.stdout_text.empty());
+    assert(nested_local_thread.stderr_text.empty());
+
     std::filesystem::remove_all(smoke_temp_root);
     return 0;
 }

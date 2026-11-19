@@ -153,6 +153,8 @@ member-derived receivers.
 `concurrency_statement_body_thread_main.or` demonstrates straight-line local statements inside a thread body.
 `concurrency_nested_task_main.or` demonstrates nested scalar tasks with transitive immutable capture and await.
 `concurrency_nested_thread_main.or` demonstrates nested scalar threads with transitive immutable capture and join.
+`concurrency_nested_local_capture_task_main.or` demonstrates an inner task capturing an outer-task local binding.
+`concurrency_nested_local_capture_thread_main.or` demonstrates an inner thread capturing an outer-thread local binding.
 
 The numbered `tour_*.or` files split `ORISON_TOUR.md` into focused examples:
 

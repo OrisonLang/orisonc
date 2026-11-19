@@ -42,8 +42,9 @@ Date: 2026-11-18
   executor semantics remain design work rather than unblocked lowering tasks.
 - Nested scalar task/thread bindings now propagate transitive immutable captures, generated entry/cleanup thunks,
   result types, and synchronization through checked-in compile-link-run coverage.
-- Recommended next implementation: audit inner concurrency expressions that capture a binding declared inside the
-  enclosing task/thread body. This proves local-only capture ownership before mixed task/thread nesting is admitted.
+- Inner task/thread expressions now capture enclosing-body locals without adding those locals to the outer environment.
+- Recommended next implementation: audit mixed task/thread nesting in both directions, including boundary-specific
+  capture safety checks and generated runtime symbol composition.
 
 Date: 2026-09-03
 
@@ -192,5 +193,5 @@ This note is an implementation snapshot. It does not define language syntax or s
 
 ## Suggested Next Step
 
-- Audit inner concurrency expressions that capture a binding declared inside the enclosing task/thread body, then
-  cover mixed task/thread nesting once local-only environment ownership is proven.
+- Audit mixed task/thread nesting in both directions, including boundary-specific capture safety checks and generated
+  runtime symbol composition.

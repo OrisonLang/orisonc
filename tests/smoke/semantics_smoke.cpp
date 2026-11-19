@@ -14538,6 +14538,36 @@ void test_nested_concurrency_capture_origin_success() {
     assert(analysis.concurrency_expressions[1].result_type_name == "UInt32");
 }
 
+void test_nested_concurrency_local_capture_origin_success() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_nested_local_capture_origin_success.or";
+    write_concurrency_fixture(
+        path,
+        "demo.capture",
+        {
+            "async function nested(seed: UInt32) -> UInt32",
+            "    let pending = task",
+            "        let local = seed + 1 as UInt32",
+            "        let nested_pending = task",
+            "            local + local",
+            "        await nested_pending",
+            "    await pending",
+        }
+    );
+
+    auto analysis = analyze_orison_fixture(path);
+    assert(!analysis.has_errors());
+    assert(analysis.concurrency_captures.size() == 3);
+    assert(analysis.concurrency_captures[0].name == "seed");
+    assert(analysis.concurrency_captures[0].expression_line == 3);
+    assert(analysis.concurrency_captures[1].name == "local");
+    assert(analysis.concurrency_captures[1].expression_line == 5);
+    assert(analysis.concurrency_captures[2].name == "local");
+    assert(analysis.concurrency_captures[2].expression_line == 5);
+    assert(analysis.concurrency_expressions.size() == 2);
+    assert(analysis.concurrency_expressions[0].result_type_name == "UInt32");
+    assert(analysis.concurrency_expressions[1].result_type_name == "UInt32");
+}
+
 void test_thread_capture_owned_parameter_type_failure() {
     auto path = std::filesystem::temp_directory_path() / "orison_semantics_thread_owned_parameter_failure.or";
     write_concurrency_fixture(
@@ -15873,6 +15903,7 @@ int main() {
     test_thread_value_without_join_failure();
     test_concurrency_capture_classification_success();
     test_nested_concurrency_capture_origin_success();
+    test_nested_concurrency_local_capture_origin_success();
     test_thread_capture_owned_parameter_type_failure();
     test_thread_capture_transferable_generic_success();
     test_thread_capture_unconstrained_generic_failure();

@@ -67,6 +67,9 @@ drop/cleanup decisions.
 - Nested scalar task/thread bindings lower as body prefixes. Nested entry and cleanup definitions, generated symbols,
   capture environments, result storage, and synchronization calls propagate from the inner lowering session into the
   enclosing module. Semantic expression summaries retain each nested result type for outer planning.
+- A binding declared inside an outer concurrency body is captured only by an inner concurrency expression that uses it.
+  The binding is computed in the outer thunk and stored into the inner environment; it is not added to the outer
+  environment.
 - Scalar `await` expressions for lowered task bindings call `__orison_task_await(handle)`, load the typed result from
   compiler-owned result storage, and destroy the handle after the load.
 - `async function` lowering is currently a narrow backend admission rule for scalar task/await bodies; it does not yet
@@ -245,6 +248,8 @@ drop/cleanup decisions.
   path.
 - `examples/concurrency_nested_task_main.or` and `examples/concurrency_nested_thread_main.or` are checked-in runnable
   sources for transitive scalar capture, nested generated thunks, and nested synchronization.
+- `examples/concurrency_nested_local_capture_task_main.or` and
+  `examples/concurrency_nested_local_capture_thread_main.or` prove local-only inner capture ownership.
 - Module emission now validates concurrency runtime prelude declarations plus generated task/thread entry and cleanup
   thunk symbols through the shared lowering module symbol registry before generated LLVM IR is accepted.
 
