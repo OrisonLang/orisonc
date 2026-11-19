@@ -21,6 +21,9 @@ inventing semantics outside the spec/tour.
   protocol treated as a future language decision.
 - A drop ABI declaration is necessary but not sufficient: cleanup calls require both an accepted source-level drop model
   and a proven emitted declaration for every action in the cleanup thunk.
+- Every non-empty concurrency cleanup plan now marks semantic authorization as required. The readiness planner
+  correlates semantic authorization and emitted declarations independently for each nested cleanup thunk, even when
+  one type-level authorization serves matching actions at multiple boundaries.
 - The compiler will treat drop cleanup authorization as all-or-nothing per cleanup thunk. If any captured field lacks an
   emitted declaration, no drop calls are emitted for that thunk.
 - Drop planning remains finite and explicit. The compiler will not synthesize variadic, spread-like, or open-ended drop

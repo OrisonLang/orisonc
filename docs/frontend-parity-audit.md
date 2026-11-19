@@ -1,5 +1,9 @@
 # Frontend Parity Audit
 
+- 2026-11-19: Non-empty concurrency cleanup plans now require semantic owned-cleanup authorization. Nested readiness
+  coverage proves an emitted declaration alone remains blocked, while one matching type-level authorization plus that
+  declaration authorizes both boundary-local plans without losing their generated cleanup symbols. Cleanup call
+  emission remains behind the existing explicit authorization options; no source syntax or runtime ABI changed.
 - 2026-11-19: Nested concurrency cleanup planning now derives inner cleanup symbols from the generated enclosing thunk
   and resets ordinals per thunk scope. Source-backed coverage proves outer and inner owned aggregate capture candidates
   remain isolated with boundary-local field indexes. Cleanup call emission remains disabled.

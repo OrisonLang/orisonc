@@ -53,9 +53,11 @@ Date: 2026-11-18
 - Distinct-layout scalar-payload choices now retain their tag and erased payload bytes through two nested task or thread
   result-storage layers.
 - Nested owned aggregate capture cleanup plans now retain exact generated thunk identity and isolate candidates per
-  concurrency boundary. Cleanup calls remain metadata-only.
-- Recommended next implementation: audit semantic authorization and declaration correlation for nested concurrency
-  cleanup plans before enabling cleanup emission.
+  concurrency boundary. Each non-empty plan now requires semantic authorization, and readiness correlation proves one
+  matching type-level authorization plus one emitted declaration across both boundary-local plans. Cleanup calls remain
+  gated by the existing explicit authorization options.
+- Recommended next implementation: audit nested cleanup-thunk IR composition under explicit test authorization,
+  including boundary-local field addresses and calls, without enabling normal cleanup emission.
 
 Date: 2026-09-03
 
@@ -204,5 +206,5 @@ This note is an implementation snapshot. It does not define language syntax or s
 
 ## Suggested Next Step
 
-- Audit semantic authorization and declaration correlation for nested concurrency cleanup plans before enabling cleanup
-  emission.
+- Audit nested cleanup-thunk IR composition under explicit test authorization, including boundary-local field addresses
+  and calls, without enabling normal cleanup emission.

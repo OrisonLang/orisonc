@@ -298,6 +298,7 @@ auto drop_cleanup_plan_for(
 ) -> ConcurrencyDropCleanupPlan {
     auto plan = ConcurrencyDropCleanupPlan {
         .cleanup_symbol_name = std::string {cleanup_symbol_name},
+        .requires_semantic_authorization = !candidates.empty(),
     };
     plan.actions.reserve(candidates.size());
     for (auto const& candidate : candidates) {
@@ -989,11 +990,26 @@ auto authorize_drop_cleanup_calls_for_declared_abi(
     ConcurrencyDropCleanupPlan& plan,
     std::vector<OwnedCleanupDeclaration> const& declarations
 ) -> bool {
-    auto report = plan_owned_cleanup_authorization(plan, declarations);
-    plan.owned_cleanup_call_emission = report.authorized
+    auto declarations_complete = plan.actions.empty()
+        ? plan.requires_descriptor_deallocation
+        : std::all_of(
+              plan.actions.begin(),
+              plan.actions.end(),
+              [&](OwnedCleanupAction const& action) {
+                  return std::find_if(
+                             declarations.begin(),
+                             declarations.end(),
+                             [&](OwnedCleanupDeclaration const& declaration) {
+                                 return declaration.symbol_name == action.symbol_name &&
+                                        declaration.emit_declaration;
+                             }
+                         ) != declarations.end();
+              }
+          );
+    plan.owned_cleanup_call_emission = declarations_complete
         ? OwnedCleanupCallEmissionEligibility::declared_drop_abi
         : OwnedCleanupCallEmissionEligibility::metadata_only;
-    return report.authorized;
+    return declarations_complete;
 }
 
 auto apply_drop_cleanup_authorization_options(

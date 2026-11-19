@@ -95,6 +95,10 @@ drop/cleanup decisions.
   nested cleanup symbols use the generated enclosing thunk identity, and each cleanup contains only the owned capture
   candidates assigned to that boundary. Cleanup call emission remains disabled until semantic authorization and ABI
   declarations are proven for the nested plans.
+- Non-empty concurrency cleanup plans require semantic owned-cleanup authorization. Readiness correlation applies one
+  type-level authorization and its emitted ABI declaration to every matching boundary-local action while retaining a
+  distinct authorization result for each generated cleanup thunk. Declaration-only metadata cannot make readiness
+  succeed, and normal cleanup call emission remains disabled without the existing explicit authorization options.
 - Target layout now resolves named record LLVM types through the lowering context, allowing aggregate capture
   environments to report concrete byte sizes when their record field layouts are known.
 - Scalar task/thread lowering now has smoke coverage for record result storage, including context-sized `%record.*`

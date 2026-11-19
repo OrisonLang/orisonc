@@ -227,6 +227,7 @@ int main() {
     );
     assert(record_plan->cleanup.owned_cleanup.actions.front().field_index == 0);
     assert(record_plan->cleanup.owned_cleanup.actions.front().discovery_line == 20);
+    assert(record_plan->cleanup.owned_cleanup.requires_semantic_authorization);
     assert(!orison::lowering::drop_calls_enabled(record_plan->cleanup.owned_cleanup));
 
     auto nested_cleanup_plans = orison::lowering::plan_concurrency_drop_cleanups(
@@ -243,6 +244,7 @@ int main() {
     assert(nested_cleanup_plans[0].actions[1].capture_name == "inner_payload");
     assert(nested_cleanup_plans[0].actions[1].field_index == 1);
     assert(nested_cleanup_plans[0].actions[1].discovery_line == 23);
+    assert(nested_cleanup_plans[0].requires_semantic_authorization);
     assert(!orison::lowering::drop_calls_enabled(nested_cleanup_plans[0]));
     assert(
         nested_cleanup_plans[1].cleanup_symbol_name ==
@@ -252,6 +254,7 @@ int main() {
     assert(nested_cleanup_plans[1].actions[0].capture_name == "inner_payload");
     assert(nested_cleanup_plans[1].actions[0].field_index == 0);
     assert(nested_cleanup_plans[1].actions[0].discovery_line == 25);
+    assert(nested_cleanup_plans[1].requires_semantic_authorization);
     assert(!orison::lowering::drop_calls_enabled(nested_cleanup_plans[1]));
 
     auto nested_cleanup_actions = orison::lowering::plan_concurrency_owned_cleanup_actions(
@@ -260,10 +263,74 @@ int main() {
         semantic_result
     );
     assert(nested_cleanup_actions.size() == 3);
+    auto nested_payload_declaration = orison::lowering::OwnedCleanupDeclaration {
+        .symbol_name = "__orison_owned_cleanup.Payload.demo.concurrency",
+        .source_type_name = "Payload",
+        .discovery_line = 23,
+        .emit_declaration = true,
+    };
+    auto nested_declaration_only_readiness = orison::lowering::plan_owned_cleanup_readiness_snapshot(
+        {},
+        {nested_payload_declaration},
+        nested_cleanup_plans
+    );
+    assert(nested_declaration_only_readiness.cleanup_authorizations.size() == 2);
+    assert(!nested_declaration_only_readiness.cleanup_authorizations[0].authorization.authorized);
+    assert(
+        nested_declaration_only_readiness.cleanup_authorizations[0].authorization.semantic_unresolved_blockers.size() ==
+        2
+    );
+    assert(nested_declaration_only_readiness.cleanup_authorizations[0].authorization.missing_declarations.empty());
+    assert(!nested_declaration_only_readiness.cleanup_authorizations[1].authorization.authorized);
+    assert(
+        nested_declaration_only_readiness.cleanup_authorizations[1].authorization.semantic_unresolved_blockers.size() ==
+        1
+    );
+    assert(nested_declaration_only_readiness.cleanup_authorizations[1].authorization.missing_declarations.empty());
+
+    auto nested_payload_authorization = orison::semantics::OwnedCleanupLoweringAuthorization {
+        .site = orison::semantics::OwnedCleanupSite {
+            .source_type_name = "Payload",
+            .abi_symbol_name = "__orison_owned_cleanup.Payload.demo.concurrency",
+            .owner_name = "inner_payload",
+            .site_line = 25,
+        },
+        .semantic_resolved = true,
+        .semantic_owned_cleanup_lowering_enabled = true,
+        .authorized = true,
+    };
+    auto nested_authorized_readiness = orison::lowering::plan_owned_cleanup_readiness_snapshot(
+        {nested_payload_authorization},
+        {nested_payload_declaration},
+        nested_cleanup_plans
+    );
+    assert(nested_authorized_readiness.semantic_authorizations.size() == 1);
+    assert(nested_authorized_readiness.emitted_declarations.size() == 1);
+    assert(nested_authorized_readiness.cleanup_authorizations.size() == 2);
+    assert(nested_authorized_readiness.cleanup_authorizations[0].authorization.authorized);
+    assert(nested_authorized_readiness.cleanup_authorizations[1].authorization.authorized);
+    auto nested_readiness_relations =
+        orison::lowering::format_owned_cleanup_readiness_relation_report(nested_authorized_readiness);
+    assert(nested_readiness_relations.size() == 2);
+    assert(
+        nested_readiness_relations[0] ==
+        "drop readiness relation __orison_task_cleanup.nested.23.0 authorized semantic blockers 0 "
+        "emitted declarations 1 missing declarations 0"
+    );
+    assert(
+        nested_readiness_relations[1] ==
+        "drop readiness relation __orison_task_cleanup.__orison_task_thunk_nested_23_0.25.0 authorized "
+        "semantic blockers 0 emitted declarations 1 missing declarations 0"
+    );
+
     auto authorized_plan = record_plan->cleanup.owned_cleanup;
     assert(!orison::lowering::authorize_drop_cleanup_calls_for_declared_abi(authorized_plan, {}));
     assert(!orison::lowering::drop_calls_enabled(authorized_plan));
-    auto missing_authorization = orison::lowering::plan_owned_cleanup_authorization(authorized_plan, {});
+    auto missing_authorization = orison::lowering::plan_owned_cleanup_authorization(
+        authorized_plan,
+        {},
+        {nested_payload_authorization}
+    );
     assert(!missing_authorization.authorized);
     assert(missing_authorization.missing_declarations.size() == 1);
     assert(
@@ -467,7 +534,8 @@ int main() {
                 .discovery_line = 20,
                 .emit_declaration = true,
             },
-        }
+        },
+        {nested_payload_authorization}
     );
     assert(successful_authorization.authorized);
     assert(successful_authorization.missing_declarations.empty());
