@@ -1688,6 +1688,50 @@ auto main() -> int {
     assert(nested_choice_result_thread.stdout_text.empty());
     assert(nested_choice_result_thread.stderr_text.empty());
 
+    auto nested_distinct_choice_result_task_path = std::filesystem::path(ORISON_SOURCE_DIR) /
+        "examples" / "concurrency_nested_distinct_choice_result_task_main.or";
+    auto nested_distinct_choice_result_task_ir = run_emit_llvm(app, nested_distinct_choice_result_task_path);
+    assert_success_with_stdout_contains(
+        nested_distinct_choice_result_task_ir,
+        {
+            "%outer.task.result = alloca { i32, [4 x i8] }",
+            "ptr %outer.task.result, i64 8",
+            "%inner.task.result = alloca { i32, [4 x i8] }",
+            "ptr %inner.task.result, i64 8",
+            "load { i32, [4 x i8] }, ptr %inner.task.result",
+            "store { i32, [4 x i8] }",
+            "load { i32, [4 x i8] }, ptr %outer.task.result",
+            "load i1, ptr",
+            "load i32, ptr",
+        }
+    );
+    auto nested_distinct_choice_result_task = run_program(app, nested_distinct_choice_result_task_path);
+    assert(nested_distinct_choice_result_task.exit_code == 0);
+    assert(nested_distinct_choice_result_task.stdout_text.empty());
+    assert(nested_distinct_choice_result_task.stderr_text.empty());
+
+    auto nested_distinct_choice_result_thread_path = std::filesystem::path(ORISON_SOURCE_DIR) /
+        "examples" / "concurrency_nested_distinct_choice_result_thread_main.or";
+    auto nested_distinct_choice_result_thread_ir = run_emit_llvm(app, nested_distinct_choice_result_thread_path);
+    assert_success_with_stdout_contains(
+        nested_distinct_choice_result_thread_ir,
+        {
+            "%outer.thread.result = alloca { i32, [4 x i8] }",
+            "ptr %outer.thread.result, i64 8",
+            "%inner.thread.result = alloca { i32, [4 x i8] }",
+            "ptr %inner.thread.result, i64 8",
+            "load { i32, [4 x i8] }, ptr %inner.thread.result",
+            "store { i32, [4 x i8] }",
+            "load { i32, [4 x i8] }, ptr %outer.thread.result",
+            "load i1, ptr",
+            "load i32, ptr",
+        }
+    );
+    auto nested_distinct_choice_result_thread = run_program(app, nested_distinct_choice_result_thread_path);
+    assert(nested_distinct_choice_result_thread.exit_code == 0);
+    assert(nested_distinct_choice_result_thread.stdout_text.empty());
+    assert(nested_distinct_choice_result_thread.stderr_text.empty());
+
     std::filesystem::remove_all(smoke_temp_root);
     return 0;
 }

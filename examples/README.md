@@ -163,6 +163,8 @@ member-derived receivers.
 `concurrency_nested_record_result_thread_main.or` demonstrates a named-record result crossing two nested thread boundaries.
 `concurrency_nested_choice_result_task_main.or` demonstrates a scalar-payload choice crossing two nested task boundaries.
 `concurrency_nested_choice_result_thread_main.or` demonstrates a scalar-payload choice crossing two nested thread boundaries.
+`concurrency_nested_distinct_choice_result_task_main.or` demonstrates an erased distinct-layout choice crossing two nested task boundaries.
+`concurrency_nested_distinct_choice_result_thread_main.or` demonstrates an erased distinct-layout choice crossing two nested thread boundaries.
 
 The numbered `tour_*.or` files split `ORISON_TOUR.md` into focused examples:
 

@@ -14749,6 +14749,35 @@ void test_nested_concurrency_choice_result_summaries_success() {
     assert(analysis.concurrency_expressions[1].result_type_name == "Result");
 }
 
+void test_nested_concurrency_distinct_choice_result_summaries_success() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_semantics_nested_distinct_choice_result_success.or";
+    write_concurrency_fixture(
+        path,
+        "demo.concurrency",
+        {
+            "choice Result",
+            "    Failure(active: Bool)",
+            "    Success(value: UInt32)",
+            "implements Shareable for Result",
+            "    function placeholder(this: shared This) -> Unit",
+            "        return",
+            "async function nested(value: UInt32) -> Result",
+            "    let outer = task",
+            "        let inner = task",
+            "            Success(value)",
+            "        await inner",
+            "    await outer",
+        }
+    );
+
+    auto analysis = analyze_orison_fixture(path);
+    assert(!analysis.has_errors());
+    assert(analysis.concurrency_expressions.size() == 2);
+    assert(analysis.concurrency_expressions[0].result_type_name == "Result");
+    assert(analysis.concurrency_expressions[1].result_type_name == "Result");
+}
+
 void test_thread_capture_owned_parameter_type_failure() {
     auto path = std::filesystem::temp_directory_path() / "orison_semantics_thread_owned_parameter_failure.or";
     write_concurrency_fixture(
@@ -16090,6 +16119,7 @@ int main() {
     test_nested_concurrency_array_result_summaries_success();
     test_nested_concurrency_record_result_summaries_success();
     test_nested_concurrency_choice_result_summaries_success();
+    test_nested_concurrency_distinct_choice_result_summaries_success();
     test_thread_capture_owned_parameter_type_failure();
     test_thread_capture_transferable_generic_success();
     test_thread_capture_unconstrained_generic_failure();

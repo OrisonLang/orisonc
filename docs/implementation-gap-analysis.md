@@ -50,8 +50,10 @@ Date: 2026-11-18
   layers.
 - Scalar-payload choice results now retain their tag and payload through two nested task or thread result-storage
   layers.
-- Recommended next implementation: audit distinct-layout scalar-payload choices through two nested concurrency
-  result-storage layers. This exercises erased payload bytes before owned aggregate captures.
+- Distinct-layout scalar-payload choices now retain their tag and erased payload bytes through two nested task or thread
+  result-storage layers.
+- Recommended next implementation: audit owned aggregate capture cleanup planning across nested concurrency boundaries
+  before enabling cleanup emission.
 
 Date: 2026-09-03
 
@@ -200,5 +202,4 @@ This note is an implementation snapshot. It does not define language syntax or s
 
 ## Suggested Next Step
 
-- Audit distinct-layout scalar-payload choice results through two nested concurrency result-storage layers before
-  admitting owned aggregate captures.
+- Audit owned aggregate capture cleanup planning across nested concurrency boundaries before enabling cleanup emission.

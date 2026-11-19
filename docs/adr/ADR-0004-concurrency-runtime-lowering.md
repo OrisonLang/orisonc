@@ -106,6 +106,9 @@ drop/cleanup decisions.
 - Scalar-payload choice results also cross two nested task or thread boundaries. Each boundary owns an 8-byte
   `{ i32, i32 }` result buffer; the enclosing thunk forwards the synchronized tag and payload together before the
   caller reconstructs the selected variant.
+- Distinct-layout scalar-payload choices also cross two nested task or thread boundaries. Each boundary owns an 8-byte
+  `{ i32, [4 x i8] }` result buffer; the enclosing thunk forwards the tag and erased payload bytes together before the
+  caller reconstructs the selected `Bool` or `UInt32` payload.
 - The checked-in record task and thread examples now also capture an outer scalar. IR coverage pins the scalar capture
   environment, thunk-side load, record construction, typed result store, synchronization, and typed record load; linked
   execution validates the complete composition.
@@ -271,6 +274,9 @@ drop/cleanup decisions.
 - `examples/concurrency_nested_choice_result_task_main.or` and
   `examples/concurrency_nested_choice_result_thread_main.or` prove tagged scalar-payload transfer through two result
   buffers.
+- `examples/concurrency_nested_distinct_choice_result_task_main.or` and
+  `examples/concurrency_nested_distinct_choice_result_thread_main.or` prove erased distinct-layout scalar-payload
+  transfer through two result buffers.
 - Module emission now validates concurrency runtime prelude declarations plus generated task/thread entry and cleanup
   thunk symbols through the shared lowering module symbol registry before generated LLVM IR is accepted.
 
