@@ -1,0 +1,20 @@
+package examples.concurrencynestedrecordresultthread
+
+record Pair
+    public first: UInt32
+    public second: UInt32
+
+implements Transferable for Pair
+    function placeholder(this: shared This) -> Unit
+        return
+
+function main() -> UInt32
+    let first = 17 as UInt32
+    let second = 25 as UInt32
+    let outer = thread
+        let inner = thread
+            Pair(first, second)
+        inner.join()
+
+    let result: Pair = outer.join()
+    result.first + result.second == 42 as UInt32 ? 0 as UInt32 : 1 as UInt32

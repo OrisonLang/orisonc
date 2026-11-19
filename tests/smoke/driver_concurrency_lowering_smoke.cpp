@@ -1602,6 +1602,48 @@ auto main() -> int {
     assert(nested_array_result_thread.stdout_text.empty());
     assert(nested_array_result_thread.stderr_text.empty());
 
+    auto nested_record_result_task_path = std::filesystem::path(ORISON_SOURCE_DIR) /
+        "examples" / "concurrency_nested_record_result_task_main.or";
+    auto nested_record_result_task_ir = run_emit_llvm(app, nested_record_result_task_path);
+    assert_success_with_stdout_contains(
+        nested_record_result_task_ir,
+        {
+            "%record.Pair = type { i32, i32 }",
+            "%outer.task.result = alloca %record.Pair",
+            "call ptr @__orison_task_spawn(ptr @__orison_task_thunk.main.14.0, ptr %outer.task.env, ptr %outer.task.result, i64 8",
+            "%inner.task.result = alloca %record.Pair",
+            "call ptr @__orison_task_spawn(ptr @__orison_task_thunk.__orison_task_thunk_main_14_0.15.0, ptr %inner.task.env, ptr %inner.task.result, i64 8",
+            "%tmp7 = load %record.Pair, ptr %inner.task.result",
+            "store %record.Pair %tmp7, ptr %result_storage",
+            "%tmp3 = load %record.Pair, ptr %outer.task.result",
+        }
+    );
+    auto nested_record_result_task = run_program(app, nested_record_result_task_path);
+    assert(nested_record_result_task.exit_code == 0);
+    assert(nested_record_result_task.stdout_text.empty());
+    assert(nested_record_result_task.stderr_text.empty());
+
+    auto nested_record_result_thread_path = std::filesystem::path(ORISON_SOURCE_DIR) /
+        "examples" / "concurrency_nested_record_result_thread_main.or";
+    auto nested_record_result_thread_ir = run_emit_llvm(app, nested_record_result_thread_path);
+    assert_success_with_stdout_contains(
+        nested_record_result_thread_ir,
+        {
+            "%record.Pair = type { i32, i32 }",
+            "%outer.thread.result = alloca %record.Pair",
+            "call ptr @__orison_thread_spawn(ptr @__orison_thread_thunk.main.14.0, ptr %outer.thread.env, ptr %outer.thread.result, i64 8",
+            "%inner.thread.result = alloca %record.Pair",
+            "call ptr @__orison_thread_spawn(ptr @__orison_thread_thunk.__orison_thread_thunk_main_14_0.15.0, ptr %inner.thread.env, ptr %inner.thread.result, i64 8",
+            "%tmp7 = load %record.Pair, ptr %inner.thread.result",
+            "store %record.Pair %tmp7, ptr %result_storage",
+            "%tmp3 = load %record.Pair, ptr %outer.thread.result",
+        }
+    );
+    auto nested_record_result_thread = run_program(app, nested_record_result_thread_path);
+    assert(nested_record_result_thread.exit_code == 0);
+    assert(nested_record_result_thread.stdout_text.empty());
+    assert(nested_record_result_thread.stderr_text.empty());
+
     std::filesystem::remove_all(smoke_temp_root);
     return 0;
 }

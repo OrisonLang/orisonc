@@ -46,8 +46,10 @@ Date: 2026-11-18
 - Mixed task/thread nesting now composes both runtime symbol families and applies capture marker checks at every crossed
   boundary.
 - Fixed-array results now retain typed layout and target sizing through two nested task or thread result-storage layers.
-- Recommended next implementation: audit named-record results through two nested concurrency result-storage layers.
-  This extends the same proof to context-resolved named aggregate layouts.
+- Named-record results now retain nominal LLVM layout and target sizing through two nested task or thread result-storage
+  layers.
+- Recommended next implementation: audit scalar-payload choice results through two nested concurrency result-storage
+  layers. This exercises tagged payload transfer and reconstruction before owned aggregate captures.
 
 Date: 2026-09-03
 
@@ -196,5 +198,5 @@ This note is an implementation snapshot. It does not define language syntax or s
 
 ## Suggested Next Step
 
-- Audit named-record results through two nested concurrency result-storage layers before admitting owned aggregate
-  captures.
+- Audit scalar-payload choice results through two nested concurrency result-storage layers before admitting owned
+  aggregate captures.

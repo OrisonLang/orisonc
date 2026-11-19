@@ -100,6 +100,9 @@ drop/cleanup decisions.
   access without changing the runtime ABI.
 - Record-valued thread lowering now has matching compile, link, and execution coverage. `.join()` restores the typed
   record from compiler-owned result storage, and both fields remain available to ordinary expression lowering.
+- Named `%record.Pair` results also cross two nested task or thread boundaries. Each boundary resolves the same nominal
+  layout and owns an 8-byte typed result buffer; the enclosing thunk forwards the synchronized aggregate into its own
+  result storage.
 - The checked-in record task and thread examples now also capture an outer scalar. IR coverage pins the scalar capture
   environment, thunk-side load, record construction, typed result store, synchronization, and typed record load; linked
   execution validates the complete composition.
@@ -260,6 +263,8 @@ drop/cleanup decisions.
   mixed runtime symbol composition and nested synchronization in both directions.
 - `examples/concurrency_nested_array_result_task_main.or` and
   `examples/concurrency_nested_array_result_thread_main.or` prove typed fixed-array transfer through two result buffers.
+- `examples/concurrency_nested_record_result_task_main.or` and
+  `examples/concurrency_nested_record_result_thread_main.or` prove nominal record transfer through two result buffers.
 - Module emission now validates concurrency runtime prelude declarations plus generated task/thread entry and cleanup
   thunk symbols through the shared lowering module symbol registry before generated LLVM IR is accepted.
 

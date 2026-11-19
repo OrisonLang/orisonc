@@ -1,0 +1,20 @@
+package examples.concurrencynestedrecordresulttask
+
+record Pair
+    public first: UInt32
+    public second: UInt32
+
+implements Shareable for Pair
+    function placeholder(this: shared This) -> Unit
+        return
+
+async function main() -> UInt32
+    let first = 19 as UInt32
+    let second = 23 as UInt32
+    let outer = task
+        let inner = task
+            Pair(first, second)
+        await inner
+
+    let result: Pair = await outer
+    result.first + result.second == 42 as UInt32 ? 0 as UInt32 : 1 as UInt32
