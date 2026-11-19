@@ -28,6 +28,9 @@ inventing semantics outside the spec/tour.
   compose without exposing cleanup syntax in Orison source or enabling normal cleanup emission.
 - The resulting authorized nested module passes LLVM verification, and each spawn is correlated with its own cleanup
   thunk. This remains test-only proof rather than accepted normal cleanup semantics.
+- Paired normal-options proof keeps both nested plans metadata-only, reports both as blocked, and emits neither a
+  concrete owned-cleanup definition nor a cleanup call. This closes the nested concurrency cleanup gate audit without
+  accepting new source semantics.
 - The compiler will treat drop cleanup authorization as all-or-nothing per cleanup thunk. If any captured field lacks an
   emitted declaration, no drop calls are emitted for that thunk.
 - Drop planning remains finite and explicit. The compiler will not synthesize variadic, spread-like, or open-ended drop

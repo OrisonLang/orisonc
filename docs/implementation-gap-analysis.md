@@ -61,8 +61,10 @@ Date: 2026-11-18
   cleanup emission remains unchanged.
 - The complete authorized nested-cleanup module passes LLVM verification, and each task spawn carries its exact
   boundary-local cleanup pointer.
-- Recommended next implementation: add paired source-backed proof that normal nested cleanup emission retains metadata
-  but emits no cleanup calls, closing this gate audit before selecting another lowering gap.
+- Paired normal-options proof retains both nested cleanup plans and their candidate metadata while reporting both as
+  blocked and emitting no concrete cleanup definition or call. The nested concurrency cleanup gate audit is complete.
+- Recommended next implementation: support a nested outer task whose final scalar expression combines a thunk-local
+  value with an awaited inner-task result, such as `outer_value + await inner`.
 
 Date: 2026-09-03
 
@@ -211,5 +213,5 @@ This note is an implementation snapshot. It does not define language syntax or s
 
 ## Suggested Next Step
 
-- Add paired source-backed proof that normal nested cleanup emission retains metadata but emits no cleanup calls,
-  closing this gate audit before selecting another lowering gap.
+- Support a nested outer task whose final scalar expression combines a thunk-local value with an awaited inner-task
+  result, such as `outer_value + await inner`.

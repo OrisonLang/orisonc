@@ -15028,8 +15028,7 @@ void test_emit_semantic_authorized_record_capture_drop_abi_calls() {
 void test_emit_semantic_authorized_nested_task_capture_cleanup_calls() {
     auto path = std::filesystem::temp_directory_path() /
         "orison_lowering_semantic_allowed_nested_task_capture_cleanup.or";
-    auto result = lower_source(
-        path,
+    auto source = std::string_view {
         "package demo.lowering\n"
         "\n"
         "record Payload\n"
@@ -15045,7 +15044,49 @@ void test_emit_semantic_authorized_nested_task_capture_cleanup_calls() {
         "        let inner = task\n"
         "            inner_payload.value\n"
         "        await inner\n"
-        "    await outer\n",
+        "    await outer\n"
+    };
+    auto normal_result = lower_source(path, source);
+
+    assert(!normal_result.has_errors());
+    assert(normal_result.owned_cleanup_declarations.size() == 1);
+    assert(!normal_result.owned_cleanup_declarations.front().emit_declaration);
+    auto normal_readiness_summary_report = normal_result.owned_cleanup_readiness_summary_report();
+    assert(normal_readiness_summary_report.size() == 1);
+    assert(
+        normal_readiness_summary_report.front() ==
+        "drop readiness summary semantic authorized 0 blocked 0 emitted declarations 0 cleanup authorized 0 blocked 2"
+    );
+    assert_ir_contains(
+        normal_result,
+        "define private void @__orison_task_cleanup.nested.11.0(ptr %environment)"
+    );
+    assert_ir_contains(
+        normal_result,
+        "; cleanup candidate outer_payload: Payload field 0 drop __orison_owned_cleanup.Payload.demo.lowering"
+    );
+    assert_ir_contains(
+        normal_result,
+        "define private void @__orison_task_cleanup.__orison_task_thunk_nested_11_0.13.0(ptr %environment)"
+    );
+    assert_ir_contains(
+        normal_result,
+        "; cleanup candidate inner_payload: Payload field 0 drop __orison_owned_cleanup.Payload.demo.lowering"
+    );
+    assert(
+        normal_result.ir_text.find("define void @__orison_owned_cleanup.Payload.demo.lowering") ==
+        std::string::npos
+    );
+    assert(
+        normal_result.ir_text.find("call void @__orison_owned_cleanup.Payload.demo.lowering") ==
+        std::string::npos
+    );
+    auto normal_verifier = orison::lowering::LlvmIrVerifier {};
+    assert(!normal_verifier.verify(normal_result.ir_text).has_errors());
+
+    auto result = lower_source(
+        path,
+        source,
         orison::lowering::LlvmIrEmissionOptions {
             .semantic_owned_cleanup_lowering_authorizations = {
                 orison::semantics::OwnedCleanupLoweringAuthorization {

@@ -1,5 +1,8 @@
 # Frontend Parity Audit
 
+- 2026-11-19: Paired normal-options nested-task coverage now proves both cleanup thunks retain boundary-local candidate
+  metadata while readiness reports two blocked plans. No concrete `Payload` cleanup definition or call is emitted, and
+  the metadata-only module passes LLVM verification. No source syntax or runtime ABI changed.
 - 2026-11-19: The complete explicitly authorized nested-task cleanup module now passes LLVM parsing and verification.
   IR coverage pins the outer spawn to the outer cleanup thunk and the inner spawn to the cleanup thunk derived from the
   generated outer thunk identity. Normal cleanup emission, source syntax, and the runtime ABI remain unchanged.

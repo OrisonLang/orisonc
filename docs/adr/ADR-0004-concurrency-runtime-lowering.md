@@ -106,6 +106,9 @@ drop/cleanup decisions.
 - The complete explicitly authorized nested-cleanup module passes LLVM parsing and verification. Each task spawn passes
   its exact boundary-local cleanup thunk through the runtime ABI cleanup slot: the outer spawn uses the outer cleanup,
   and the inner spawn uses the cleanup derived from the generated outer thunk identity.
+- Paired normal-options coverage proves the same nested module retains both cleanup thunks and their boundary-local
+  candidate metadata while readiness remains blocked and no concrete owned-cleanup definition or call is emitted. The
+  metadata-only module also passes LLVM verification.
 - Target layout now resolves named record LLVM types through the lowering context, allowing aggregate capture
   environments to report concrete byte sizes when their record field layouts are known.
 - Scalar task/thread lowering now has smoke coverage for record result storage, including context-sized `%record.*`
