@@ -1,5 +1,9 @@
 # Frontend Parity Audit
 
+- 2026-11-18: Mixed scalar task/thread nesting now has semantic, IR, link, and runtime proof in both directions.
+  Generated modules compose both runtime symbol families and nested thunk identities. Capture validation checks every
+  crossed boundary, so `Shareable`-only values remain rejected when a thread boundary is present. No compiler behavior,
+  source syntax, or runtime ABI changed.
 - 2026-11-18: Nested task/thread local-only capture now has semantic, IR, link, and runtime proof. An outer thunk
   computes its local binding and stores it only in the inner environment; the outer environment retains only its
   function-scope capture. No compiler behavior, source syntax, or runtime ABI changed.

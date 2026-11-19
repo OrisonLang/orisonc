@@ -1522,6 +1522,46 @@ auto main() -> int {
     assert(nested_local_thread.stdout_text.empty());
     assert(nested_local_thread.stderr_text.empty());
 
+    auto mixed_task_in_thread_path = std::filesystem::path(ORISON_SOURCE_DIR) /
+        "examples" / "concurrency_mixed_task_in_thread_main.or";
+    auto mixed_task_in_thread_ir = run_emit_llvm(app, mixed_task_in_thread_path);
+    assert_success_with_stdout_contains(
+        mixed_task_in_thread_ir,
+        {
+            "declare ptr @__orison_thread_spawn(ptr, ptr, ptr, i64, ptr)",
+            "declare ptr @__orison_task_spawn(ptr, ptr, ptr, i64, ptr)",
+            "define private void @__orison_task_thunk.__orison_thread_thunk_main_5_0.6.0(ptr %environment, ptr %result_storage)",
+            "define private void @__orison_thread_thunk.main.5.0(ptr %environment, ptr %result_storage)",
+            "%inner.task.env = alloca { i32 }",
+            "call void @__orison_task_await(ptr %inner)",
+            "call void @__orison_thread_join(ptr %outer)",
+        }
+    );
+    auto mixed_task_in_thread = run_program(app, mixed_task_in_thread_path);
+    assert(mixed_task_in_thread.exit_code == 0);
+    assert(mixed_task_in_thread.stdout_text.empty());
+    assert(mixed_task_in_thread.stderr_text.empty());
+
+    auto mixed_thread_in_task_path = std::filesystem::path(ORISON_SOURCE_DIR) /
+        "examples" / "concurrency_mixed_thread_in_task_main.or";
+    auto mixed_thread_in_task_ir = run_emit_llvm(app, mixed_thread_in_task_path);
+    assert_success_with_stdout_contains(
+        mixed_thread_in_task_ir,
+        {
+            "declare ptr @__orison_task_spawn(ptr, ptr, ptr, i64, ptr)",
+            "declare ptr @__orison_thread_spawn(ptr, ptr, ptr, i64, ptr)",
+            "define private void @__orison_thread_thunk.__orison_task_thunk_main_5_0.6.0(ptr %environment, ptr %result_storage)",
+            "define private void @__orison_task_thunk.main.5.0(ptr %environment, ptr %result_storage)",
+            "%inner.thread.env = alloca { i32 }",
+            "call void @__orison_thread_join(ptr %inner)",
+            "call void @__orison_task_await(ptr %outer)",
+        }
+    );
+    auto mixed_thread_in_task = run_program(app, mixed_thread_in_task_path);
+    assert(mixed_thread_in_task.exit_code == 0);
+    assert(mixed_thread_in_task.stdout_text.empty());
+    assert(mixed_thread_in_task.stderr_text.empty());
+
     std::filesystem::remove_all(smoke_temp_root);
     return 0;
 }

@@ -43,8 +43,10 @@ Date: 2026-11-18
 - Nested scalar task/thread bindings now propagate transitive immutable captures, generated entry/cleanup thunks,
   result types, and synchronization through checked-in compile-link-run coverage.
 - Inner task/thread expressions now capture enclosing-body locals without adding those locals to the outer environment.
-- Recommended next implementation: audit mixed task/thread nesting in both directions, including boundary-specific
-  capture safety checks and generated runtime symbol composition.
+- Mixed task/thread nesting now composes both runtime symbol families and applies capture marker checks at every crossed
+  boundary.
+- Recommended next implementation: audit fixed-array results through two nested concurrency result-storage layers.
+  This extends nested lowering beyond scalar payloads without introducing new ownership semantics.
 
 Date: 2026-09-03
 
@@ -193,5 +195,5 @@ This note is an implementation snapshot. It does not define language syntax or s
 
 ## Suggested Next Step
 
-- Audit mixed task/thread nesting in both directions, including boundary-specific capture safety checks and generated
-  runtime symbol composition.
+- Audit fixed-array results through two nested concurrency result-storage layers before admitting owned aggregate
+  captures.

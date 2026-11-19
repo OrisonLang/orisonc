@@ -14568,6 +14568,106 @@ void test_nested_concurrency_local_capture_origin_success() {
     assert(analysis.concurrency_expressions[1].result_type_name == "UInt32");
 }
 
+void test_mixed_concurrency_capture_origin_success() {
+    auto task_in_thread_path =
+        std::filesystem::temp_directory_path() / "orison_semantics_task_in_thread_capture_origin_success.or";
+    write_concurrency_fixture(
+        task_in_thread_path,
+        "demo.capture",
+        {
+            "async function nested(seed: UInt32) -> UInt32",
+            "    let outer = thread",
+            "        let inner = task",
+            "            seed + seed",
+            "        await inner",
+            "    outer.join()",
+        }
+    );
+
+    auto task_in_thread = analyze_orison_fixture(task_in_thread_path);
+    assert(!task_in_thread.has_errors());
+    assert(task_in_thread.concurrency_captures.size() == 4);
+    assert(task_in_thread.concurrency_captures[0].expression_kind ==
+           orison::semantics::ConcurrencyExpressionKind::thread);
+    assert(task_in_thread.concurrency_captures[1].expression_kind ==
+           orison::semantics::ConcurrencyExpressionKind::task);
+    assert(task_in_thread.concurrency_captures[2].expression_kind ==
+           orison::semantics::ConcurrencyExpressionKind::thread);
+    assert(task_in_thread.concurrency_captures[3].expression_kind ==
+           orison::semantics::ConcurrencyExpressionKind::task);
+
+    auto thread_in_task_path =
+        std::filesystem::temp_directory_path() / "orison_semantics_thread_in_task_capture_origin_success.or";
+    write_concurrency_fixture(
+        thread_in_task_path,
+        "demo.capture",
+        {
+            "async function nested(seed: UInt32) -> UInt32",
+            "    let outer = task",
+            "        let inner = thread",
+            "            seed + seed",
+            "        inner.join()",
+            "    await outer",
+        }
+    );
+
+    auto thread_in_task = analyze_orison_fixture(thread_in_task_path);
+    assert(!thread_in_task.has_errors());
+    assert(thread_in_task.concurrency_captures.size() == 4);
+    assert(thread_in_task.concurrency_captures[0].expression_kind ==
+           orison::semantics::ConcurrencyExpressionKind::task);
+    assert(thread_in_task.concurrency_captures[1].expression_kind ==
+           orison::semantics::ConcurrencyExpressionKind::thread);
+    assert(thread_in_task.concurrency_captures[2].expression_kind ==
+           orison::semantics::ConcurrencyExpressionKind::task);
+    assert(thread_in_task.concurrency_captures[3].expression_kind ==
+           orison::semantics::ConcurrencyExpressionKind::thread);
+}
+
+void test_mixed_concurrency_thread_boundary_rejects_shareable_capture() {
+    auto task_in_thread_path =
+        std::filesystem::temp_directory_path() / "orison_semantics_task_in_thread_shareable_failure.or";
+    write_concurrency_fixture(
+        task_in_thread_path,
+        "demo.capture",
+        {
+            "implements Shareable for Buffer",
+            "    function placeholder(this: shared This) -> Unit",
+            "        return",
+            "async function nested(buffer: Buffer) -> UInt32",
+            "    let outer = thread",
+            "        let inner = task",
+            "            buffer.value",
+            "        await inner",
+            "    outer.join()",
+            "record Buffer",
+            "    value: UInt32",
+        }
+    );
+    assert_thread_capture_transferable_diagnostic(task_in_thread_path, 8, "buffer", "Buffer");
+
+    auto thread_in_task_path =
+        std::filesystem::temp_directory_path() / "orison_semantics_thread_in_task_shareable_failure.or";
+    write_concurrency_fixture(
+        thread_in_task_path,
+        "demo.capture",
+        {
+            "implements Shareable for Buffer",
+            "    function placeholder(this: shared This) -> Unit",
+            "        return",
+            "async function nested(buffer: Buffer) -> UInt32",
+            "    let outer = task",
+            "        let inner = thread",
+            "            buffer.value",
+            "        inner.join()",
+            "    await outer",
+            "record Buffer",
+            "    value: UInt32",
+        }
+    );
+    assert_thread_capture_transferable_diagnostic(thread_in_task_path, 8, "buffer", "Buffer");
+}
+
 void test_thread_capture_owned_parameter_type_failure() {
     auto path = std::filesystem::temp_directory_path() / "orison_semantics_thread_owned_parameter_failure.or";
     write_concurrency_fixture(
@@ -15904,6 +16004,8 @@ int main() {
     test_concurrency_capture_classification_success();
     test_nested_concurrency_capture_origin_success();
     test_nested_concurrency_local_capture_origin_success();
+    test_mixed_concurrency_capture_origin_success();
+    test_mixed_concurrency_thread_boundary_rejects_shareable_capture();
     test_thread_capture_owned_parameter_type_failure();
     test_thread_capture_transferable_generic_success();
     test_thread_capture_unconstrained_generic_failure();
