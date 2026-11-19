@@ -56,8 +56,11 @@ Date: 2026-11-18
   concurrency boundary. Each non-empty plan now requires semantic authorization, and readiness correlation proves one
   matching type-level authorization plus one emitted declaration across both boundary-local plans. Cleanup calls remain
   gated by the existing explicit authorization options.
-- Recommended next implementation: audit nested cleanup-thunk IR composition under explicit test authorization,
-  including boundary-local field addresses and calls, without enabling normal cleanup emission.
+- Nested cleanup-thunk IR now has source-backed proof under explicit semantic test authorization. Outer and inner
+  thunks emit boundary-local environment field addresses and call the shared concrete cleanup definition. Normal
+  cleanup emission remains unchanged.
+- Recommended next implementation: verify the complete authorized nested-cleanup module and correlate each task spawn
+  with its exact boundary-local cleanup pointer, without enabling normal cleanup emission.
 
 Date: 2026-09-03
 
@@ -206,5 +209,5 @@ This note is an implementation snapshot. It does not define language syntax or s
 
 ## Suggested Next Step
 
-- Audit nested cleanup-thunk IR composition under explicit test authorization, including boundary-local field addresses
-  and calls, without enabling normal cleanup emission.
+- Verify the complete authorized nested-cleanup module and correlate each task spawn with its exact boundary-local
+  cleanup pointer, without enabling normal cleanup emission.

@@ -15025,6 +15025,76 @@ void test_emit_semantic_authorized_record_capture_drop_abi_calls() {
     );
 }
 
+void test_emit_semantic_authorized_nested_task_capture_cleanup_calls() {
+    auto path = std::filesystem::temp_directory_path() /
+        "orison_lowering_semantic_allowed_nested_task_capture_cleanup.or";
+    auto result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "record Payload\n"
+        "    public value: Int64\n"
+        "\n"
+        "implements Shareable for Payload\n"
+        "    function placeholder(this: shared This) -> Unit\n"
+        "        return\n"
+        "\n"
+        "async function nested(outer_payload: Payload, inner_payload: Payload) -> Int64\n"
+        "    let outer = task\n"
+        "        let outer_value = outer_payload.value\n"
+        "        let inner = task\n"
+        "            inner_payload.value\n"
+        "        await inner\n"
+        "    await outer\n",
+        orison::lowering::LlvmIrEmissionOptions {
+            .semantic_owned_cleanup_lowering_authorizations = {
+                orison::semantics::OwnedCleanupLoweringAuthorization {
+                    .site = orison::semantics::OwnedCleanupSite {
+                        .source_type_name = "Payload",
+                        .abi_symbol_name = "__orison_owned_cleanup.Payload.demo.lowering",
+                        .owner_name = "inner_payload",
+                        .site_line = 13,
+                    },
+                    .semantic_resolved = true,
+                    .semantic_owned_cleanup_lowering_enabled = true,
+                    .authorized = true,
+                },
+            },
+        }
+    );
+
+    assert(!result.has_errors());
+    auto readiness_summary_report = result.owned_cleanup_readiness_summary_report();
+    assert(readiness_summary_report.size() == 1);
+    assert(
+        readiness_summary_report.front() ==
+        "drop readiness summary semantic authorized 1 blocked 0 emitted declarations 1 cleanup authorized 2 blocked 0"
+    );
+    assert_ir_contains(
+        result,
+        "define private void @__orison_task_cleanup.nested.11.0(ptr %environment) {\n"
+        "entry:\n"
+        "  %cleanup.field.0 = getelementptr { %record.Payload, %record.Payload }, ptr %environment, i32 0, i32 0\n"
+        "  ; cleanup candidate outer_payload: Payload field 0 drop __orison_owned_cleanup.Payload.demo.lowering\n"
+        "  call void @__orison_owned_cleanup.Payload.demo.lowering(ptr %cleanup.field.0)\n"
+        "  %cleanup.field.1 = getelementptr { %record.Payload, %record.Payload }, ptr %environment, i32 0, i32 1\n"
+        "  ; cleanup candidate inner_payload: Payload field 1 drop __orison_owned_cleanup.Payload.demo.lowering\n"
+        "  call void @__orison_owned_cleanup.Payload.demo.lowering(ptr %cleanup.field.1)\n"
+        "  ret void\n"
+        "}"
+    );
+    assert_ir_contains(
+        result,
+        "define private void @__orison_task_cleanup.__orison_task_thunk_nested_11_0.13.0(ptr %environment) {\n"
+        "entry:\n"
+        "  %cleanup.field.0 = getelementptr { %record.Payload }, ptr %environment, i32 0, i32 0\n"
+        "  ; cleanup candidate inner_payload: Payload field 0 drop __orison_owned_cleanup.Payload.demo.lowering\n"
+        "  call void @__orison_owned_cleanup.Payload.demo.lowering(ptr %cleanup.field.0)\n"
+        "  ret void\n"
+        "}"
+    );
+}
+
 void test_reject_partial_record_capture_drop_abi_calls() {
     auto path = std::filesystem::temp_directory_path() / "orison_lowering_partial_record_capture_cleanup.or";
     auto result = lower_source(
@@ -16667,6 +16737,7 @@ auto main() -> int {
     test_emit_same_type_record_capture_drop_metadata_dedupes();
     test_emit_allowed_record_capture_drop_abi_calls();
     test_emit_semantic_authorized_record_capture_drop_abi_calls();
+    test_emit_semantic_authorized_nested_task_capture_cleanup_calls();
     test_reject_partial_record_capture_drop_abi_calls();
     test_reject_partial_semantic_authorized_record_capture_drop_abi_calls();
     test_reject_unsupported_final_if_arm_expression();

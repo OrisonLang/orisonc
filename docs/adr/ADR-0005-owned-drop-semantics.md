@@ -24,6 +24,8 @@ inventing semantics outside the spec/tour.
 - Every non-empty concurrency cleanup plan now marks semantic authorization as required. The readiness planner
   correlates semantic authorization and emitted declarations independently for each nested cleanup thunk, even when
   one type-level authorization serves matching actions at multiple boundaries.
+- Explicitly authorized test lowering now has nested cleanup-thunk IR proof. Boundary-local environment GEPs and calls
+  compose without exposing cleanup syntax in Orison source or enabling normal cleanup emission.
 - The compiler will treat drop cleanup authorization as all-or-nothing per cleanup thunk. If any captured field lacks an
   emitted declaration, no drop calls are emitted for that thunk.
 - Drop planning remains finite and explicit. The compiler will not synthesize variadic, spread-like, or open-ended drop

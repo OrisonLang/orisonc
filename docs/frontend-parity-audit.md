@@ -1,5 +1,9 @@
 # Frontend Parity Audit
 
+- 2026-11-19: Nested task cleanup thunks now have source-backed IR proof under explicit semantic test authorization.
+  The outer two-field environment emits field 0 and field 1 cleanup addresses and calls; the inner one-field
+  environment emits only field 0. Both thunks call the same concrete `Payload` cleanup definition. Normal cleanup
+  emission, source syntax, and the runtime ABI remain unchanged.
 - 2026-11-19: Non-empty concurrency cleanup plans now require semantic owned-cleanup authorization. Nested readiness
   coverage proves an emitted declaration alone remains blocked, while one matching type-level authorization plus that
   declaration authorizes both boundary-local plans without losing their generated cleanup symbols. Cleanup call

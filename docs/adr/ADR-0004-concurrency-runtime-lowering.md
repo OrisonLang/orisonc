@@ -99,6 +99,10 @@ drop/cleanup decisions.
   type-level authorization and its emitted ABI declaration to every matching boundary-local action while retaining a
   distinct authorization result for each generated cleanup thunk. Declaration-only metadata cannot make readiness
   succeed, and normal cleanup call emission remains disabled without the existing explicit authorization options.
+- Source-backed IR coverage now proves nested cleanup-thunk composition under explicit semantic test authorization.
+  The outer thunk addresses both fields in its two-field environment, while the inner thunk addresses its sole field
+  in a separate one-field environment; all calls target the same authorized concrete cleanup definition. Normal
+  cleanup emission remains unchanged.
 - Target layout now resolves named record LLVM types through the lowering context, allowing aggregate capture
   environments to report concrete byte sizes when their record field layouts are known.
 - Scalar task/thread lowering now has smoke coverage for record result storage, including context-sized `%record.*`
