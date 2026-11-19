@@ -41,7 +41,19 @@ int main() {
                   "    let worker = thread\n"
                   "        value + value\n"
                   "\n"
-                  "    worker.join()\n";
+                  "    worker.join()\n"
+                  "\n"
+                  "implements Shareable for Payload\n"
+                  "    function placeholder(this: shared This) -> Unit\n"
+                  "        return\n"
+                  "\n"
+                  "async function nested(outer_payload: Payload, inner_payload: Payload) -> Int64\n"
+                  "    let outer = task\n"
+                  "        let outer_value = outer_payload.value\n"
+                  "        let inner = task\n"
+                  "            inner_payload.value\n"
+                  "        outer_value + await inner\n"
+                  "    await outer\n";
     }
 
     auto source = orison::source::SourceFile::read(path);
@@ -216,6 +228,38 @@ int main() {
     assert(record_plan->cleanup.owned_cleanup.actions.front().field_index == 0);
     assert(record_plan->cleanup.owned_cleanup.actions.front().discovery_line == 20);
     assert(!orison::lowering::drop_calls_enabled(record_plan->cleanup.owned_cleanup));
+
+    auto nested_cleanup_plans = orison::lowering::plan_concurrency_drop_cleanups(
+        parse_result.module,
+        context,
+        semantic_result
+    );
+    assert(nested_cleanup_plans.size() == 2);
+    assert(nested_cleanup_plans[0].cleanup_symbol_name == "__orison_task_cleanup.nested.23.0");
+    assert(nested_cleanup_plans[0].actions.size() == 2);
+    assert(nested_cleanup_plans[0].actions[0].capture_name == "outer_payload");
+    assert(nested_cleanup_plans[0].actions[0].field_index == 0);
+    assert(nested_cleanup_plans[0].actions[0].discovery_line == 23);
+    assert(nested_cleanup_plans[0].actions[1].capture_name == "inner_payload");
+    assert(nested_cleanup_plans[0].actions[1].field_index == 1);
+    assert(nested_cleanup_plans[0].actions[1].discovery_line == 23);
+    assert(!orison::lowering::drop_calls_enabled(nested_cleanup_plans[0]));
+    assert(
+        nested_cleanup_plans[1].cleanup_symbol_name ==
+        "__orison_task_cleanup.__orison_task_thunk_nested_23_0.25.0"
+    );
+    assert(nested_cleanup_plans[1].actions.size() == 1);
+    assert(nested_cleanup_plans[1].actions[0].capture_name == "inner_payload");
+    assert(nested_cleanup_plans[1].actions[0].field_index == 0);
+    assert(nested_cleanup_plans[1].actions[0].discovery_line == 25);
+    assert(!orison::lowering::drop_calls_enabled(nested_cleanup_plans[1]));
+
+    auto nested_cleanup_actions = orison::lowering::plan_concurrency_owned_cleanup_actions(
+        parse_result.module,
+        context,
+        semantic_result
+    );
+    assert(nested_cleanup_actions.size() == 3);
     auto authorized_plan = record_plan->cleanup.owned_cleanup;
     assert(!orison::lowering::authorize_drop_cleanup_calls_for_declared_abi(authorized_plan, {}));
     assert(!orison::lowering::drop_calls_enabled(authorized_plan));

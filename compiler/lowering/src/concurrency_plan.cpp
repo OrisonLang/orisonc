@@ -334,6 +334,192 @@ void collect_owned_cleanup_actions_from_expression(
     }
 }
 
+void collect_planned_drop_cleanups_from_expression_tree(
+    syntax::ExpressionSyntax const& expression,
+    std::string_view enclosing_symbol_name,
+    std::size_t& ordinal,
+    LoweringEmissionContext const& context,
+    semantics::SemanticAnalysisResult const& semantics,
+    std::vector<ConcurrencyDropCleanupPlan>& drop_cleanups
+);
+
+void collect_planned_drop_cleanups_from_statement(
+    syntax::StatementSyntax const& statement,
+    std::string_view enclosing_symbol_name,
+    std::size_t& ordinal,
+    LoweringEmissionContext const& context,
+    semantics::SemanticAnalysisResult const& semantics,
+    std::vector<ConcurrencyDropCleanupPlan>& drop_cleanups
+) {
+    collect_planned_drop_cleanups_from_expression_tree(
+        statement.expression,
+        enclosing_symbol_name,
+        ordinal,
+        context,
+        semantics,
+        drop_cleanups
+    );
+    collect_planned_drop_cleanups_from_expression_tree(
+        statement.assignment_target,
+        enclosing_symbol_name,
+        ordinal,
+        context,
+        semantics,
+        drop_cleanups
+    );
+    for (auto const& nested_statement : statement.nested_statements) {
+        collect_planned_drop_cleanups_from_statement(
+            nested_statement,
+            enclosing_symbol_name,
+            ordinal,
+            context,
+            semantics,
+            drop_cleanups
+        );
+    }
+    for (auto const& alternate_statement : statement.alternate_statements) {
+        collect_planned_drop_cleanups_from_statement(
+            alternate_statement,
+            enclosing_symbol_name,
+            ordinal,
+            context,
+            semantics,
+            drop_cleanups
+        );
+    }
+    for (auto const& switch_case : statement.switch_cases) {
+        collect_planned_drop_cleanups_from_expression_tree(
+            switch_case.pattern,
+            enclosing_symbol_name,
+            ordinal,
+            context,
+            semantics,
+            drop_cleanups
+        );
+        for (auto const& case_statement : switch_case.statements) {
+            if (case_statement != nullptr) {
+                collect_planned_drop_cleanups_from_statement(
+                    *case_statement,
+                    enclosing_symbol_name,
+                    ordinal,
+                    context,
+                    semantics,
+                    drop_cleanups
+                );
+            }
+        }
+    }
+}
+
+void collect_planned_drop_cleanups_from_expression_children(
+    syntax::ExpressionSyntax const& expression,
+    std::string_view enclosing_symbol_name,
+    std::size_t& ordinal,
+    LoweringEmissionContext const& context,
+    semantics::SemanticAnalysisResult const& semantics,
+    std::vector<ConcurrencyDropCleanupPlan>& drop_cleanups
+) {
+    for (auto const& argument : expression.arguments) {
+        collect_planned_drop_cleanups_from_expression_tree(
+            argument,
+            enclosing_symbol_name,
+            ordinal,
+            context,
+            semantics,
+            drop_cleanups
+        );
+    }
+    for (auto const& nested_statement : expression.nested_statements) {
+        if (nested_statement != nullptr) {
+            collect_planned_drop_cleanups_from_statement(
+                *nested_statement,
+                enclosing_symbol_name,
+                ordinal,
+                context,
+                semantics,
+                drop_cleanups
+            );
+        }
+    }
+    if (expression.left != nullptr) {
+        collect_planned_drop_cleanups_from_expression_tree(
+            *expression.left,
+            enclosing_symbol_name,
+            ordinal,
+            context,
+            semantics,
+            drop_cleanups
+        );
+    }
+    if (expression.right != nullptr) {
+        collect_planned_drop_cleanups_from_expression_tree(
+            *expression.right,
+            enclosing_symbol_name,
+            ordinal,
+            context,
+            semantics,
+            drop_cleanups
+        );
+    }
+    if (expression.alternate != nullptr) {
+        collect_planned_drop_cleanups_from_expression_tree(
+            *expression.alternate,
+            enclosing_symbol_name,
+            ordinal,
+            context,
+            semantics,
+            drop_cleanups
+        );
+    }
+}
+
+void collect_planned_drop_cleanups_from_expression_tree(
+    syntax::ExpressionSyntax const& expression,
+    std::string_view enclosing_symbol_name,
+    std::size_t& ordinal,
+    LoweringEmissionContext const& context,
+    semantics::SemanticAnalysisResult const& semantics,
+    std::vector<ConcurrencyDropCleanupPlan>& drop_cleanups
+) {
+    if (!is_concurrency_expression(expression)) {
+        collect_planned_drop_cleanups_from_expression_children(
+            expression,
+            enclosing_symbol_name,
+            ordinal,
+            context,
+            semantics,
+            drop_cleanups
+        );
+        return;
+    }
+
+    auto const expression_ordinal = ordinal++;
+    collect_owned_cleanup_actions_from_expression(
+        expression,
+        context,
+        semantics,
+        enclosing_symbol_name,
+        expression_ordinal,
+        drop_cleanups
+    );
+
+    auto nested_enclosing_symbol_name = concurrency_thunk_symbol_name(
+        expression_plan_kind(expression),
+        enclosing_symbol_name,
+        expression.line,
+        expression_ordinal
+    );
+    auto nested_ordinal = std::size_t {0};
+    collect_planned_drop_cleanups_from_expression_children(
+        expression,
+        nested_enclosing_symbol_name,
+        nested_ordinal,
+        context,
+        semantics,
+        drop_cleanups
+    );
+}
+
 void collect_planned_drop_cleanups_from_function(
     syntax::FunctionSyntax const& function,
     std::string_view enclosing_symbol_name,
@@ -342,20 +528,16 @@ void collect_planned_drop_cleanups_from_function(
     std::vector<ConcurrencyDropCleanupPlan>& drop_cleanups
 ) {
     auto ordinal = std::size_t {0};
-    walk_function_expressions(function, [&](syntax::ExpressionSyntax const& expression) {
-        if (!is_concurrency_expression(expression)) {
-            return;
-        }
-        collect_owned_cleanup_actions_from_expression(
-            expression,
-            context,
-            semantics,
+    for (auto const& statement : function.body_statements) {
+        collect_planned_drop_cleanups_from_statement(
+            statement,
             enclosing_symbol_name,
             ordinal,
+            context,
+            semantics,
             drop_cleanups
         );
-        ++ordinal;
-    });
+    }
 }
 
 }  // namespace

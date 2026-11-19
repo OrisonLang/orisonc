@@ -91,6 +91,10 @@ drop/cleanup decisions.
   exists.
 - Concurrency plans now record cleanup drop candidates for non-scalar captured environment fields so future owned-capture
   cleanup lowering has explicit field metadata without changing the runtime ABI.
+- Module-wide cleanup planning now mirrors nested thunk scopes. Each scope owns an independent concurrency ordinal,
+  nested cleanup symbols use the generated enclosing thunk identity, and each cleanup contains only the owned capture
+  candidates assigned to that boundary. Cleanup call emission remains disabled until semantic authorization and ABI
+  declarations are proven for the nested plans.
 - Target layout now resolves named record LLVM types through the lowering context, allowing aggregate capture
   environments to report concrete byte sizes when their record field layouts are known.
 - Scalar task/thread lowering now has smoke coverage for record result storage, including context-sized `%record.*`

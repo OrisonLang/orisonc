@@ -52,8 +52,10 @@ Date: 2026-11-18
   layers.
 - Distinct-layout scalar-payload choices now retain their tag and erased payload bytes through two nested task or thread
   result-storage layers.
-- Recommended next implementation: audit owned aggregate capture cleanup planning across nested concurrency boundaries
-  before enabling cleanup emission.
+- Nested owned aggregate capture cleanup plans now retain exact generated thunk identity and isolate candidates per
+  concurrency boundary. Cleanup calls remain metadata-only.
+- Recommended next implementation: audit semantic authorization and declaration correlation for nested concurrency
+  cleanup plans before enabling cleanup emission.
 
 Date: 2026-09-03
 
@@ -202,4 +204,5 @@ This note is an implementation snapshot. It does not define language syntax or s
 
 ## Suggested Next Step
 
-- Audit owned aggregate capture cleanup planning across nested concurrency boundaries before enabling cleanup emission.
+- Audit semantic authorization and declaration correlation for nested concurrency cleanup plans before enabling cleanup
+  emission.

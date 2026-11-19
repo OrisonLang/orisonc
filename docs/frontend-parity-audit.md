@@ -1,5 +1,8 @@
 # Frontend Parity Audit
 
+- 2026-11-19: Nested concurrency cleanup planning now derives inner cleanup symbols from the generated enclosing thunk
+  and resets ordinals per thunk scope. Source-backed coverage proves outer and inner owned aggregate capture candidates
+  remain isolated with boundary-local field indexes. Cleanup call emission remains disabled.
 - 2026-11-19: Distinct-layout scalar-payload `Result` values now have semantic, IR, link, and runtime proof across two
   nested task or thread boundaries. Both result buffers retain `{ i32, [4 x i8] }` and 8-byte sizing. Task execution
   reconstructs `UInt32`; thread execution reconstructs `Bool`. No compiler behavior, source syntax, or runtime ABI changed.
