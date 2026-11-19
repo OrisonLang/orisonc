@@ -1,5 +1,8 @@
 # Frontend Parity Audit
 
+- 2026-11-19: The complete explicitly authorized nested-task cleanup module now passes LLVM parsing and verification.
+  IR coverage pins the outer spawn to the outer cleanup thunk and the inner spawn to the cleanup thunk derived from the
+  generated outer thunk identity. Normal cleanup emission, source syntax, and the runtime ABI remain unchanged.
 - 2026-11-19: Nested task cleanup thunks now have source-backed IR proof under explicit semantic test authorization.
   The outer two-field environment emits field 0 and field 1 cleanup addresses and calls; the inner one-field
   environment emits only field 0. Both thunks call the same concrete `Payload` cleanup definition. Normal cleanup

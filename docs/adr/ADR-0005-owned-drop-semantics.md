@@ -26,6 +26,8 @@ inventing semantics outside the spec/tour.
   one type-level authorization serves matching actions at multiple boundaries.
 - Explicitly authorized test lowering now has nested cleanup-thunk IR proof. Boundary-local environment GEPs and calls
   compose without exposing cleanup syntax in Orison source or enabling normal cleanup emission.
+- The resulting authorized nested module passes LLVM verification, and each spawn is correlated with its own cleanup
+  thunk. This remains test-only proof rather than accepted normal cleanup semantics.
 - The compiler will treat drop cleanup authorization as all-or-nothing per cleanup thunk. If any captured field lacks an
   emitted declaration, no drop calls are emitted for that thunk.
 - Drop planning remains finite and explicit. The compiler will not synthesize variadic, spread-like, or open-ended drop

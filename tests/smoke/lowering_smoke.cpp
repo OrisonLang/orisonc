@@ -15093,6 +15093,27 @@ void test_emit_semantic_authorized_nested_task_capture_cleanup_calls() {
         "  ret void\n"
         "}"
     );
+    assert_ir_contains(
+        result,
+        "call ptr @__orison_task_spawn(ptr @__orison_task_thunk.nested.11.0, ptr %outer.task.env, "
+        "ptr %outer.task.result, i64 8, ptr @__orison_task_cleanup.nested.11.0)"
+    );
+    assert_ir_contains(
+        result,
+        "call ptr @__orison_task_spawn("
+        "ptr @__orison_task_thunk.__orison_task_thunk_nested_11_0.13.0, ptr %inner.task.env, "
+        "ptr %inner.task.result, i64 8, "
+        "ptr @__orison_task_cleanup.__orison_task_thunk_nested_11_0.13.0)"
+    );
+
+    auto verifier = orison::lowering::LlvmIrVerifier {};
+    auto diagnostics = verifier.verify(result.ir_text);
+    if (diagnostics.has_errors()) {
+        for (auto const& diagnostic : diagnostics.entries()) {
+            std::cerr << diagnostic.message << "\n";
+        }
+    }
+    assert(!diagnostics.has_errors());
 }
 
 void test_reject_partial_record_capture_drop_abi_calls() {

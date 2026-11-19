@@ -59,8 +59,10 @@ Date: 2026-11-18
 - Nested cleanup-thunk IR now has source-backed proof under explicit semantic test authorization. Outer and inner
   thunks emit boundary-local environment field addresses and call the shared concrete cleanup definition. Normal
   cleanup emission remains unchanged.
-- Recommended next implementation: verify the complete authorized nested-cleanup module and correlate each task spawn
-  with its exact boundary-local cleanup pointer, without enabling normal cleanup emission.
+- The complete authorized nested-cleanup module passes LLVM verification, and each task spawn carries its exact
+  boundary-local cleanup pointer.
+- Recommended next implementation: add paired source-backed proof that normal nested cleanup emission retains metadata
+  but emits no cleanup calls, closing this gate audit before selecting another lowering gap.
 
 Date: 2026-09-03
 
@@ -209,5 +211,5 @@ This note is an implementation snapshot. It does not define language syntax or s
 
 ## Suggested Next Step
 
-- Verify the complete authorized nested-cleanup module and correlate each task spawn with its exact boundary-local
-  cleanup pointer, without enabling normal cleanup emission.
+- Add paired source-backed proof that normal nested cleanup emission retains metadata but emits no cleanup calls,
+  closing this gate audit before selecting another lowering gap.

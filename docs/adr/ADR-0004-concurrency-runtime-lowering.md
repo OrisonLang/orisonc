@@ -103,6 +103,9 @@ drop/cleanup decisions.
   The outer thunk addresses both fields in its two-field environment, while the inner thunk addresses its sole field
   in a separate one-field environment; all calls target the same authorized concrete cleanup definition. Normal
   cleanup emission remains unchanged.
+- The complete explicitly authorized nested-cleanup module passes LLVM parsing and verification. Each task spawn passes
+  its exact boundary-local cleanup thunk through the runtime ABI cleanup slot: the outer spawn uses the outer cleanup,
+  and the inner spawn uses the cleanup derived from the generated outer thunk identity.
 - Target layout now resolves named record LLVM types through the lowering context, allowing aggregate capture
   environments to report concrete byte sizes when their record field layouts are known.
 - Scalar task/thread lowering now has smoke coverage for record result storage, including context-sized `%record.*`
