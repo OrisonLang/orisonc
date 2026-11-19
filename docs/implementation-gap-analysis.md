@@ -2,7 +2,7 @@
 
 ## Brief Snapshot
 
-Date: 2026-11-16
+Date: 2026-11-18
 
 - `orisonc` has a complete native pipeline for the validated source matrix: parsing, semantic analysis, LLVM IR,
   object emission, linking, and execution.
@@ -40,8 +40,10 @@ Date: 2026-11-16
   the runtime ABI. Choice coverage includes direct payload storage and erased storage for variants with distinct scalar
   layouts. Aggregate capture cleanup remains gated by ownership work; broader async ABI, suspension, cancellation, and
   executor semantics remain design work rather than unblocked lowering tasks.
-- Recommended next implementation: audit fixed-array values as task and thread results. This exercises inline aggregate
-  result sizing and transfer without adding source semantics.
+- Nested scalar task/thread bindings now propagate transitive immutable captures, generated entry/cleanup thunks,
+  result types, and synchronization through checked-in compile-link-run coverage.
+- Recommended next implementation: audit inner concurrency expressions that capture a binding declared inside the
+  enclosing task/thread body. This proves local-only capture ownership before mixed task/thread nesting is admitted.
 
 Date: 2026-09-03
 
@@ -190,5 +192,5 @@ This note is an implementation snapshot. It does not define language syntax or s
 
 ## Suggested Next Step
 
-- Model transitive captures for nested task/thread expressions and propagate nested generated thunk definitions and
-  symbols into the enclosing module before admitting nested concurrency body bindings.
+- Audit inner concurrency expressions that capture a binding declared inside the enclosing task/thread body, then
+  cover mixed task/thread nesting once local-only environment ownership is proven.

@@ -14514,20 +14514,28 @@ void test_nested_concurrency_capture_origin_success() {
             "        let outer_copy = outer",
             "        let nested_pending = task",
             "            inner",
-            "        outer_copy",
+            "        await nested_pending",
             "    await pending",
         }
     );
 
     auto analysis = analyze_orison_fixture(path);
     assert(!analysis.has_errors());
-    assert(analysis.concurrency_captures.size() == 2);
+    assert(analysis.concurrency_captures.size() == 3);
     assert(analysis.concurrency_captures[0].name == "outer");
     assert(analysis.concurrency_captures[0].line == 4);
     assert(analysis.concurrency_captures[0].expression_line == 3);
     assert(analysis.concurrency_captures[1].name == "inner");
     assert(analysis.concurrency_captures[1].line == 6);
-    assert(analysis.concurrency_captures[1].expression_line == 5);
+    assert(analysis.concurrency_captures[1].expression_line == 3);
+    assert(analysis.concurrency_captures[2].name == "inner");
+    assert(analysis.concurrency_captures[2].line == 6);
+    assert(analysis.concurrency_captures[2].expression_line == 5);
+    assert(analysis.concurrency_expressions.size() == 2);
+    assert(analysis.concurrency_expressions[0].line == 5);
+    assert(analysis.concurrency_expressions[0].result_type_name == "UInt32");
+    assert(analysis.concurrency_expressions[1].line == 3);
+    assert(analysis.concurrency_expressions[1].result_type_name == "UInt32");
 }
 
 void test_thread_capture_owned_parameter_type_failure() {

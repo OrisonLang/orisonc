@@ -1,0 +1,11 @@
+package examples.concurrencynestedthread
+
+function main() -> UInt32
+    let base = 21 as UInt32
+    let outer = thread
+        let inner = thread
+            base + base
+        inner.join()
+
+    let result: UInt32 = outer.join()
+    result == 42 as UInt32 ? 0 as UInt32 : 1 as UInt32

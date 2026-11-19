@@ -1442,25 +1442,45 @@ auto main() -> int {
     assert(statement_body_thread.stdout_text.empty());
     assert(statement_body_thread.stderr_text.empty());
 
-    auto nested_task_body_path = std::filesystem::temp_directory_path() / "nested_task_body.or";
-    write_fixture(
-        nested_task_body_path,
-        "demo.nestedtaskbody",
+    auto nested_task_path = std::filesystem::path(ORISON_SOURCE_DIR) /
+        "examples" / "concurrency_nested_task_main.or";
+    auto nested_task_ir = run_emit_llvm(app, nested_task_path);
+    assert_success_with_stdout_contains(
+        nested_task_ir,
         {
-            "async function launch(value: UInt32) -> UInt32",
-            "    let pending = task",
-            "        let nested = task",
-            "            value",
-            "        value",
-            "    await pending",
+            "%outer.task.env = alloca { i32 }",
+            "define private void @__orison_task_thunk.main.5.0(ptr %environment, ptr %result_storage)",
+            "define private void @__orison_task_thunk.__orison_task_thunk_main_5_0.6.0(ptr %environment, ptr %result_storage)",
+            "%inner.task.env = alloca { i32 }",
+            "call ptr @__orison_task_spawn(ptr @__orison_task_thunk.__orison_task_thunk_main_5_0.6.0",
+            "call void @__orison_task_await(ptr %inner)",
+            "store i32 %tmp4, ptr %result_storage",
         }
     );
-    auto nested_task_body = run_emit_llvm(app, nested_task_body_path);
-    assert(nested_task_body.exit_code != 0);
-    assert(
-        nested_task_body.stderr_text.find("lowering does not yet support this task body statement") !=
-        std::string::npos
+    auto nested_task = run_program(app, nested_task_path);
+    assert(nested_task.exit_code == 0);
+    assert(nested_task.stdout_text.empty());
+    assert(nested_task.stderr_text.empty());
+
+    auto nested_thread_path = std::filesystem::path(ORISON_SOURCE_DIR) /
+        "examples" / "concurrency_nested_thread_main.or";
+    auto nested_thread_ir = run_emit_llvm(app, nested_thread_path);
+    assert_success_with_stdout_contains(
+        nested_thread_ir,
+        {
+            "%outer.thread.env = alloca { i32 }",
+            "define private void @__orison_thread_thunk.main.5.0(ptr %environment, ptr %result_storage)",
+            "define private void @__orison_thread_thunk.__orison_thread_thunk_main_5_0.6.0(ptr %environment, ptr %result_storage)",
+            "%inner.thread.env = alloca { i32 }",
+            "call ptr @__orison_thread_spawn(ptr @__orison_thread_thunk.__orison_thread_thunk_main_5_0.6.0",
+            "call void @__orison_thread_join(ptr %inner)",
+            "store i32 %tmp4, ptr %result_storage",
+        }
     );
+    auto nested_thread = run_program(app, nested_thread_path);
+    assert(nested_thread.exit_code == 0);
+    assert(nested_thread.stdout_text.empty());
+    assert(nested_thread.stderr_text.empty());
 
     std::filesystem::remove_all(smoke_temp_root);
     return 0;

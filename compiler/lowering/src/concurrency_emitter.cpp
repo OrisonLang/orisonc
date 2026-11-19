@@ -12,6 +12,7 @@
 #include "orison/lowering/statement_emitter.hpp"
 #include "orison/lowering/unit_deferred_cleanup.hpp"
 
+#include <iterator>
 #include <utility>
 
 namespace orison::lowering {
@@ -39,6 +40,9 @@ auto is_supported_concurrency_body_prefix(
 ) -> bool {
     if (statement.kind == syntax::StatementKind::let_binding ||
         statement.kind == syntax::StatementKind::var_binding) {
+        if (statement.kind == syntax::StatementKind::let_binding) {
+            return true;
+        }
         return statement.expression.kind != syntax::ExpressionKind::task &&
                statement.expression.kind != syntax::ExpressionKind::thread;
     }
@@ -331,6 +335,17 @@ auto emit_concurrency_entry_thunk(
            << ", ptr %result_storage\n";
     output << "  ret void\n";
     output << "}\n";
+
+    parent_session.state.pending_function_definitions.insert(
+        parent_session.state.pending_function_definitions.end(),
+        std::make_move_iterator(thunk_state.pending_function_definitions.begin()),
+        std::make_move_iterator(thunk_state.pending_function_definitions.end())
+    );
+    parent_session.state.pending_generated_module_symbols.insert(
+        parent_session.state.pending_generated_module_symbols.end(),
+        std::make_move_iterator(thunk_state.pending_generated_module_symbols.begin()),
+        std::make_move_iterator(thunk_state.pending_generated_module_symbols.end())
+    );
     return output.str();
 }
 

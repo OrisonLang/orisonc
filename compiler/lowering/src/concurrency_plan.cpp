@@ -143,25 +143,11 @@ auto final_value_expression(
 auto infer_concurrency_result_type(
     syntax::ExpressionSyntax const& expression,
     LoweringEmissionContext const& context,
-    FunctionLoweringState const& state,
-    semantics::SemanticAnalysisResult const& semantics
+    FunctionLoweringState const& state
 ) -> std::optional<LoweredType> {
     auto inferred = infer_expression_type(expression, context, state);
     if (inferred.has_value()) {
         return inferred;
-    }
-
-    for (auto summary = semantics.semantic_module.expressions.rbegin();
-         summary != semantics.semantic_module.expressions.rend();
-         ++summary) {
-        if (summary->line == expression.line &&
-            summary->text == expression.text &&
-            !summary->type_name.empty()) {
-            auto semantic_type = lowered_type_for_source_type_name(summary->type_name, context.lowering);
-            if (semantic_type.has_value()) {
-                return semantic_type;
-            }
-        }
     }
 
     if (expression.kind == syntax::ExpressionKind::integer_literal) {
@@ -173,14 +159,32 @@ auto infer_concurrency_result_type(
 
     if (expression.kind == syntax::ExpressionKind::binary && expression.left != nullptr &&
         expression.right != nullptr) {
-        auto left = infer_concurrency_result_type(*expression.left, context, state, semantics);
-        auto right = infer_concurrency_result_type(*expression.right, context, state, semantics);
+        auto left = infer_concurrency_result_type(*expression.left, context, state);
+        auto right = infer_concurrency_result_type(*expression.right, context, state);
         if (left.has_value() && right.has_value() && left->type == right->type &&
             left->signedness == right->signedness) {
             return left;
         }
     }
 
+    return std::nullopt;
+}
+
+auto semantic_concurrency_result_type(
+    syntax::ExpressionSyntax const& expression,
+    LoweringEmissionContext const& context,
+    semantics::SemanticAnalysisResult const& semantics
+) -> std::optional<LoweredType> {
+    auto expected_kind = semantic_kind_for(expression_plan_kind(expression));
+    for (auto summary = semantics.concurrency_expressions.rbegin();
+         summary != semantics.concurrency_expressions.rend();
+         ++summary) {
+        if (summary->line == expression.line &&
+            summary->expression_kind == expected_kind &&
+            !summary->result_type_name.empty()) {
+            return lowered_type_for_source_type_name(summary->result_type_name, context.lowering);
+        }
+    }
     return std::nullopt;
 }
 
@@ -847,7 +851,10 @@ auto plan_concurrency_expression(
         return std::nullopt;
     }
 
-    auto result_type = infer_concurrency_result_type(*result_expression, context, state, semantics);
+    auto result_type = semantic_concurrency_result_type(expression, context, semantics);
+    if (!result_type.has_value()) {
+        result_type = infer_concurrency_result_type(*result_expression, context, state);
+    }
     if (!result_type.has_value() || result_type->type.empty() || result_type->type == "void") {
         return std::nullopt;
     }

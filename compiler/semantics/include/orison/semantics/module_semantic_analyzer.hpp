@@ -32,6 +32,12 @@ struct ConcurrencyCapture {
     ConcurrencyCaptureKind capture_kind = ConcurrencyCaptureKind::parameter;
 };
 
+struct ConcurrencyExpressionSummary {
+    std::size_t line = 0;
+    ConcurrencyExpressionKind expression_kind = ConcurrencyExpressionKind::task;
+    std::string result_type_name;
+};
+
 enum class DynamicArrayDescriptorBindingKind {
     local_binding,
     parameter_binding,
@@ -171,6 +177,7 @@ struct SemanticAnalysisResult {
     diagnostics::DiagnosticBag diagnostics;
     SemanticModuleSummary semantic_module;
     std::vector<ConcurrencyCapture> concurrency_captures;
+    std::vector<ConcurrencyExpressionSummary> concurrency_expressions;
 
     auto has_errors() const -> bool {
         return diagnostics.has_errors();

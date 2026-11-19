@@ -44,9 +44,9 @@ drop/cleanup decisions.
   expression's source line. Lowering selects captures by expression kind and exact owner line, then converts those
   occurrences into one environment field per captured binding in first-use order. Cleanup planning uses the same
   owner-specific deduplicated field layout.
-- Nested concurrency expressions restore the enclosing capture context after semantic analysis. Their direct captures
-  remain assigned to the inner expression rather than entering an enclosing environment through line-range matching.
-  Transitive capture propagation remains future work alongside nested concurrency body lowering.
+- Nested concurrency expressions retain one active capture context per crossed task/thread boundary. A reference from
+  an inner body to an outer binding records both the direct inner capture and each required transitive outer capture,
+  while bindings declared inside an outer body remain local to that outer thunk.
 - Scalar `thread` bindings can now lower their capture environment allocation, result storage allocation, capture
   stores, private entry thunk, and runtime spawn call shape with the planned result byte size. The thunk loads captures
   from the environment, lowers the final scalar body expression, and writes the result into compiler-owned result
@@ -64,8 +64,9 @@ drop/cleanup decisions.
 - Task and thread entry thunks lower straight-line body prefixes through the shared statement-block lowerer before
   storing the final value. The admitted prefixes are local `let`, local `var`, assignment, and call statements.
   Semantic expression summaries provide result types when the final value is a thunk-local binding.
-- Nested task/thread bindings remain rejected as body prefixes until transitive captures and nested generated-function
-  propagation are implemented.
+- Nested scalar task/thread bindings lower as body prefixes. Nested entry and cleanup definitions, generated symbols,
+  capture environments, result storage, and synchronization calls propagate from the inner lowering session into the
+  enclosing module. Semantic expression summaries retain each nested result type for outer planning.
 - Scalar `await` expressions for lowered task bindings call `__orison_task_await(handle)`, load the typed result from
   compiler-owned result storage, and destroy the handle after the load.
 - `async function` lowering is currently a narrow backend admission rule for scalar task/await bodies; it does not yet
@@ -242,6 +243,8 @@ drop/cleanup decisions.
   payloads containing nested fixed arrays of named records.
 - `examples/concurrency_thread_main.or` is the checked-in runnable smoke source for the current scalar thread runtime
   path.
+- `examples/concurrency_nested_task_main.or` and `examples/concurrency_nested_thread_main.or` are checked-in runnable
+  sources for transitive scalar capture, nested generated thunks, and nested synchronization.
 - Module emission now validates concurrency runtime prelude declarations plus generated task/thread entry and cleanup
   thunk symbols through the shared lowering module symbol registry before generated LLVM IR is accepted.
 

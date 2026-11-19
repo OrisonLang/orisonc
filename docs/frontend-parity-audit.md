@@ -1,5 +1,9 @@
 # Frontend Parity Audit
 
+- 2026-11-18: Nested scalar task and thread bindings now lower through transitive immutable capture environments.
+  Semantic analysis records every crossed concurrency boundary, result summaries preserve nested payload types, and
+  lowering propagates inner entry/cleanup definitions plus generated symbols into the module. Checked-in task/thread
+  programs pin both thunk layers, synchronization, link, and runtime behavior. No source syntax or runtime ABI changed.
 - 2026-11-18: Task and thread entry thunks now lower straight-line `let`, `var`, assignment, and call statements before
   their final value expression. Semantic expression summaries recover final local result types during planning. Checked-in
   task/thread programs pin emitted local storage, mutation, calls, result transfer, link, and runtime behavior. Nested

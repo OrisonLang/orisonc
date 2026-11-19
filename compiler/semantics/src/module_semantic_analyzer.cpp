@@ -160,6 +160,7 @@ public:
             .diagnostics = std::move(diagnostics_),
             .semantic_module = std::move(semantic_module_),
             .concurrency_captures = std::move(concurrency_captures),
+            .concurrency_expressions = std::move(concurrency_expressions_),
         };
     }
 
@@ -174,6 +175,12 @@ private:
         bool module_constant = false;
         std::size_t scope_depth = 0;
         std::size_t declaration_line = 0;
+    };
+
+    struct ConcurrencyCaptureContext {
+        std::size_t scope_depth = 0;
+        ConcurrencyExpressionKind expression_kind = ConcurrencyExpressionKind::task;
+        std::size_t expression_line = 0;
     };
 
     struct FixedArraySourceType {
@@ -1872,6 +1879,20 @@ private:
 
     auto infer_expression_type_name(syntax::ExpressionSyntax const& expression) const -> std::string {
         switch (expression.kind) {
+        case syntax::ExpressionKind::task:
+        case syntax::ExpressionKind::thread: {
+            auto expected_kind = expression.kind == syntax::ExpressionKind::thread
+                                     ? ConcurrencyExpressionKind::thread
+                                     : ConcurrencyExpressionKind::task;
+            for (auto summary = concurrency_expressions_.rbegin();
+                 summary != concurrency_expressions_.rend();
+                 ++summary) {
+                if (summary->line == expression.line && summary->expression_kind == expected_kind) {
+                    return summary->result_type_name;
+                }
+            }
+            return {};
+        }
         case syntax::ExpressionKind::name: {
             if (expression.text == "unit") {
                 return "Unit";
@@ -3795,7 +3816,19 @@ private:
             return {};
         }
 
-        return infer_expression_type_name(statement.expression);
+        auto const& expression = statement.expression;
+        if (expression.kind == syntax::ExpressionKind::unary && expression.text == "await" && expression.left &&
+            is_async_boundary_value_origin(infer_expression_value_origin(*expression.left))) {
+            return infer_expression_type_name(*expression.left);
+        }
+        if (expression.kind == syntax::ExpressionKind::call && expression.left &&
+            expression.left->kind == syntax::ExpressionKind::member_access && expression.left->text == "join" &&
+            expression.left->left &&
+            infer_expression_value_origin(*expression.left->left) == ValueOriginKind::thread) {
+            return infer_expression_type_name(*expression.left->left);
+        }
+
+        return infer_expression_type_name(expression);
     }
 
     void collect_concurrency_marker_implementations() {
@@ -7327,33 +7360,37 @@ private:
                 );
             }
 
-            auto saved_capture_depth = capture_scope_depth_;
-            auto saved_capture_expression_kind = current_capture_expression_kind_;
-            auto saved_capture_expression_line = current_capture_expression_line_;
-            capture_scope_depth_ = scope_stack_.size();
-            current_capture_expression_kind_ = expression_kind;
-            current_capture_expression_line_ = expression.line;
+            capture_contexts_.push_back(ConcurrencyCaptureContext {
+                .scope_depth = scope_stack_.size(),
+                .expression_kind = expression_kind,
+                .expression_line = expression.line,
+            });
 
             push_scope();
             for (auto const& nested_statement : expression.nested_statements) {
                 analyze_statement(*nested_statement, in_async_function);
             }
 
+            auto result_type_name = std::string {};
             if (final_statement != nullptr &&
                 (final_statement->kind == syntax::StatementKind::expression_statement ||
                  is_value_return_statement(*final_statement))) {
+                result_type_name = infer_statement_value_type_name(*final_statement);
                 validate_concurrency_value_type(
                     final_statement->line,
-                    infer_statement_value_type_name(*final_statement),
+                    result_type_name,
                     expression_kind,
                     "result"
                 );
             }
             pop_scope();
 
-            capture_scope_depth_ = saved_capture_depth;
-            current_capture_expression_kind_ = saved_capture_expression_kind;
-            current_capture_expression_line_ = saved_capture_expression_line;
+            capture_contexts_.pop_back();
+            concurrency_expressions_.push_back(ConcurrencyExpressionSummary {
+                .line = expression.line,
+                .expression_kind = expression_kind,
+                .result_type_name = std::move(result_type_name),
+            });
             record_expression_summary(expression);
             return;
         }
@@ -7862,15 +7899,12 @@ private:
     }
 
     void record_concurrency_capture(syntax::ExpressionSyntax const& expression) {
-        if (capture_scope_depth_ == no_capture_scope_depth) {
+        if (capture_contexts_.empty()) {
             return;
         }
 
         auto const* binding = find_binding(expression.text);
-        if (binding == nullptr || binding->scope_depth >= capture_scope_depth_) {
-            return;
-        }
-        if (binding->module_constant) {
+        if (binding == nullptr || binding->module_constant) {
             return;
         }
 
@@ -7883,14 +7917,24 @@ private:
             capture_kind = ConcurrencyCaptureKind::mutable_outer_local;
         }
 
-        concurrency_captures.push_back(ConcurrencyCapture {
-            .line = expression.line,
-            .expression_line = current_capture_expression_line_,
-            .name = expression.text,
-            .type_name = binding->type_name,
-            .expression_kind = current_capture_expression_kind_,
-            .capture_kind = capture_kind,
-        });
+        auto crossing_contexts = std::vector<ConcurrencyCaptureContext const*> {};
+        for (auto const& context : capture_contexts_) {
+            if (binding->scope_depth >= context.scope_depth) {
+                continue;
+            }
+            crossing_contexts.push_back(&context);
+            concurrency_captures.push_back(ConcurrencyCapture {
+                .line = expression.line,
+                .expression_line = context.expression_line,
+                .name = expression.text,
+                .type_name = binding->type_name,
+                .expression_kind = context.expression_kind,
+                .capture_kind = capture_kind,
+            });
+        }
+        if (crossing_contexts.empty()) {
+            return;
+        }
 
         if (capture_kind == ConcurrencyCaptureKind::receiver) {
             diagnostics_.error(expression.line, "concurrency expression cannot capture receiver 'this'");
@@ -7908,26 +7952,29 @@ private:
         if ((capture_kind == ConcurrencyCaptureKind::parameter ||
              capture_kind == ConcurrencyCaptureKind::immutable_outer_local) &&
             !binding->type_name.empty()) {
-            if (current_capture_expression_kind_ == ConcurrencyExpressionKind::thread &&
-                !is_obviously_safe_capture_type(binding->type_name) &&
-                !has_allowed_concurrency_marker(binding->type_name, current_capture_expression_kind_)) {
-                diagnostics_.error(
-                    expression.line,
-                    "thread capture '" + expression.text + "' of type '" + binding->type_name +
-                        "' requires future Transferable analysis"
-                );
-                return;
-            }
-
-            if (current_capture_expression_kind_ == ConcurrencyExpressionKind::task &&
-                !is_obviously_safe_capture_type(binding->type_name) &&
-                !has_allowed_concurrency_marker(binding->type_name, current_capture_expression_kind_)) {
-                diagnostics_.error(
-                    expression.line,
-                    "task capture '" + expression.text + "' of type '" + binding->type_name +
-                        "' requires future Transferable/Shareable analysis"
-                );
-                return;
+            auto diagnosed_task = false;
+            auto diagnosed_thread = false;
+            for (auto const* context : crossing_contexts) {
+                if (is_obviously_safe_capture_type(binding->type_name) ||
+                    has_allowed_concurrency_marker(binding->type_name, context->expression_kind)) {
+                    continue;
+                }
+                if (context->expression_kind == ConcurrencyExpressionKind::thread && !diagnosed_thread) {
+                    diagnostics_.error(
+                        expression.line,
+                        "thread capture '" + expression.text + "' of type '" + binding->type_name +
+                            "' requires future Transferable analysis"
+                    );
+                    diagnosed_thread = true;
+                }
+                if (context->expression_kind == ConcurrencyExpressionKind::task && !diagnosed_task) {
+                    diagnostics_.error(
+                        expression.line,
+                        "task capture '" + expression.text + "' of type '" + binding->type_name +
+                            "' requires future Transferable/Shareable analysis"
+                    );
+                    diagnosed_task = true;
+                }
             }
         }
     }
@@ -7936,6 +7983,7 @@ private:
     SemanticAnalysisOptions const& options_;
     diagnostics::DiagnosticBag diagnostics_;
     std::vector<ConcurrencyCapture> concurrency_captures;
+    std::vector<ConcurrencyExpressionSummary> concurrency_expressions_;
     SemanticModuleSummary semantic_module_;
     std::vector<std::string> async_callable_names_;
     std::vector<AsyncMethodSignature> async_method_signatures_;
@@ -7960,10 +8008,7 @@ private:
     std::string current_function_return_type_name_;
     std::unordered_set<std::string> current_generic_scope_;
     std::string expected_pointer_type_name_;
-    static constexpr std::size_t no_capture_scope_depth = static_cast<std::size_t>(-1);
-    std::size_t capture_scope_depth_ = no_capture_scope_depth;
-    ConcurrencyExpressionKind current_capture_expression_kind_ = ConcurrencyExpressionKind::task;
-    std::size_t current_capture_expression_line_ = 0;
+    std::vector<ConcurrencyCaptureContext> capture_contexts_;
 };
 
 }  // namespace
