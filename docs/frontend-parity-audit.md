@@ -1,5 +1,8 @@
 # Frontend Parity Audit
 
+- 2026-11-19: Scalar-payload `Result` values now have semantic, IR, link, and runtime proof across two nested task or
+  thread boundaries. Both result buffers retain `{ i32, i32 }` and 8-byte sizing, and the enclosing thunk forwards the
+  synchronized tag and payload together. No compiler behavior, source syntax, or runtime ABI changed.
 - 2026-11-19: Named `Pair` record results now have semantic, IR, link, and runtime proof across two nested task or
   thread boundaries. Both result buffers retain `%record.Pair` and 8-byte sizing, and the enclosing thunk forwards the
   synchronized nominal aggregate into its own result storage. No compiler behavior, source syntax, or runtime ABI changed.

@@ -48,8 +48,10 @@ Date: 2026-11-18
 - Fixed-array results now retain typed layout and target sizing through two nested task or thread result-storage layers.
 - Named-record results now retain nominal LLVM layout and target sizing through two nested task or thread result-storage
   layers.
-- Recommended next implementation: audit scalar-payload choice results through two nested concurrency result-storage
-  layers. This exercises tagged payload transfer and reconstruction before owned aggregate captures.
+- Scalar-payload choice results now retain their tag and payload through two nested task or thread result-storage
+  layers.
+- Recommended next implementation: audit distinct-layout scalar-payload choices through two nested concurrency
+  result-storage layers. This exercises erased payload bytes before owned aggregate captures.
 
 Date: 2026-09-03
 
@@ -198,5 +200,5 @@ This note is an implementation snapshot. It does not define language syntax or s
 
 ## Suggested Next Step
 
-- Audit scalar-payload choice results through two nested concurrency result-storage layers before admitting owned
-  aggregate captures.
+- Audit distinct-layout scalar-payload choice results through two nested concurrency result-storage layers before
+  admitting owned aggregate captures.

@@ -103,6 +103,9 @@ drop/cleanup decisions.
 - Named `%record.Pair` results also cross two nested task or thread boundaries. Each boundary resolves the same nominal
   layout and owns an 8-byte typed result buffer; the enclosing thunk forwards the synchronized aggregate into its own
   result storage.
+- Scalar-payload choice results also cross two nested task or thread boundaries. Each boundary owns an 8-byte
+  `{ i32, i32 }` result buffer; the enclosing thunk forwards the synchronized tag and payload together before the
+  caller reconstructs the selected variant.
 - The checked-in record task and thread examples now also capture an outer scalar. IR coverage pins the scalar capture
   environment, thunk-side load, record construction, typed result store, synchronization, and typed record load; linked
   execution validates the complete composition.
@@ -265,6 +268,9 @@ drop/cleanup decisions.
   `examples/concurrency_nested_array_result_thread_main.or` prove typed fixed-array transfer through two result buffers.
 - `examples/concurrency_nested_record_result_task_main.or` and
   `examples/concurrency_nested_record_result_thread_main.or` prove nominal record transfer through two result buffers.
+- `examples/concurrency_nested_choice_result_task_main.or` and
+  `examples/concurrency_nested_choice_result_thread_main.or` prove tagged scalar-payload transfer through two result
+  buffers.
 - Module emission now validates concurrency runtime prelude declarations plus generated task/thread entry and cleanup
   thunk symbols through the shared lowering module symbol registry before generated LLVM IR is accepted.
 
