@@ -111,6 +111,9 @@ drop/cleanup decisions.
   bytes; result storage preserves both forms through synchronization and switch lowering reconstructs each source type.
 - Fixed `Array<UInt32, 2>` results now cross task and thread boundaries as inline `[2 x i32]` values. Compiler-owned
   result storage uses the target-layout size of 8 bytes, while the runtime ABI remains source-type-agnostic.
+- Fixed `Array<UInt32, 2>` results also cross two nested task or thread boundaries. Each boundary owns an 8-byte typed
+  result buffer; the enclosing thunk synchronizes with the inner handle, loads `[2 x i32]`, and stores that value into
+  its own result buffer.
 - Nested `Array<Array<UInt32, 2>, 2>` results now cross the same boundaries as inline `[2 x [2 x i32]]` values.
   Recursive construction and target sizing produce 16-byte compiler-owned result storage without runtime ABI changes.
 - Fixed `Array<Pair, 2>` results now preserve named `%record.Pair` elements inside `[2 x %record.Pair]`. Recursive
@@ -255,6 +258,8 @@ drop/cleanup decisions.
   `examples/concurrency_nested_local_capture_thread_main.or` prove local-only inner capture ownership.
 - `examples/concurrency_mixed_task_in_thread_main.or` and `examples/concurrency_mixed_thread_in_task_main.or` prove
   mixed runtime symbol composition and nested synchronization in both directions.
+- `examples/concurrency_nested_array_result_task_main.or` and
+  `examples/concurrency_nested_array_result_thread_main.or` prove typed fixed-array transfer through two result buffers.
 - Module emission now validates concurrency runtime prelude declarations plus generated task/thread entry and cleanup
   thunk symbols through the shared lowering module symbol registry before generated LLVM IR is accepted.
 

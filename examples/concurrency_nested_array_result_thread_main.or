@@ -1,0 +1,16 @@
+package examples.concurrencynestedarrayresultthread
+
+implements Transferable for Array<UInt32, 2>
+    function placeholder(this: shared This) -> Unit
+        return
+
+function main() -> UInt32
+    let first = 17 as UInt32
+    let second = 25 as UInt32
+    let outer = thread
+        let inner = thread
+            [first, second]
+        inner.join()
+
+    let result: Array<UInt32, 2> = outer.join()
+    result[0] + result[1] == 42 as UInt32 ? 0 as UInt32 : 1 as UInt32

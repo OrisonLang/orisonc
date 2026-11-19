@@ -1,0 +1,16 @@
+package examples.concurrencynestedarrayresulttask
+
+implements Shareable for Array<UInt32, 2>
+    function placeholder(this: shared This) -> Unit
+        return
+
+async function main() -> UInt32
+    let first = 19 as UInt32
+    let second = 23 as UInt32
+    let outer = task
+        let inner = task
+            [first, second]
+        await inner
+
+    let result: Array<UInt32, 2> = await outer
+    result[0] + result[1] == 42 as UInt32 ? 0 as UInt32 : 1 as UInt32

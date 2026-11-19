@@ -45,8 +45,9 @@ Date: 2026-11-18
 - Inner task/thread expressions now capture enclosing-body locals without adding those locals to the outer environment.
 - Mixed task/thread nesting now composes both runtime symbol families and applies capture marker checks at every crossed
   boundary.
-- Recommended next implementation: audit fixed-array results through two nested concurrency result-storage layers.
-  This extends nested lowering beyond scalar payloads without introducing new ownership semantics.
+- Fixed-array results now retain typed layout and target sizing through two nested task or thread result-storage layers.
+- Recommended next implementation: audit named-record results through two nested concurrency result-storage layers.
+  This extends the same proof to context-resolved named aggregate layouts.
 
 Date: 2026-09-03
 
@@ -195,5 +196,5 @@ This note is an implementation snapshot. It does not define language syntax or s
 
 ## Suggested Next Step
 
-- Audit fixed-array results through two nested concurrency result-storage layers before admitting owned aggregate
+- Audit named-record results through two nested concurrency result-storage layers before admitting owned aggregate
   captures.

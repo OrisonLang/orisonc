@@ -157,6 +157,8 @@ member-derived receivers.
 `concurrency_nested_local_capture_thread_main.or` demonstrates an inner thread capturing an outer-thread local binding.
 `concurrency_mixed_task_in_thread_main.or` demonstrates a scalar task nested inside a thread.
 `concurrency_mixed_thread_in_task_main.or` demonstrates a scalar thread nested inside a task.
+`concurrency_nested_array_result_task_main.or` demonstrates a fixed-array result crossing two nested task boundaries.
+`concurrency_nested_array_result_thread_main.or` demonstrates a fixed-array result crossing two nested thread boundaries.
 
 The numbered `tour_*.or` files split `ORISON_TOUR.md` into focused examples:
 

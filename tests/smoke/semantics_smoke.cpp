@@ -14668,6 +14668,31 @@ void test_mixed_concurrency_thread_boundary_rejects_shareable_capture() {
     assert_thread_capture_transferable_diagnostic(thread_in_task_path, 8, "buffer", "Buffer");
 }
 
+void test_nested_concurrency_array_result_summaries_success() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_nested_array_result_success.or";
+    write_concurrency_fixture(
+        path,
+        "demo.concurrency",
+        {
+            "implements Shareable for Array<UInt32, 2>",
+            "    function placeholder(this: shared This) -> Unit",
+            "        return",
+            "async function nested(first: UInt32, second: UInt32) -> Array<UInt32, 2>",
+            "    let outer = task",
+            "        let inner = task",
+            "            [first, second]",
+            "        await inner",
+            "    await outer",
+        }
+    );
+
+    auto analysis = analyze_orison_fixture(path);
+    assert(!analysis.has_errors());
+    assert(analysis.concurrency_expressions.size() == 2);
+    assert(analysis.concurrency_expressions[0].result_type_name == "Array<UInt32, 2>");
+    assert(analysis.concurrency_expressions[1].result_type_name == "Array<UInt32, 2>");
+}
+
 void test_thread_capture_owned_parameter_type_failure() {
     auto path = std::filesystem::temp_directory_path() / "orison_semantics_thread_owned_parameter_failure.or";
     write_concurrency_fixture(
@@ -16006,6 +16031,7 @@ int main() {
     test_nested_concurrency_local_capture_origin_success();
     test_mixed_concurrency_capture_origin_success();
     test_mixed_concurrency_thread_boundary_rejects_shareable_capture();
+    test_nested_concurrency_array_result_summaries_success();
     test_thread_capture_owned_parameter_type_failure();
     test_thread_capture_transferable_generic_success();
     test_thread_capture_unconstrained_generic_failure();

@@ -1562,6 +1562,46 @@ auto main() -> int {
     assert(mixed_thread_in_task.stdout_text.empty());
     assert(mixed_thread_in_task.stderr_text.empty());
 
+    auto nested_array_result_task_path = std::filesystem::path(ORISON_SOURCE_DIR) /
+        "examples" / "concurrency_nested_array_result_task_main.or";
+    auto nested_array_result_task_ir = run_emit_llvm(app, nested_array_result_task_path);
+    assert_success_with_stdout_contains(
+        nested_array_result_task_ir,
+        {
+            "%outer.task.result = alloca [2 x i32]",
+            "call ptr @__orison_task_spawn(ptr @__orison_task_thunk.main.10.0, ptr %outer.task.env, ptr %outer.task.result, i64 8",
+            "%inner.task.result = alloca [2 x i32]",
+            "call ptr @__orison_task_spawn(ptr @__orison_task_thunk.__orison_task_thunk_main_10_0.11.0, ptr %inner.task.env, ptr %inner.task.result, i64 8",
+            "%tmp7 = load [2 x i32], ptr %inner.task.result",
+            "store [2 x i32] %tmp7, ptr %result_storage",
+            "%tmp3 = load [2 x i32], ptr %outer.task.result",
+        }
+    );
+    auto nested_array_result_task = run_program(app, nested_array_result_task_path);
+    assert(nested_array_result_task.exit_code == 0);
+    assert(nested_array_result_task.stdout_text.empty());
+    assert(nested_array_result_task.stderr_text.empty());
+
+    auto nested_array_result_thread_path = std::filesystem::path(ORISON_SOURCE_DIR) /
+        "examples" / "concurrency_nested_array_result_thread_main.or";
+    auto nested_array_result_thread_ir = run_emit_llvm(app, nested_array_result_thread_path);
+    assert_success_with_stdout_contains(
+        nested_array_result_thread_ir,
+        {
+            "%outer.thread.result = alloca [2 x i32]",
+            "call ptr @__orison_thread_spawn(ptr @__orison_thread_thunk.main.10.0, ptr %outer.thread.env, ptr %outer.thread.result, i64 8",
+            "%inner.thread.result = alloca [2 x i32]",
+            "call ptr @__orison_thread_spawn(ptr @__orison_thread_thunk.__orison_thread_thunk_main_10_0.11.0, ptr %inner.thread.env, ptr %inner.thread.result, i64 8",
+            "%tmp7 = load [2 x i32], ptr %inner.thread.result",
+            "store [2 x i32] %tmp7, ptr %result_storage",
+            "%tmp3 = load [2 x i32], ptr %outer.thread.result",
+        }
+    );
+    auto nested_array_result_thread = run_program(app, nested_array_result_thread_path);
+    assert(nested_array_result_thread.exit_code == 0);
+    assert(nested_array_result_thread.stdout_text.empty());
+    assert(nested_array_result_thread.stderr_text.empty());
+
     std::filesystem::remove_all(smoke_temp_root);
     return 0;
 }
