@@ -320,6 +320,9 @@ drop/cleanup decisions.
 - `examples/concurrency_await_switch_match_main.or` and `examples/concurrency_await_switch_default_main.or` compile,
   link, and run direct scalar task results as `switch` subjects. Their IR checks pin synchronization and consumed-
   handle destruction before matched/default dispatch. No source syntax or concurrency ABI changed.
+- `examples/concurrency_await_fixed_array_index_main.or` compiles, links, and runs a direct `UInt64` task result as a
+  fixed-array index. Prelude discovery now infers unannotated array-literal local types, keeping bounds-failure symbol
+  declarations aligned with emitted checks. IR pins synchronization, cleanup, bounds checking, GEP, and element load.
 
 ## Follow-up work
 

@@ -220,5 +220,5 @@ This note is an implementation snapshot. It does not define language syntax or s
 
 ## Suggested Next Step
 
-- Audit a scalar task `await` used directly as a fixed-array index, covering an in-bounds load and consumed-handle
-  cleanup without extending syntax or the async ABI.
+- Add the paired out-of-bounds awaited fixed-array index regression, verifying consumed-handle cleanup precedes the
+  bounds trap and the built executable fails deterministically.

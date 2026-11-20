@@ -1890,6 +1890,29 @@ auto main() -> int {
     assert(await_switch_default.stdout_text.empty());
     assert(await_switch_default.stderr_text.empty());
 
+    auto await_fixed_array_index_path = std::filesystem::path(ORISON_SOURCE_DIR) /
+        "examples" / "concurrency_await_fixed_array_index_main.or";
+    auto await_fixed_array_index_ir = run_emit_llvm(app, await_fixed_array_index_path);
+    assert_success_with_stdout_contains(
+        await_fixed_array_index_ir,
+        {
+            "declare void @__orison_dynamic_array_bounds_failed()",
+            "call void @__orison_task_await(ptr %pending)\n"
+            "  %tmp3 = load i64, ptr %pending.task.result\n"
+            "  call void @__orison_concurrency_handle_destroy(ptr %pending)\n"
+            "  %aggregate_path_index4.in_bounds = icmp ult i64 %tmp3, 2",
+            "br i1 %aggregate_path_index4.in_bounds, label %fixed_array.index.in_bounds.1, "
+            "label %fixed_array.index.out_of_bounds.1",
+            "call void @__orison_dynamic_array_bounds_failed()\n  unreachable",
+            "%tmp5 = getelementptr [2 x i32], ptr %values.addr, i64 0, i64 %tmp3",
+            "%tmp6 = load i32, ptr %tmp5",
+        }
+    );
+    auto await_fixed_array_index = run_program(app, await_fixed_array_index_path);
+    assert(await_fixed_array_index.exit_code == 0);
+    assert(await_fixed_array_index.stdout_text.empty());
+    assert(await_fixed_array_index.stderr_text.empty());
+
     std::filesystem::remove_all(smoke_temp_root);
     return 0;
 }

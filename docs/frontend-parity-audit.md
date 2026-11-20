@@ -4173,6 +4173,9 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-11-20: Direct task `await` as a scalar `switch` subject now has compile-link-run coverage for matched and default
   outcomes. The checked-in examples verify await, scalar result load, consumed-handle destruction, switch dispatch,
   and final result merging. No syntax or ABI changed.
+- 2026-11-20: Direct task `await` as a fixed-array index now has compile-link-run coverage for an in-bounds load.
+  Prelude discovery infers unannotated array-literal locals so emitted runtime bounds checks receive their declaration.
+  IR verifies await, handle destruction, bounds checking, indexed addressing, and element loading. No syntax changed.
 - 2026-11-18: Concrete generic record payloads containing nested fixed arrays of named records now have checked-in task
   and thread proof. `Result<Batch>` specializes two `T` payload fields to `{ %record.Batch, %record.Batch }`, where
   `%record.Batch` is `{ [2 x [2 x %record.Pair]] }`; it uses `{ i32, [64 x i8] }` with 68-byte result storage,

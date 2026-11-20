@@ -1,0 +1,8 @@
+package examples.concurrency_await_fixed_array_index
+
+async function main() -> UInt32
+    let values = [11 as UInt32, 31 as UInt32]
+    let pending = task
+        1 as UInt64
+
+    values[await pending] - 31 as UInt32

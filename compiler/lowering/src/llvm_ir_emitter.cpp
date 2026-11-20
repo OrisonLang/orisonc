@@ -2351,6 +2351,17 @@ void collect_source_type_names(
         context.records.contains(statement.expression.left->text)) {
         source_type_names[statement.name] = statement.expression.left->text;
     }
+    if ((statement.kind == syntax::StatementKind::let_binding ||
+         statement.kind == syntax::StatementKind::var_binding) &&
+        !statement.name.empty() &&
+        statement.annotated_type.name.empty() &&
+        statement.expression.kind == syntax::ExpressionKind::array_literal) {
+        auto state = FunctionLoweringState {};
+        state.source_type_names = source_type_names;
+        if (auto inferred_type = source_type_name_for_expression(statement.expression, context, state)) {
+            source_type_names[statement.name] = std::move(*inferred_type);
+        }
+    }
     for (auto const& nested_statement : statement.nested_statements) {
         collect_source_type_names(nested_statement, choices, context, source_type_names);
     }
