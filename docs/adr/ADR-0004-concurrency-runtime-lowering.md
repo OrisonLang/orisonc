@@ -314,6 +314,9 @@ drop/cleanup decisions.
 - `examples/concurrency_await_if_true_main.or` and `examples/concurrency_await_if_false_main.or` compile, link, and run
   both Boolean task outcomes as direct `if` conditions. Their IR checks pin await, result load, consumed-handle
   destruction, and conditional branch order. No source syntax or concurrency ABI changed.
+- `examples/concurrency_await_guard_continue_main.or` and `examples/concurrency_await_guard_return_main.or` compile,
+  link, and run direct Boolean task results as `guard` conditions. Their IR checks pin synchronization and consumed-
+  handle destruction before continuation or early return. No source syntax or concurrency ABI changed.
 
 ## Follow-up work
 

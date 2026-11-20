@@ -1,0 +1,10 @@
+package examples.concurrency_await_guard_continue
+
+async function main() -> UInt32
+    let pending = task
+        true
+
+    guard await pending else
+        return 1 as UInt32
+
+    0 as UInt32

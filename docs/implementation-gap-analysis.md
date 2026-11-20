@@ -220,5 +220,5 @@ This note is an implementation snapshot. It does not define language syntax or s
 
 ## Suggested Next Step
 
-- Audit direct Boolean task `await` in a `guard` condition, covering continuation and early-return outcomes without
+- Audit a scalar task `await` used directly as a `switch` subject, covering matched and default outcomes without
   extending syntax or the async ABI.

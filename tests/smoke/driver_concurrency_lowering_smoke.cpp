@@ -1810,6 +1810,46 @@ auto main() -> int {
     assert(await_if_false.stdout_text.empty());
     assert(await_if_false.stderr_text.empty());
 
+    auto await_guard_continue_path = std::filesystem::path(ORISON_SOURCE_DIR) /
+        "examples" / "concurrency_await_guard_continue_main.or";
+    auto await_guard_continue_ir = run_emit_llvm(app, await_guard_continue_path);
+    assert_success_with_stdout_contains(
+        await_guard_continue_ir,
+        {
+            "store i1 1, ptr %result_storage",
+            "call void @__orison_task_await(ptr %pending)\n"
+            "  %tmp1 = load i1, ptr %pending.task.result\n"
+            "  call void @__orison_concurrency_handle_destroy(ptr %pending)\n"
+            "  br i1 %tmp1, label %guard.merge.1, label %guard.failure.1",
+            "guard.failure.1:\n  ret i32 1",
+            "guard.merge.1:\n  ret i32 0",
+        }
+    );
+    auto await_guard_continue = run_program(app, await_guard_continue_path);
+    assert(await_guard_continue.exit_code == 0);
+    assert(await_guard_continue.stdout_text.empty());
+    assert(await_guard_continue.stderr_text.empty());
+
+    auto await_guard_return_path = std::filesystem::path(ORISON_SOURCE_DIR) /
+        "examples" / "concurrency_await_guard_return_main.or";
+    auto await_guard_return_ir = run_emit_llvm(app, await_guard_return_path);
+    assert_success_with_stdout_contains(
+        await_guard_return_ir,
+        {
+            "store i1 0, ptr %result_storage",
+            "call void @__orison_task_await(ptr %pending)\n"
+            "  %tmp1 = load i1, ptr %pending.task.result\n"
+            "  call void @__orison_concurrency_handle_destroy(ptr %pending)\n"
+            "  br i1 %tmp1, label %guard.merge.1, label %guard.failure.1",
+            "guard.failure.1:\n  ret i32 0",
+            "guard.merge.1:\n  ret i32 1",
+        }
+    );
+    auto await_guard_return = run_program(app, await_guard_return_path);
+    assert(await_guard_return.exit_code == 0);
+    assert(await_guard_return.stdout_text.empty());
+    assert(await_guard_return.stderr_text.empty());
+
     std::filesystem::remove_all(smoke_temp_root);
     return 0;
 }
