@@ -65,8 +65,11 @@ Date: 2026-11-18
   blocked and emitting no concrete cleanup definition or call. The nested concurrency cleanup gate audit is complete.
 - Nested outer tasks now support final scalar expressions that combine a thunk-local value with an awaited inner-task
   result. Semantic typing and LLVM lowering are proven for `outer_value + await inner`.
-- Recommended next implementation: audit the generalized `await` expression path in scalar comparisons, ternaries,
-  and function-call arguments before broadening nested concurrency result composition further.
+- Explicitly typed locals now have verifier-backed `await` coverage in scalar comparisons, direct function-call
+  arguments, and ternary arms. Branch-dependent task handles merge as live-or-null pointers so automatic cleanup
+  retains the unselected task at runtime.
+- Recommended next implementation: extend lowering-side unannotated local type recovery to composed `await`
+  comparisons, calls, and ternaries, matching the semantic analyzer's inferred result types.
 
 Date: 2026-09-03
 
@@ -215,5 +218,5 @@ This note is an implementation snapshot. It does not define language syntax or s
 
 ## Suggested Next Step
 
-- Audit the generalized `await` expression path in scalar comparisons, ternaries, and function-call arguments before
-  broadening nested concurrency result composition further.
+- Extend lowering-side unannotated local type recovery to composed `await` comparisons, calls, and ternaries, matching
+  the semantic analyzer's inferred result types.

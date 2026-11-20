@@ -211,6 +211,7 @@ auto test_result_completion_emitters() -> void {
         "  call void @__orison_concurrency_handle_destroy(ptr %worker)\n"
     );
     assert(thread_binding.handle_destroyed);
+    assert(thread_binding.handle == "null");
     assert(thread_result->type == "i64");
     assert(thread_result->value == "%tmp0");
     assert(thread_result->signedness == orison::lowering::IntegerSignedness::signed_integer);
@@ -263,6 +264,7 @@ auto test_result_completion_emitters() -> void {
         "  call void @__orison_concurrency_handle_destroy(ptr %pending)\n"
     );
     assert(task_binding.handle_destroyed);
+    assert(task_binding.handle == "null");
     assert(task_result->type == "i1");
     assert(task_result->value == "%tmp1");
     assert(task_result->signedness == orison::lowering::IntegerSignedness::not_integer);
@@ -337,6 +339,8 @@ auto test_abandoned_handle_cleanup() -> void {
     assert(state.thread_bindings.at("joined").handle_destroyed);
     assert(state.thread_bindings.at("worker").handle_destroyed);
     assert(state.task_bindings.at("pending").handle_destroyed);
+    assert(state.thread_bindings.at("worker").handle == "null");
+    assert(state.task_bindings.at("pending").handle == "null");
 }
 
 }  // namespace

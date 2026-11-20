@@ -79,6 +79,9 @@ drop/cleanup decisions.
   not only as a final standalone statement. Nested task lowering therefore supports scalar compositions such as
   `outer_value + await inner`; the generated thunk awaits, loads, destroys the inner handle, and emits the arithmetic
   before storing the outer result.
+- Ternary arms lower from the same concurrency-binding snapshot. When only one arm awaits a task, the merge block
+  represents that task handle with a pointer PHI selecting `null` for the consumed path and the live handle for the
+  other path. Existing null-safe automatic cleanup then destroys only the handle left live at runtime.
 - `async function` lowering is currently a narrow backend admission rule for scalar task/await bodies; it does not yet
   model a distinct async function ABI, suspension, cancellation, or executor integration.
 - A minimal pthread-backed runtime archive now provides the accepted concurrency ABI during host linking. Destroying an

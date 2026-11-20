@@ -37,6 +37,7 @@
 #include <sstream>
 #include <string>
 #include <string_view>
+#include <unordered_map>
 #include <utility>
 #include <vector>
 
@@ -4767,6 +4768,14 @@ auto lowered_expression(
             bool returned_owners_are_distinct = false;
             BranchBindingScope* binding_scope = nullptr;
             std::vector<OwnershipTransferState> ownership_transfers_by_arm;
+            std::unordered_map<std::string, ConcurrencyBinding> initial_thread_bindings;
+            std::unordered_map<std::string, ConcurrencyBinding> initial_task_bindings;
+            std::unordered_map<std::string, ConcurrencyBinding> then_thread_bindings;
+            std::unordered_map<std::string, ConcurrencyBinding> then_task_bindings;
+            std::unordered_map<std::string, ConcurrencyBinding> else_thread_bindings;
+            std::unordered_map<std::string, ConcurrencyBinding> else_task_bindings;
+            std::string then_exit_block;
+            std::string else_exit_block;
         };
         auto arm_context = ArmContext {
             .then_expression = *expression.right,
@@ -4781,6 +4790,8 @@ auto lowered_expression(
             .else_returned_owner = else_returned_owner,
             .returned_owners_are_distinct = branch_returned_owners_are_distinct,
             .binding_scope = binding_scope.has_value() ? &*binding_scope : nullptr,
+            .initial_thread_bindings = state.thread_bindings,
+            .initial_task_bindings = state.task_bindings,
         };
         auto result = emit_conditional_value(
             plan,
@@ -4816,6 +4827,9 @@ auto lowered_expression(
                     if (arm.binding_scope != nullptr) {
                         arm.ownership_transfers_by_arm.push_back(arm.session.state.ownership_transfers);
                     }
+                    arm.then_thread_bindings = arm.session.state.thread_bindings;
+                    arm.then_task_bindings = arm.session.state.task_bindings;
+                    arm.then_exit_block = arm.session.state.current_block;
                     return value;
                 },
                 .between_arms = [](void* opaque) {
@@ -4823,6 +4837,8 @@ auto lowered_expression(
                     if (arm.binding_scope != nullptr) {
                         arm.binding_scope->reset();
                     }
+                    arm.session.state.thread_bindings = arm.initial_thread_bindings;
+                    arm.session.state.task_bindings = arm.initial_task_bindings;
                 },
                 .lower_else = [](void* opaque) {
                     auto& arm = *static_cast<ArmContext*>(opaque);
@@ -4851,6 +4867,9 @@ auto lowered_expression(
                     if (arm.binding_scope != nullptr) {
                         arm.ownership_transfers_by_arm.push_back(arm.session.state.ownership_transfers);
                     }
+                    arm.else_thread_bindings = arm.session.state.thread_bindings;
+                    arm.else_task_bindings = arm.session.state.task_bindings;
+                    arm.else_exit_block = arm.session.state.current_block;
                     return value;
                 },
             }
@@ -4875,6 +4894,42 @@ auto lowered_expression(
             }
             binding_scope->commit_ownership_transfers(std::move(*merged_transfers));
         }
+        auto merge_concurrency_bindings = [&](auto const& initial_bindings,
+                                              auto const& then_bindings,
+                                              auto const& else_bindings,
+                                              auto& merged_bindings) {
+            merged_bindings = initial_bindings;
+            for (auto& [name, merged_binding] : merged_bindings) {
+                auto then_binding = then_bindings.find(name);
+                auto else_binding = else_bindings.find(name);
+                if (then_binding == then_bindings.end() || else_binding == else_bindings.end()) {
+                    continue;
+                }
+                if (then_binding->second.handle == else_binding->second.handle) {
+                    merged_binding = then_binding->second;
+                    continue;
+                }
+
+                auto merged_handle = next_llvm_temporary_name(state.next_temporary_index);
+                output << "  " << merged_handle << " = phi ptr [" << then_binding->second.handle
+                       << ", %" << arm_context.then_exit_block << "], ["
+                       << else_binding->second.handle << ", %" << arm_context.else_exit_block << "]\n";
+                merged_binding.handle = std::move(merged_handle);
+                merged_binding.handle_destroyed = false;
+            }
+        };
+        merge_concurrency_bindings(
+            arm_context.initial_thread_bindings,
+            arm_context.then_thread_bindings,
+            arm_context.else_thread_bindings,
+            state.thread_bindings
+        );
+        merge_concurrency_bindings(
+            arm_context.initial_task_bindings,
+            arm_context.then_task_bindings,
+            arm_context.else_task_bindings,
+            state.task_bindings
+        );
         return result.value;
     }
 

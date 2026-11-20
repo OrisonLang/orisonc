@@ -62,6 +62,7 @@ auto emit_concurrency_handle_destroy(
     auto destroy_call = concurrency_runtime_call(ConcurrencyRuntimeOperation::destroy_handle);
     output << "  call " << destroy_call.return_type << " @" << destroy_call.symbol_name
            << "(ptr " << binding.handle << ")\n";
+    binding.handle = "null";
     binding.handle_destroyed = true;
 }
 

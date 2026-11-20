@@ -13090,6 +13090,46 @@ void test_emit_scalar_task_await_expression() {
     assert(result.ir_text.find("ret i64 %tmp") != std::string::npos);
 }
 
+void test_emit_await_in_comparison_call_argument_and_ternary_arms() {
+    auto path = std::filesystem::temp_directory_path() / "orison_lowering_composed_await.or";
+    auto result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "function keep(value: UInt32) -> UInt32\n"
+        "    value\n"
+        "\n"
+        "async function compose(value: UInt32, choose_left: Bool) -> UInt32\n"
+        "    let compared_pending = task\n"
+        "        value + 1 as UInt32\n"
+        "    let larger: Bool = await compared_pending > value\n"
+        "    let argument_pending = task\n"
+        "        value + 2 as UInt32\n"
+        "    let passed: UInt32 = keep(await argument_pending)\n"
+        "    let left_pending = task\n"
+        "        passed + 3 as UInt32\n"
+        "    let right_pending = task\n"
+        "        passed + 4 as UInt32\n"
+        "    let selected: UInt32 = choose_left ? await left_pending : await right_pending\n"
+        "    larger ? selected : passed\n"
+    );
+
+    assert(!result.has_errors());
+    assert_ir_contains(result, "call void @__orison_task_await(ptr %compared_pending)");
+    assert_ir_contains(result, " = icmp ugt i32 ");
+    assert_ir_contains(result, "call void @__orison_task_await(ptr %argument_pending)");
+    assert_ir_contains(result, "call i32 @keep(i32 %tmp");
+    assert_ir_contains(result, "call void @__orison_task_await(ptr %left_pending)");
+    assert_ir_contains(result, "call void @__orison_task_await(ptr %right_pending)");
+    assert_ir_contains(result, " = phi ptr [null, %ternary.then.");
+    assert_ir_contains(result, " = phi ptr [%right_pending, %ternary.then.");
+    assert_ir_contains(result, "call void @__orison_concurrency_handle_destroy(ptr %tmp");
+
+    auto verifier = orison::lowering::LlvmIrVerifier {};
+    auto diagnostics = verifier.verify(result.ir_text);
+    assert(!diagnostics.has_errors());
+}
+
 void test_emit_no_capture_thread_uses_null_cleanup() {
     auto path = std::filesystem::temp_directory_path() / "orison_lowering_no_capture_thread_expression.or";
     auto result = lower_source(
@@ -16753,6 +16793,7 @@ auto main() -> int {
     test_emit_scalar_thread_join_expression();
     test_emit_abandoned_scalar_thread_cleanup();
     test_emit_scalar_task_await_expression();
+    test_emit_await_in_comparison_call_argument_and_ternary_arms();
     test_emit_no_capture_thread_uses_null_cleanup();
     test_emit_no_capture_task_uses_null_cleanup();
     test_emit_record_thread_result_storage_size();
