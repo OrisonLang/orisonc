@@ -1850,6 +1850,46 @@ auto main() -> int {
     assert(await_guard_return.stdout_text.empty());
     assert(await_guard_return.stderr_text.empty());
 
+    auto await_switch_match_path = std::filesystem::path(ORISON_SOURCE_DIR) /
+        "examples" / "concurrency_await_switch_match_main.or";
+    auto await_switch_match_ir = run_emit_llvm(app, await_switch_match_path);
+    assert_success_with_stdout_contains(
+        await_switch_match_ir,
+        {
+            "store i32 7, ptr %result_storage",
+            "call void @__orison_task_await(ptr %pending)\n"
+            "  %tmp1 = load i32, ptr %pending.task.result\n"
+            "  call void @__orison_concurrency_handle_destroy(ptr %pending)\n"
+            "  switch i32 %tmp1, label %switch.default.1 [",
+            "i32 7, label %switch.case.1.0",
+            "%tmp2 = phi i32 [0, %switch.case.1.0], [1, %switch.default.1]",
+        }
+    );
+    auto await_switch_match = run_program(app, await_switch_match_path);
+    assert(await_switch_match.exit_code == 0);
+    assert(await_switch_match.stdout_text.empty());
+    assert(await_switch_match.stderr_text.empty());
+
+    auto await_switch_default_path = std::filesystem::path(ORISON_SOURCE_DIR) /
+        "examples" / "concurrency_await_switch_default_main.or";
+    auto await_switch_default_ir = run_emit_llvm(app, await_switch_default_path);
+    assert_success_with_stdout_contains(
+        await_switch_default_ir,
+        {
+            "store i32 8, ptr %result_storage",
+            "call void @__orison_task_await(ptr %pending)\n"
+            "  %tmp1 = load i32, ptr %pending.task.result\n"
+            "  call void @__orison_concurrency_handle_destroy(ptr %pending)\n"
+            "  switch i32 %tmp1, label %switch.default.1 [",
+            "i32 7, label %switch.case.1.0",
+            "%tmp2 = phi i32 [1, %switch.case.1.0], [0, %switch.default.1]",
+        }
+    );
+    auto await_switch_default = run_program(app, await_switch_default_path);
+    assert(await_switch_default.exit_code == 0);
+    assert(await_switch_default.stdout_text.empty());
+    assert(await_switch_default.stderr_text.empty());
+
     std::filesystem::remove_all(smoke_temp_root);
     return 0;
 }

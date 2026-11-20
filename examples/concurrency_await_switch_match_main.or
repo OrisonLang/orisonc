@@ -1,0 +1,9 @@
+package examples.concurrency_await_switch_match
+
+async function main() -> UInt32
+    let pending = task
+        7 as UInt32
+
+    switch await pending
+        7 => 0 as UInt32
+        default => 1 as UInt32

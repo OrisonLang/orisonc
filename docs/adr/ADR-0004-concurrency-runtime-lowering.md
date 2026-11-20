@@ -317,6 +317,9 @@ drop/cleanup decisions.
 - `examples/concurrency_await_guard_continue_main.or` and `examples/concurrency_await_guard_return_main.or` compile,
   link, and run direct Boolean task results as `guard` conditions. Their IR checks pin synchronization and consumed-
   handle destruction before continuation or early return. No source syntax or concurrency ABI changed.
+- `examples/concurrency_await_switch_match_main.or` and `examples/concurrency_await_switch_default_main.or` compile,
+  link, and run direct scalar task results as `switch` subjects. Their IR checks pin synchronization and consumed-
+  handle destruction before matched/default dispatch. No source syntax or concurrency ABI changed.
 
 ## Follow-up work
 

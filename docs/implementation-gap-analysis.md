@@ -220,5 +220,5 @@ This note is an implementation snapshot. It does not define language syntax or s
 
 ## Suggested Next Step
 
-- Audit a scalar task `await` used directly as a `switch` subject, covering matched and default outcomes without
-  extending syntax or the async ABI.
+- Audit a scalar task `await` used directly as a fixed-array index, covering an in-bounds load and consumed-handle
+  cleanup without extending syntax or the async ABI.
