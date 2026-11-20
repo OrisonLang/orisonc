@@ -220,5 +220,5 @@ This note is an implementation snapshot. It does not define language syntax or s
 
 ## Suggested Next Step
 
-- Add compile-link-run coverage for both composed-`await` ternary outcomes, proving selected-task synchronization and
-  automatic unselected-task cleanup at runtime.
+- Audit the next bounded composed concurrency expression whose accepted source semantics already have lowering support,
+  prioritizing task results used by control flow without extending the async ABI.

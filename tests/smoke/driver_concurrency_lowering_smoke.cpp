@@ -1732,6 +1732,46 @@ auto main() -> int {
     assert(nested_distinct_choice_result_thread.stdout_text.empty());
     assert(nested_distinct_choice_result_thread.stderr_text.empty());
 
+    auto composed_await_ternary_left_path = std::filesystem::path(ORISON_SOURCE_DIR) /
+        "examples" / "concurrency_composed_await_ternary_left_main.or";
+    auto composed_await_ternary_left_ir = run_emit_llvm(app, composed_await_ternary_left_path);
+    assert_success_with_stdout_contains(
+        composed_await_ternary_left_ir,
+        {
+            "br i1 1, label %ternary.then.",
+            "call void @__orison_task_await(ptr %left_pending)",
+            "call void @__orison_task_await(ptr %right_pending)",
+            " = phi ptr [null, %ternary.then.",
+            " = phi ptr [%right_pending, %ternary.then.",
+            "call void @__orison_concurrency_handle_destroy(ptr %tmp8)\n"
+            "  call void @__orison_concurrency_handle_destroy(ptr %tmp7)",
+        }
+    );
+    auto composed_await_ternary_left = run_program(app, composed_await_ternary_left_path);
+    assert(composed_await_ternary_left.exit_code == 0);
+    assert(composed_await_ternary_left.stdout_text.empty());
+    assert(composed_await_ternary_left.stderr_text.empty());
+
+    auto composed_await_ternary_right_path = std::filesystem::path(ORISON_SOURCE_DIR) /
+        "examples" / "concurrency_composed_await_ternary_right_main.or";
+    auto composed_await_ternary_right_ir = run_emit_llvm(app, composed_await_ternary_right_path);
+    assert_success_with_stdout_contains(
+        composed_await_ternary_right_ir,
+        {
+            "br i1 0, label %ternary.then.",
+            "call void @__orison_task_await(ptr %left_pending)",
+            "call void @__orison_task_await(ptr %right_pending)",
+            " = phi ptr [null, %ternary.then.",
+            " = phi ptr [%right_pending, %ternary.then.",
+            "call void @__orison_concurrency_handle_destroy(ptr %tmp8)\n"
+            "  call void @__orison_concurrency_handle_destroy(ptr %tmp7)",
+        }
+    );
+    auto composed_await_ternary_right = run_program(app, composed_await_ternary_right_path);
+    assert(composed_await_ternary_right.exit_code == 0);
+    assert(composed_await_ternary_right.stdout_text.empty());
+    assert(composed_await_ternary_right.stderr_text.empty());
+
     std::filesystem::remove_all(smoke_temp_root);
     return 0;
 }

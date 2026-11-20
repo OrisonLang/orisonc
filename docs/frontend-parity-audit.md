@@ -4161,6 +4161,9 @@ This file tracks which source-language frontend slices are reflected in the curr
   `%record.Batch` is `{ [2 x %record.Pair], i32 }`; it uses `{ i32, [40 x i8] }` with 44-byte result storage,
   reconstructs all nested record fields and scalar markers, and emits concrete `Result_Batch_` implementation symbols.
   No syntax or ABI changed.
+- 2026-11-19: Composed task `await` ternaries now have compile-link-run coverage for both outcomes. The checked-in
+  examples verify the selected value, branch-local synchronization, null/live handle joins, and automatic cleanup of
+  the unselected task handle. No syntax or ABI changed.
 - 2026-11-18: Concrete generic record payloads containing nested fixed arrays of named records now have checked-in task
   and thread proof. `Result<Batch>` specializes two `T` payload fields to `{ %record.Batch, %record.Batch }`, where
   `%record.Batch` is `{ [2 x [2 x %record.Pair]] }`; it uses `{ i32, [64 x i8] }` with 68-byte result storage,

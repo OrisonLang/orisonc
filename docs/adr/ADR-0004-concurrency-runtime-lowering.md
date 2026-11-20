@@ -307,6 +307,10 @@ drop/cleanup decisions.
   transfer through two result buffers.
 - Module emission now validates concurrency runtime prelude declarations plus generated task/thread entry and cleanup
   thunk symbols through the shared lowering module symbol registry before generated LLVM IR is accepted.
+- `examples/concurrency_composed_await_ternary_left_main.or` and
+  `examples/concurrency_composed_await_ternary_right_main.or` compile, link, and run both task-valued ternary outcomes.
+  Their IR checks pin selected-branch synchronization, null/live handle joins, and automatic destruction of the
+  unselected task handle. No source syntax or concurrency ABI changed.
 
 ## Follow-up work
 
