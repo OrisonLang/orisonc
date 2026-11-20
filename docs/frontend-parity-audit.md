@@ -1,9 +1,13 @@
 # Frontend Parity Audit
 
+- 2026-11-19: Concurrency plans and bindings now preserve each semantic result source type. Lowering source-type
+  queries recover that type through `await`, so comparison, direct-call argument, and ternary-arm compositions infer
+  unannotated local types. Focused planner, emitter, and verifier-backed lowering coverage passes without syntax or
+  runtime ABI changes.
 - 2026-11-19: Scalar `await` lowering now composes through comparisons, direct function-call arguments, and ternary
   arms. Ternary lowering snapshots task-handle state per arm and merges each branch-dependent handle as live-or-null,
   preserving automatic cleanup of the unselected task. Verifier-backed coverage passes without source syntax or
-  runtime ABI changes. Unannotated local type recovery for these forms remains incomplete.
+  runtime ABI changes.
 - 2026-11-19: `await` now retains its task result type inside larger semantic expressions. A nested outer task can
   combine a thunk-local scalar with `await inner`; lowering emits the inner await, typed load, handle destruction, and
   scalar arithmetic before storing the outer result. Semantic and verifier-backed lowering coverage pass without

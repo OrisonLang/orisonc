@@ -5499,6 +5499,14 @@ auto source_type_name_for_expression(
         if (expression.text == "not") {
             return std::string {"Bool"};
         }
+        if (expression.text == "await" && expression.left->kind == syntax::ExpressionKind::name) {
+            auto task_binding = state.task_bindings.find(expression.left->text);
+            if (task_binding != state.task_bindings.end() &&
+                !task_binding->second.result_source_type_name.empty()) {
+                return task_binding->second.result_source_type_name;
+            }
+            return std::nullopt;
+        }
         if (expression.text == "-" || expression.text == "bit_not") {
             return source_type_name_for_expression(*expression.left, context, state);
         }

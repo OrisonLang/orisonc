@@ -81,6 +81,7 @@ auto register_concurrency_binding(
     std::string handle_name,
     std::string result_storage,
     LoweredType result_type,
+    std::string result_source_type_name,
     FunctionLoweringState& state
 ) -> void;
 

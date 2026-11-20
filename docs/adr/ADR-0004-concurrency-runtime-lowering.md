@@ -82,6 +82,9 @@ drop/cleanup decisions.
 - Ternary arms lower from the same concurrency-binding snapshot. When only one arm awaits a task, the merge block
   represents that task handle with a pointer PHI selecting `null` for the consumed path and the live handle for the
   other path. Existing null-safe automatic cleanup then destroys only the handle left live at runtime.
+- Concurrency plans and bindings retain the semantic result source type alongside its lowered LLVM type. Source-type
+  queries use that exact type for `await`, allowing unannotated locals to infer composed comparison, direct-call, and
+  ternary results without reconstructing nominal or alias identity from LLVM types.
 - `async function` lowering is currently a narrow backend admission rule for scalar task/await bodies; it does not yet
   model a distinct async function ABI, suspension, cancellation, or executor integration.
 - A minimal pthread-backed runtime archive now provides the accepted concurrency ABI during host linking. Destroying an

@@ -110,6 +110,7 @@ struct ConcurrencyExpressionPlan {
     std::string thunk_symbol_name;
     std::string cleanup_symbol_name;
     LoweredType result_type;
+    std::string result_source_type_name;
     ConcurrencyEnvironmentLayout environment_layout;
     ConcurrencyResultStorageLayout result_storage;
     ConcurrencyCleanupPlan cleanup;

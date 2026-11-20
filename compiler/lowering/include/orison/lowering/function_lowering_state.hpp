@@ -37,6 +37,7 @@ struct ConcurrencyBinding {
     std::string handle;
     std::string result_storage;
     LoweredType result_type;
+    std::string result_source_type_name;
     bool handle_destroyed = false;
 };
 

@@ -98,6 +98,7 @@ int main() {
     assert(task_plan->cleanup_symbol_name == "__orison_task_cleanup.compute.7.0");
     assert(task_plan->result_type.type == "i64");
     assert(task_plan->result_type.signedness == orison::lowering::IntegerSignedness::signed_integer);
+    assert(task_plan->result_source_type_name == "Int64");
     assert(task_plan->captures.size() == 1);
     assert(task_plan->captures.front().name == "value");
     assert(task_plan->captures.front().source_type_name == "Int64");
@@ -138,6 +139,7 @@ int main() {
     assert(thread_plan->thunk_symbol_name == "__orison_thread_thunk.on_thread.13.0");
     assert(thread_plan->cleanup_symbol_name == "__orison_thread_cleanup.on_thread.13.0");
     assert(thread_plan->result_type.type == "i64");
+    assert(thread_plan->result_source_type_name == "Int64");
     assert(thread_plan->captures.size() == 1);
     assert(thread_plan->captures.front().name == "value");
     assert(thread_plan->captures.front().capture_kind == orison::semantics::ConcurrencyCaptureKind::parameter);

@@ -170,11 +170,10 @@ auto infer_concurrency_result_type(
     return std::nullopt;
 }
 
-auto semantic_concurrency_result_type(
+auto semantic_concurrency_result_source_type_name(
     syntax::ExpressionSyntax const& expression,
-    LoweringEmissionContext const& context,
     semantics::SemanticAnalysisResult const& semantics
-) -> std::optional<LoweredType> {
+) -> std::optional<std::string> {
     auto expected_kind = semantic_kind_for(expression_plan_kind(expression));
     for (auto summary = semantics.concurrency_expressions.rbegin();
          summary != semantics.concurrency_expressions.rend();
@@ -182,7 +181,7 @@ auto semantic_concurrency_result_type(
         if (summary->line == expression.line &&
             summary->expression_kind == expected_kind &&
             !summary->result_type_name.empty()) {
-            return lowered_type_for_source_type_name(summary->result_type_name, context.lowering);
+            return summary->result_type_name;
         }
     }
     return std::nullopt;
@@ -1049,7 +1048,10 @@ auto plan_concurrency_expression(
         return std::nullopt;
     }
 
-    auto result_type = semantic_concurrency_result_type(expression, context, semantics);
+    auto result_source_type_name = semantic_concurrency_result_source_type_name(expression, semantics);
+    auto result_type = result_source_type_name.has_value()
+        ? lowered_type_for_source_type_name(*result_source_type_name, context.lowering)
+        : std::optional<LoweredType> {};
     if (!result_type.has_value()) {
         result_type = infer_concurrency_result_type(*result_expression, context, state);
     }
@@ -1074,6 +1076,7 @@ auto plan_concurrency_expression(
             ordinal
         ),
         .result_type = *result_type,
+        .result_source_type_name = result_source_type_name.value_or(std::string {}),
     };
 
     plan.captures = capture_plans_for_expression(expression, context, semantics);

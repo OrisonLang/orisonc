@@ -68,8 +68,10 @@ Date: 2026-11-18
 - Explicitly typed locals now have verifier-backed `await` coverage in scalar comparisons, direct function-call
   arguments, and ternary arms. Branch-dependent task handles merge as live-or-null pointers so automatic cleanup
   retains the unselected task at runtime.
-- Recommended next implementation: extend lowering-side unannotated local type recovery to composed `await`
-  comparisons, calls, and ternaries, matching the semantic analyzer's inferred result types.
+- Concurrency plans and bindings now retain semantic result source types, and unannotated locals recover those types
+  through composed `await` comparisons, direct calls, and ternaries.
+- Recommended next implementation: add compile-link-run coverage for both composed-`await` ternary outcomes, proving
+  selected-task synchronization and automatic unselected-task cleanup at runtime.
 
 Date: 2026-09-03
 
@@ -218,5 +220,5 @@ This note is an implementation snapshot. It does not define language syntax or s
 
 ## Suggested Next Step
 
-- Extend lowering-side unannotated local type recovery to composed `await` comparisons, calls, and ternaries, matching
-  the semantic analyzer's inferred result types.
+- Add compile-link-run coverage for both composed-`await` ternary outcomes, proving selected-task synchronization and
+  automatic unselected-task cleanup at runtime.

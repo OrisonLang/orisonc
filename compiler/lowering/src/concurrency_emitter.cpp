@@ -199,6 +199,7 @@ auto register_concurrency_binding(
     std::string handle_name,
     std::string result_storage,
     LoweredType result_type,
+    std::string result_source_type_name,
     FunctionLoweringState& state
 ) -> void {
     state.immutable_bindings[binding_name] = LoweredExpression {
@@ -210,6 +211,7 @@ auto register_concurrency_binding(
         .handle = std::move(handle_name),
         .result_storage = std::move(result_storage),
         .result_type = std::move(result_type),
+        .result_source_type_name = std::move(result_source_type_name),
     };
     if (kind == ConcurrencyPlanKind::thread) {
         state.thread_bindings[binding_name] = std::move(binding);

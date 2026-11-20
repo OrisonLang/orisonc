@@ -896,6 +896,7 @@ auto lower_thread_let_statement(
         std::move(handle_name),
         std::move(result_storage),
         plan->result_type,
+        plan->result_source_type_name,
         session.state
     );
     queue_concurrency_function_definitions(

@@ -13102,15 +13102,15 @@ void test_emit_await_in_comparison_call_argument_and_ternary_arms() {
         "async function compose(value: UInt32, choose_left: Bool) -> UInt32\n"
         "    let compared_pending = task\n"
         "        value + 1 as UInt32\n"
-        "    let larger: Bool = await compared_pending > value\n"
+        "    let larger = await compared_pending > value\n"
         "    let argument_pending = task\n"
         "        value + 2 as UInt32\n"
-        "    let passed: UInt32 = keep(await argument_pending)\n"
+        "    let passed = keep(await argument_pending)\n"
         "    let left_pending = task\n"
         "        passed + 3 as UInt32\n"
         "    let right_pending = task\n"
         "        passed + 4 as UInt32\n"
-        "    let selected: UInt32 = choose_left ? await left_pending : await right_pending\n"
+        "    let selected = choose_left ? await left_pending : await right_pending\n"
         "    larger ? selected : passed\n"
     );
 

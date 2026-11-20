@@ -117,6 +117,7 @@ auto test_register_concurrency_binding() -> void {
             .type = "i64",
             .signedness = orison::lowering::IntegerSignedness::signed_integer,
         },
+        "Int64",
         state
     );
     assert(state.immutable_bindings.at("worker").type == "ptr");
@@ -127,6 +128,7 @@ auto test_register_concurrency_binding() -> void {
     assert(state.thread_bindings.at("worker").result_storage == "%worker.thread.result");
     assert(state.thread_bindings.at("worker").result_type.type == "i64");
     assert(state.thread_bindings.at("worker").result_type.signedness == orison::lowering::IntegerSignedness::signed_integer);
+    assert(state.thread_bindings.at("worker").result_source_type_name == "Int64");
     assert(state.task_bindings.empty());
     assert(state.task_binding_order.empty());
 
@@ -139,6 +141,7 @@ auto test_register_concurrency_binding() -> void {
             .type = "i1",
             .signedness = orison::lowering::IntegerSignedness::not_integer,
         },
+        "Bool",
         state
     );
     assert(state.immutable_bindings.at("pending").type == "ptr");
@@ -148,6 +151,7 @@ auto test_register_concurrency_binding() -> void {
     assert(state.task_bindings.at("pending").result_storage == "%pending.task.result");
     assert(state.task_bindings.at("pending").result_type.type == "i1");
     assert(state.task_bindings.at("pending").result_type.signedness == orison::lowering::IntegerSignedness::not_integer);
+    assert(state.task_bindings.at("pending").result_source_type_name == "Bool");
 }
 
 auto test_queue_concurrency_function_definitions() -> void {
