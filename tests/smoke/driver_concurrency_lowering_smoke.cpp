@@ -1772,6 +1772,44 @@ auto main() -> int {
     assert(composed_await_ternary_right.stdout_text.empty());
     assert(composed_await_ternary_right.stderr_text.empty());
 
+    auto await_if_true_path = std::filesystem::path(ORISON_SOURCE_DIR) /
+        "examples" / "concurrency_await_if_true_main.or";
+    auto await_if_true_ir = run_emit_llvm(app, await_if_true_path);
+    assert_success_with_stdout_contains(
+        await_if_true_ir,
+        {
+            "store i1 1, ptr %result_storage",
+            "call void @__orison_task_await(ptr %pending)\n"
+            "  %tmp1 = load i1, ptr %pending.task.result\n"
+            "  call void @__orison_concurrency_handle_destroy(ptr %pending)\n"
+            "  br i1 %tmp1, label %if.then.1, label %if.else.1",
+            "%tmp2 = phi i32 [0, %if.then.1], [1, %if.else.1]",
+        }
+    );
+    auto await_if_true = run_program(app, await_if_true_path);
+    assert(await_if_true.exit_code == 0);
+    assert(await_if_true.stdout_text.empty());
+    assert(await_if_true.stderr_text.empty());
+
+    auto await_if_false_path = std::filesystem::path(ORISON_SOURCE_DIR) /
+        "examples" / "concurrency_await_if_false_main.or";
+    auto await_if_false_ir = run_emit_llvm(app, await_if_false_path);
+    assert_success_with_stdout_contains(
+        await_if_false_ir,
+        {
+            "store i1 0, ptr %result_storage",
+            "call void @__orison_task_await(ptr %pending)\n"
+            "  %tmp1 = load i1, ptr %pending.task.result\n"
+            "  call void @__orison_concurrency_handle_destroy(ptr %pending)\n"
+            "  br i1 %tmp1, label %if.then.1, label %if.else.1",
+            "%tmp2 = phi i32 [1, %if.then.1], [0, %if.else.1]",
+        }
+    );
+    auto await_if_false = run_program(app, await_if_false_path);
+    assert(await_if_false.exit_code == 0);
+    assert(await_if_false.stdout_text.empty());
+    assert(await_if_false.stderr_text.empty());
+
     std::filesystem::remove_all(smoke_temp_root);
     return 0;
 }

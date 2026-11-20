@@ -4164,6 +4164,9 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-11-19: Composed task `await` ternaries now have compile-link-run coverage for both outcomes. The checked-in
   examples verify the selected value, branch-local synchronization, null/live handle joins, and automatic cleanup of
   the unselected task handle. No syntax or ABI changed.
+- 2026-11-19: Direct task `await` in an `if` condition now has compile-link-run coverage for true and false results.
+  The checked-in examples verify await, Boolean result load, consumed-handle destruction, branch selection, and final
+  result merging. No syntax or ABI changed.
 - 2026-11-18: Concrete generic record payloads containing nested fixed arrays of named records now have checked-in task
   and thread proof. `Result<Batch>` specializes two `T` payload fields to `{ %record.Batch, %record.Batch }`, where
   `%record.Batch` is `{ [2 x [2 x %record.Pair]] }`; it uses `{ i32, [64 x i8] }` with 68-byte result storage,

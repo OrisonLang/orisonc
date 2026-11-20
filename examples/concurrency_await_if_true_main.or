@@ -1,0 +1,10 @@
+package examples.concurrency_await_if_true
+
+async function main() -> UInt32
+    let pending = task
+        true
+
+    if await pending
+        0 as UInt32
+    else
+        1 as UInt32

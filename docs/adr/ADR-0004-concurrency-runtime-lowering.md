@@ -311,6 +311,9 @@ drop/cleanup decisions.
   `examples/concurrency_composed_await_ternary_right_main.or` compile, link, and run both task-valued ternary outcomes.
   Their IR checks pin selected-branch synchronization, null/live handle joins, and automatic destruction of the
   unselected task handle. No source syntax or concurrency ABI changed.
+- `examples/concurrency_await_if_true_main.or` and `examples/concurrency_await_if_false_main.or` compile, link, and run
+  both Boolean task outcomes as direct `if` conditions. Their IR checks pin await, result load, consumed-handle
+  destruction, and conditional branch order. No source syntax or concurrency ABI changed.
 
 ## Follow-up work
 

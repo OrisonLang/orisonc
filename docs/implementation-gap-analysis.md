@@ -220,5 +220,5 @@ This note is an implementation snapshot. It does not define language syntax or s
 
 ## Suggested Next Step
 
-- Audit the next bounded composed concurrency expression whose accepted source semantics already have lowering support,
-  prioritizing task results used by control flow without extending the async ABI.
+- Audit direct Boolean task `await` in a `guard` condition, covering continuation and early-return outcomes without
+  extending syntax or the async ABI.
