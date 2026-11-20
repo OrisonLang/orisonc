@@ -220,5 +220,5 @@ This note is an implementation snapshot. It does not define language syntax or s
 
 ## Suggested Next Step
 
-- Audit a scalar task `await` used as a fixed-array assignment index, verifying single evaluation, consumed-handle
-  cleanup, bounds checking, and the final element store without extending syntax or the concurrency ABI.
+- Add the paired out-of-bounds awaited fixed-array assignment regression, verifying cleanup and bounds failure occur
+  before any element store and the built executable fails deterministically.
