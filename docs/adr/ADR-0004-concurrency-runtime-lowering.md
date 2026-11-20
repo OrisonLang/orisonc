@@ -323,6 +323,9 @@ drop/cleanup decisions.
 - `examples/concurrency_await_fixed_array_index_main.or` compiles, links, and runs a direct `UInt64` task result as a
   fixed-array index. Prelude discovery now infers unannotated array-literal local types, keeping bounds-failure symbol
   declarations aligned with emitted checks. IR pins synchronization, cleanup, bounds checking, GEP, and element load.
+- `examples/concurrency_await_fixed_array_index_out_of_bounds_main.or` proves the paired failure path. The consumed task
+  handle is destroyed before the fixed-array bounds branch, and index `2` against length `2` reaches the runtime bounds
+  abort with deterministic host exit code `134`.
 
 ## Follow-up work
 
