@@ -220,5 +220,5 @@ This note is an implementation snapshot. It does not define language syntax or s
 
 ## Suggested Next Step
 
-- Add the paired out-of-bounds awaited fixed-array assignment regression, verifying cleanup and bounds failure occur
-  before any element store and the built executable fails deterministically.
+- Audit a scalar task `await` used directly as a `DynamicArray<UInt32>` read index, verifying consumed-handle cleanup,
+  descriptor-length bounds checking, element addressing, and automatic array cleanup.

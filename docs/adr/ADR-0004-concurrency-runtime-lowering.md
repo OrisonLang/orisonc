@@ -329,6 +329,9 @@ drop/cleanup decisions.
 - `examples/concurrency_await_fixed_array_assignment_index_main.or` compiles, links, and runs a direct `UInt64` task
   result as a fixed-array assignment index. IR pins single synchronization and result evaluation, consumed-handle
   destruction, bounds checking, indexed addressing, and the final element store.
+- `examples/concurrency_await_fixed_array_assignment_index_out_of_bounds_main.or` proves the paired assignment failure
+  path. The consumed task handle is destroyed before bounds dispatch, the element store remains confined to the
+  in-bounds block, and runtime execution exits with code `134` through the bounds abort.
 
 ## Follow-up work
 

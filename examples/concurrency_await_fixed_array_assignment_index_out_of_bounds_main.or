@@ -1,0 +1,9 @@
+package examples.concurrency_await_fixed_array_assignment_index_out_of_bounds
+
+async function main() -> UInt32
+    var values = [11 as UInt32, 31 as UInt32]
+    let pending = task
+        2 as UInt64
+
+    values[await pending] = 47 as UInt32
+    values[0]
