@@ -1,0 +1,11 @@
+package examples.concurrency_await_dynamic_array_assignment_index
+
+async function main() -> UInt32
+    var values: DynamicArray<UInt32> = DynamicArray()
+    values.push(11 as UInt32)
+    values.push(31 as UInt32)
+    let pending = task
+        1 as UInt64
+
+    values[await pending] = 47 as UInt32
+    values[1] - 47 as UInt32

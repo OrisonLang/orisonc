@@ -338,6 +338,9 @@ drop/cleanup decisions.
 - `examples/concurrency_await_dynamic_array_index_out_of_bounds_main.or` proves the paired failure path. Task cleanup
   precedes descriptor inspection and bounds dispatch; index `2` against runtime length `2` aborts before the isolated
   in-bounds element-address and load block, producing host exit code `134`.
+- `examples/concurrency_await_dynamic_array_assignment_index_main.or` compiles, links, and runs a direct `UInt64` task
+  result as a `DynamicArray<UInt32>` assignment index. IR pins task cleanup, descriptor-length bounds checking, one
+  indexed store, readback, and automatic DynamicArray deallocation before return.
 
 ## Follow-up work
 

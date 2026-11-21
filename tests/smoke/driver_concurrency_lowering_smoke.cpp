@@ -2058,6 +2058,43 @@ auto main() -> int {
     assert(await_dynamic_array_index_out_of_bounds.stdout_text.empty());
     assert(await_dynamic_array_index_out_of_bounds.stderr_text.empty());
 
+    auto await_dynamic_array_assignment_index_path = std::filesystem::path(ORISON_SOURCE_DIR) /
+        "examples" / "concurrency_await_dynamic_array_assignment_index_main.or";
+    auto await_dynamic_array_assignment_index_ir =
+        run_emit_llvm(app, await_dynamic_array_assignment_index_path);
+    assert_success_with_stdout_contains(
+        await_dynamic_array_assignment_index_ir,
+        {
+            "call void @__orison_task_await(ptr %pending)\n"
+            "  %tmp3 = load i64, ptr %pending.task.result\n"
+            "  call void @__orison_concurrency_handle_destroy(ptr %pending)\n"
+            "  %values.dynamic_array_assign4.descriptor = load { ptr, i64, i64 }, ptr %values.addr",
+            "%values.dynamic_array_assign4.length = extractvalue { ptr, i64, i64 } "
+            "%values.dynamic_array_assign4.descriptor, 1\n"
+            "  %values.dynamic_array_assign4.in_bounds = icmp ult i64 %tmp3, "
+            "%values.dynamic_array_assign4.length",
+            "br i1 %values.dynamic_array_assign4.in_bounds, label %dynamic_array.assign.in_bounds.3, "
+            "label %dynamic_array.assign.out_of_bounds.3",
+            "%values.dynamic_array_assign4.element.addr = getelementptr i32, "
+            "ptr %values.dynamic_array_assign4.data, i64 %tmp3\n"
+            "  store i32 47, ptr %values.dynamic_array_assign4.element.addr",
+            "%values.dynamic_array_index5.element.addr = getelementptr i32, "
+            "ptr %values.dynamic_array_index5.data, i64 1\n"
+            "  %values.dynamic_array_index5.value = load i32, "
+            "ptr %values.dynamic_array_index5.element.addr",
+            "call void @__orison_dynamic_array_deallocate("
+            "ptr %values.dynamic_array_cleanup7.cleanup.data, i64 4, "
+            "i64 %values.dynamic_array_cleanup7.cleanup.capacity)\n"
+            "  store { ptr, i64, i64 } zeroinitializer, ptr %values.addr\n"
+            "  ret i32 %tmp6",
+        }
+    );
+    auto await_dynamic_array_assignment_index =
+        run_program(app, await_dynamic_array_assignment_index_path);
+    assert(await_dynamic_array_assignment_index.exit_code == 0);
+    assert(await_dynamic_array_assignment_index.stdout_text.empty());
+    assert(await_dynamic_array_assignment_index.stderr_text.empty());
+
     std::filesystem::remove_all(smoke_temp_root);
     return 0;
 }

@@ -220,5 +220,5 @@ This note is an implementation snapshot. It does not define language syntax or s
 
 ## Suggested Next Step
 
-- Audit a scalar task `await` used as a `DynamicArray<UInt32>` assignment index, verifying single evaluation, task
-  cleanup, descriptor-length bounds checking, element storage, and automatic array cleanup.
+- Add the paired out-of-bounds awaited `DynamicArray<UInt32>` assignment-index regression, verifying task cleanup and
+  descriptor-length bounds failure occur before the isolated element store.
