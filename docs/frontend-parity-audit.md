@@ -4185,6 +4185,9 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-11-20: The out-of-bounds awaited fixed-array assignment counterpart now has compile-link-run coverage. IR keeps
   the target element store in the in-bounds block after task cleanup and bounds dispatch; index `2` against length `2`
   reaches the bounds abort with exit code `134`. No syntax or ABI changed.
+- 2026-11-20: Direct task `await` as a `DynamicArray<UInt32>` read index now has compile-link-run coverage. IR verifies
+  consumed-handle destruction, descriptor-length bounds checking, data addressing, element loading, and automatic
+  DynamicArray deallocation before return. No syntax or ABI changed.
 - 2026-11-18: Concrete generic record payloads containing nested fixed arrays of named records now have checked-in task
   and thread proof. `Result<Batch>` specializes two `T` payload fields to `{ %record.Batch, %record.Batch }`, where
   `%record.Batch` is `{ [2 x [2 x %record.Pair]] }`; it uses `{ i32, [64 x i8] }` with 68-byte result storage,

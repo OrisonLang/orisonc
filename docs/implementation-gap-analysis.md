@@ -220,5 +220,5 @@ This note is an implementation snapshot. It does not define language syntax or s
 
 ## Suggested Next Step
 
-- Audit a scalar task `await` used directly as a `DynamicArray<UInt32>` read index, verifying consumed-handle cleanup,
-  descriptor-length bounds checking, element addressing, and automatic array cleanup.
+- Add the paired out-of-bounds awaited `DynamicArray<UInt32>` read-index regression, verifying task cleanup precedes
+  descriptor-length bounds failure and the built executable fails deterministically.
