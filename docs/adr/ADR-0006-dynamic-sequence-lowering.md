@@ -3314,6 +3314,8 @@ representation.
   descriptor bounds abort and no element address or load executes on failure.
 - Named aggregate-field scalar assignment now has awaited-index compile-link-run coverage. The assignment path projects
   the descriptor, checks its runtime length, stores one element, permits readback, and retains enclosing-record cleanup.
+- Paired runtime coverage for named aggregate-field scalar assignment proves an out-of-bounds awaited index reaches the
+  descriptor bounds abort before element addressing or replacement storage.
 - Direct runtime-index aggregate computed loops now emit bounded descriptor-storage projections for owners such as
   `holder.buckets[selected].values`. The semantic owner remains bracketed for proof metadata while LLVM labels use the
   sanitized owner spelling.

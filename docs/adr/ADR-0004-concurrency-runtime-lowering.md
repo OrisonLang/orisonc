@@ -359,6 +359,9 @@ drop/cleanup decisions.
 - `examples/concurrency_await_dynamic_array_record_field_assignment_index_main.or` uses a scalar task result as the
   assignment index of an owned `DynamicArray<UInt32>` record field. IR preserves task cleanup, descriptor bounds,
   indexed storage, readback, and aggregate-owned descriptor cleanup.
+- `examples/concurrency_await_dynamic_array_record_field_assignment_index_out_of_bounds_main.or` proves the paired
+  assignment failure path. Field projection and task cleanup precede descriptor-length bounds dispatch, while the
+  target element store remains isolated in the unexecuted in-bounds block.
 
 ## Follow-up work
 
