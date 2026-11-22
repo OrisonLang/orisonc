@@ -3305,6 +3305,8 @@ representation.
 - Named aggregate fields containing `DynamicArray<T>` now admit scalar element reads through the descriptor-aware
   element-path lowerer. Field projection precedes descriptor loading and length checks, while aggregate-owned cleanup
   remains attached to the enclosing record.
+- Paired runtime coverage for named aggregate-field scalar reads proves an out-of-bounds index reaches the descriptor
+  bounds abort before data projection, element addressing, or loading.
 - Direct runtime-index aggregate computed loops now emit bounded descriptor-storage projections for owners such as
   `holder.buckets[selected].values`. The semantic owner remains bracketed for proof metadata while LLVM labels use the
   sanitized owner spelling.

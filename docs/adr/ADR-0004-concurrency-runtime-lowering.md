@@ -347,6 +347,9 @@ drop/cleanup decisions.
 - `examples/concurrency_await_dynamic_array_record_field_index_main.or` composes a scalar task result with an owned
   `DynamicArray<UInt32>` record field. The generated path projects the field, consumes the task, checks the descriptor
   length, loads the selected element, and automatically cleans the aggregate-owned descriptor before return.
+- `examples/concurrency_await_dynamic_array_record_field_index_out_of_bounds_main.or` proves the paired failure path.
+  Field projection and task cleanup precede descriptor-length bounds dispatch; index `2` against runtime length `2`
+  aborts before the isolated data projection, element address, and load block.
 
 ## Follow-up work
 
