@@ -3319,6 +3319,9 @@ representation.
 - Nested named aggregate-field scalar assignment now has awaited-index compile-link-run coverage. Recursive record
   projection reaches the descriptor, one bounded element store supports readback, and cleanup remains rooted at the
   enclosing outer record while delegating through the inner record.
+- Paired runtime coverage for nested aggregate-field scalar assignment proves an out-of-bounds awaited index completes
+  recursive projection and task cleanup before descriptor bounds failure, with replacement storage confined to the
+  in-bounds block.
 - Direct runtime-index aggregate computed loops now emit bounded descriptor-storage projections for owners such as
   `holder.buckets[selected].values`. The semantic owner remains bracketed for proof metadata while LLVM labels use the
   sanitized owner spelling.

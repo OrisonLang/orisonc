@@ -365,6 +365,9 @@ drop/cleanup decisions.
 - `examples/concurrency_await_dynamic_array_nested_record_field_assignment_index_main.or` uses a scalar task result as
   the assignment index of an owned `DynamicArray<UInt32>` reached through two record projections. IR preserves task
   cleanup, descriptor bounds, indexed storage, readback, and recursive outer-to-inner aggregate cleanup.
+- `examples/concurrency_await_dynamic_array_nested_record_field_assignment_index_out_of_bounds_main.or` proves the
+  paired nested assignment failure path. Both record projections and task cleanup precede descriptor-length bounds
+  dispatch, while the target element store remains isolated in the unexecuted in-bounds block.
 
 ## Follow-up work
 
