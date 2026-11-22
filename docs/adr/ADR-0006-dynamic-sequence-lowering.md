@@ -3307,6 +3307,9 @@ representation.
   remains attached to the enclosing record.
 - Paired runtime coverage for named aggregate-field scalar reads proves an out-of-bounds index reaches the descriptor
   bounds abort before data projection, element addressing, or loading.
+- Nested named aggregate fields containing `DynamicArray<T>` use the same descriptor-aware scalar read path. Recursive
+  record projection reaches the descriptor, while cleanup remains attached to the enclosing outer record and delegates
+  through the nested record cleanup.
 - Direct runtime-index aggregate computed loops now emit bounded descriptor-storage projections for owners such as
   `holder.buckets[selected].values`. The semantic owner remains bracketed for proof metadata while LLVM labels use the
   sanitized owner spelling.

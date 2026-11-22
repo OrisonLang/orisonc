@@ -220,5 +220,5 @@ This note is an implementation snapshot. It does not define language syntax or s
 
 ## Suggested Next Step
 
-- Audit a scalar task `await` used to index a `DynamicArray<UInt32>` nested record field, verifying recursive aggregate
-  projection, descriptor-length bounds checking, element loading, task cleanup, and enclosing aggregate cleanup.
+- Add the paired out-of-bounds awaited nested `DynamicArray<UInt32>` record-field read regression, verifying recursive
+  projection and task cleanup precede descriptor-length failure while element addressing and loading remain unreachable.
