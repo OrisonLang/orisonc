@@ -377,6 +377,8 @@ drop/cleanup decisions.
 - `examples/concurrency_await_dynamic_array_nested_record_field_push_value_main.or` extends awaited append through two
   record projections. The nested descriptor receives growth writeback and readback while cleanup remains rooted at the
   outer record and delegates through the inner record.
+- Aggregate-field awaited append retains existing safety gates. Immutable record roots fail before task/append IR, and
+  a field transferred through an accepted choice constructor reports use-after-move before append IR.
 
 ## Follow-up work
 

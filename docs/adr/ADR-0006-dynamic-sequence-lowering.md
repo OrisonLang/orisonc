@@ -3330,6 +3330,8 @@ representation.
   prelude declaration. Awaited-value coverage pins projection, growth, field writeback, readback, and record cleanup.
 - Nested mutable aggregate-field append reuses the same receiver path through multiple record projections. Awaited-value
   compile-link-run coverage pins descriptor growth and writeback at the nested field plus recursive outer cleanup.
+- Aggregate-field append safety coverage proves immutable record roots and previously transferred DynamicArray fields
+  remain rejected before append IR emission. The receiver generalization does not weaken mutability or ownership gates.
 - Direct runtime-index aggregate computed loops now emit bounded descriptor-storage projections for owners such as
   `holder.buckets[selected].values`. The semantic owner remains bracketed for proof metadata while LLVM labels use the
   sanitized owner spelling.

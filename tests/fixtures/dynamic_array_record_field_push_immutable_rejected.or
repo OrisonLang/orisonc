@@ -1,0 +1,13 @@
+package tests.fixtures.dynamic_array_record_field_push_immutable_rejected
+
+record Holder
+    values: DynamicArray<UInt32>
+
+async function main() -> UInt32
+    var values: DynamicArray<UInt32> = DynamicArray()
+    let holder: Holder = Holder(values)
+    let pending = task
+        47 as UInt32
+
+    holder.values.push(await pending)
+    0 as UInt32

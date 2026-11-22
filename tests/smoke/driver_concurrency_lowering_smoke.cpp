@@ -2571,6 +2571,24 @@ auto main() -> int {
     assert(await_dynamic_array_nested_record_field_push_value.stdout_text.empty());
     assert(await_dynamic_array_nested_record_field_push_value.stderr_text.empty());
 
+    auto immutable_record_field_push_path = std::filesystem::path(ORISON_SOURCE_DIR) /
+        "tests" / "fixtures" / "dynamic_array_record_field_push_immutable_rejected.or";
+    auto immutable_record_field_push = run_emit_llvm(app, immutable_record_field_push_path);
+    assert(immutable_record_field_push.exit_code == 1);
+    assert(immutable_record_field_push.stderr_text.find(
+        "lowering assignment target is not a mutable local"
+    ) != std::string::npos);
+    assert(immutable_record_field_push.stdout_text.find("dynamic_array_append") == std::string::npos);
+
+    auto consumed_record_field_push_path = std::filesystem::path(ORISON_SOURCE_DIR) /
+        "tests" / "fixtures" / "dynamic_array_record_field_push_consumed_rejected.or";
+    auto consumed_record_field_push = run_emit_llvm(app, consumed_record_field_push_path);
+    assert(consumed_record_field_push.exit_code == 1);
+    assert(consumed_record_field_push.stderr_text.find(
+        "use after move: holder.values"
+    ) != std::string::npos);
+    assert(consumed_record_field_push.stdout_text.find("dynamic_array_append") == std::string::npos);
+
     std::filesystem::remove_all(smoke_temp_root);
     return 0;
 }

@@ -220,5 +220,5 @@ This note is an implementation snapshot. It does not define language syntax or s
 
 ## Suggested Next Step
 
-- Audit aggregate-field DynamicArray append safety boundaries, verifying immutable record receivers and consumed field
-  owners are rejected before append IR is emitted.
+- Audit awaited DynamicArray append through a fixed-array indexed record receiver, verifying indexed aggregate
+  projection, descriptor growth/writeback, readback, and enclosing aggregate cleanup.
