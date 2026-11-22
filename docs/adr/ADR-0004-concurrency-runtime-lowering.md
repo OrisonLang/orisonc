@@ -353,6 +353,9 @@ drop/cleanup decisions.
 - `examples/concurrency_await_dynamic_array_nested_record_field_index_main.or` composes a scalar task result with an
   owned `DynamicArray<UInt32>` reached through two record projections. The generated path consumes the task, loads the
   selected scalar, and invokes recursive outer-to-inner aggregate cleanup before return.
+- `examples/concurrency_await_dynamic_array_nested_record_field_index_out_of_bounds_main.or` proves the paired nested
+  failure path. Both record projections and task cleanup precede descriptor-length bounds dispatch; index `2` aborts
+  before data projection, element addressing, or loading.
 
 ## Follow-up work
 

@@ -3310,6 +3310,8 @@ representation.
 - Nested named aggregate fields containing `DynamicArray<T>` use the same descriptor-aware scalar read path. Recursive
   record projection reaches the descriptor, while cleanup remains attached to the enclosing outer record and delegates
   through the nested record cleanup.
+- Paired runtime coverage for nested aggregate-field scalar reads proves recursive projection completes before the
+  descriptor bounds abort and no element address or load executes on failure.
 - Direct runtime-index aggregate computed loops now emit bounded descriptor-storage projections for owners such as
   `holder.buckets[selected].values`. The semantic owner remains bracketed for proof metadata while LLVM labels use the
   sanitized owner spelling.
