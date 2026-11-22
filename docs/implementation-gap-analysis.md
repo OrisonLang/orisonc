@@ -220,5 +220,6 @@ This note is an implementation snapshot. It does not define language syntax or s
 
 ## Suggested Next Step
 
-- Audit a scalar task `await` used as the assignment index of a nested `DynamicArray<UInt32>` record field, verifying
-  recursive projection, descriptor-length bounds checking, indexed storage, readback, task cleanup, and outer cleanup.
+- Add the paired out-of-bounds scalar task `await` assignment index for a nested `DynamicArray<UInt32>` record field,
+  verifying recursive projection and task cleanup precede bounds failure while element storage remains isolated to the
+  in-bounds block.

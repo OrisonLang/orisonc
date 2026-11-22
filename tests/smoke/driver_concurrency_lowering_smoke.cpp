@@ -2353,6 +2353,51 @@ auto main() -> int {
     assert(await_dynamic_array_record_field_assignment_index_out_of_bounds.stdout_text.empty());
     assert(await_dynamic_array_record_field_assignment_index_out_of_bounds.stderr_text.empty());
 
+    auto await_dynamic_array_nested_record_field_assignment_index_path =
+        std::filesystem::path(ORISON_SOURCE_DIR) / "examples" /
+        "concurrency_await_dynamic_array_nested_record_field_assignment_index_main.or";
+    auto await_dynamic_array_nested_record_field_assignment_index_ir =
+        run_emit_llvm(app, await_dynamic_array_nested_record_field_assignment_index_path);
+    assert_success_with_stdout_contains(
+        await_dynamic_array_nested_record_field_assignment_index_ir,
+        {
+            "%tmp8 = getelementptr %record.Outer, ptr %outer.addr, i32 0, i32 0\n"
+            "  %tmp9 = getelementptr %record.Inner, ptr %tmp8, i32 0, i32 0\n"
+            "  call void @__orison_task_await(ptr %pending)\n"
+            "  %tmp10 = load i64, ptr %pending.task.result\n"
+            "  call void @__orison_concurrency_handle_destroy(ptr %pending)",
+            "%outer.inner.values.dynamic_array_index11.descriptor = "
+            "load { ptr, i64, i64 }, ptr %tmp9\n"
+            "  %outer.inner.values.dynamic_array_index11.data = "
+            "extractvalue { ptr, i64, i64 } %outer.inner.values.dynamic_array_index11.descriptor, 0\n"
+            "  %outer.inner.values.dynamic_array_index11.length = "
+            "extractvalue { ptr, i64, i64 } %outer.inner.values.dynamic_array_index11.descriptor, 1",
+            "%outer.inner.values.dynamic_array_index11.in_bounds = icmp ult i64 %tmp10, "
+            "%outer.inner.values.dynamic_array_index11.length\n"
+            "  br i1 %outer.inner.values.dynamic_array_index11.in_bounds, "
+            "label %dynamic_array.aggregate_index.in_bounds.3, "
+            "label %dynamic_array.aggregate_index.out_of_bounds.3",
+            "%outer.inner.values.dynamic_array_index11.element.addr = getelementptr i32, "
+            "ptr %outer.inner.values.dynamic_array_index11.data, i64 %tmp10\n"
+            "  store i32 47, ptr %outer.inner.values.dynamic_array_index11.element.addr",
+            "%outer.inner.values.dynamic_array_element_path14.element.addr = getelementptr i32, "
+            "ptr %outer.inner.values.dynamic_array_element_path14.data, i64 1\n"
+            "  %tmp15 = load i32, ptr %outer.inner.values.dynamic_array_element_path14.element.addr",
+            "call void @__orison_owned_cleanup.Outer."
+            "examples.concurrency_await_dynamic_array_nested_record_field_assignment_index(ptr %outer.addr)\n"
+            "  store %record.Outer zeroinitializer, ptr %outer.addr\n"
+            "  ret i32 %tmp16",
+            "call void @__orison_owned_cleanup.Inner."
+            "examples.concurrency_await_dynamic_array_nested_record_field_assignment_index"
+            "(ptr %Outer.drop.inner.addr)",
+        }
+    );
+    auto await_dynamic_array_nested_record_field_assignment_index =
+        run_program(app, await_dynamic_array_nested_record_field_assignment_index_path);
+    assert(await_dynamic_array_nested_record_field_assignment_index.exit_code == 0);
+    assert(await_dynamic_array_nested_record_field_assignment_index.stdout_text.empty());
+    assert(await_dynamic_array_nested_record_field_assignment_index.stderr_text.empty());
+
     std::filesystem::remove_all(smoke_temp_root);
     return 0;
 }
