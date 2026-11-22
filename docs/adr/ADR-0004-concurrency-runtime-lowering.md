@@ -371,6 +371,9 @@ drop/cleanup decisions.
 - `examples/concurrency_await_dynamic_array_push_value_main.or` uses a scalar task result as a
   `DynamicArray<UInt32>.push()` argument. Task synchronization and handle cleanup precede append growth, element
   storage, descriptor update, readback, and automatic array cleanup.
+- `examples/concurrency_await_dynamic_array_record_field_push_value_main.or` uses a scalar task result as the appended
+  value of a `DynamicArray<UInt32>` record field. Receiver projection precedes synchronization; task cleanup precedes
+  growth, field-descriptor writeback, readback, and enclosing-record cleanup.
 
 ## Follow-up work
 

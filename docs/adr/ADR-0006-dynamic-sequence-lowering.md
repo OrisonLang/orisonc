@@ -3325,6 +3325,9 @@ representation.
 - Local scalar append now has awaited-value compile-link-run coverage. Synchronization completes before capacity
   selection, the zero-capacity descriptor grows, the awaited scalar is stored at the old length, and the updated
   descriptor supports readback and automatic cleanup.
+- DynamicArray append lowering now accepts mutable aggregate-field receivers through the existing aggregate assignment
+  target path. Runtime-symbol discovery infers aggregate receiver types, ensuring field append growth receives its
+  prelude declaration. Awaited-value coverage pins projection, growth, field writeback, readback, and record cleanup.
 - Direct runtime-index aggregate computed loops now emit bounded descriptor-storage projections for owners such as
   `holder.buckets[selected].values`. The semantic owner remains bracketed for proof metadata while LLVM labels use the
   sanitized owner spelling.

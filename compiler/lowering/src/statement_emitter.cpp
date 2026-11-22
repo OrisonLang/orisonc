@@ -2508,29 +2508,67 @@ auto lower_dynamic_array_push_statement(
         expression.left->kind != syntax::ExpressionKind::member_access ||
         expression.left->text != "push" ||
         expression.left->left == nullptr ||
-        expression.left->left->kind != syntax::ExpressionKind::name ||
         expression.arguments.size() != 1) {
         return false;
     }
 
-    auto const& owner_name = expression.left->left->text;
-    if (is_moved_owned_dynamic_array_binding(owner_name, session.state)) {
-        diagnostics.error(statement.line, "use after move: " + owner_name);
-        return true;
-    }
-    auto const owner_is_mutable_local = session.state.mutable_bindings.contains(owner_name);
-    auto const owner_is_exclusive_receiver =
-        owner_name == "this" && session.state.exclusive_receiver_bindings.contains(owner_name);
-    if (!owner_is_mutable_local && !owner_is_exclusive_receiver) {
-        if (!is_bound_dynamic_array_parameter(owner_name, session.state)) {
-            return false;
-        }
-    }
-    auto source_type = session.state.source_type_names.find(owner_name);
-    if (source_type == session.state.source_type_names.end()) {
+    auto const& receiver = *expression.left->left;
+    auto source_type = source_type_name_for_expression(
+        receiver,
+        context.lowering,
+        session.state
+    );
+    if (!source_type.has_value() || !is_dynamic_array_source_type(*source_type)) {
         return false;
     }
-    auto element_source_type = dynamic_array_element_source_type_name(source_type->second);
+
+    auto owner_name = std::string {};
+    auto storage = std::string {};
+    if (receiver.kind == syntax::ExpressionKind::name) {
+        owner_name = receiver.text;
+        if (is_moved_owned_dynamic_array_binding(owner_name, session.state)) {
+            diagnostics.error(statement.line, "use after move: " + owner_name);
+            return true;
+        }
+        auto const owner_is_mutable_local = session.state.mutable_bindings.contains(owner_name);
+        auto const owner_is_exclusive_receiver =
+            owner_name == "this" && session.state.exclusive_receiver_bindings.contains(owner_name);
+        if (!owner_is_mutable_local && !owner_is_exclusive_receiver &&
+            !is_bound_dynamic_array_parameter(owner_name, session.state)) {
+            return false;
+        }
+        auto named_storage = aggregate_storage_for_name(owner_name, session.state);
+        if (!named_storage.has_value()) {
+            return false;
+        }
+        storage = std::move(*named_storage);
+    } else {
+        auto aggregate_target = lower_assignment_target(
+            receiver,
+            context,
+            session,
+            diagnostics,
+            output
+        );
+        if (!aggregate_target.has_value()) {
+            return true;
+        }
+        if (!aggregate_target->owner_name.has_value()) {
+            diagnostics.error(statement.line, "lowering DynamicArray push receiver owner is unknown");
+            return true;
+        }
+        owner_name = std::move(*aggregate_target->owner_name);
+        storage = std::move(aggregate_target->pointer);
+        if (auto consumed_owner = consumed_owned_binding_or_descendant_name(
+                session.state.ownership_transfers,
+                owner_name
+            )) {
+            diagnostics.error(statement.line, "use after move: " + *consumed_owner);
+            return true;
+        }
+    }
+
+    auto element_source_type = dynamic_array_element_source_type_name(*source_type);
     if (!element_source_type.has_value()) {
         return false;
     }
@@ -2545,11 +2583,7 @@ auto lower_dynamic_array_push_statement(
         );
         return true;
     }
-    auto storage = aggregate_storage_for_name(owner_name, session.state);
-    if (!storage.has_value()) {
-        return false;
-    }
-    auto plan = plan_dynamic_array_construction(source_type->second, 0, context.lowering);
+    auto plan = plan_dynamic_array_construction(*source_type, 0, context.lowering);
     if (!plan.has_value()) {
         diagnostics.error(statement.line, "source dynamic array append could not be planned");
         return true;
@@ -2585,7 +2619,7 @@ auto lower_dynamic_array_push_statement(
         std::to_string(session.state.next_temporary_index++);
     output << emit_dynamic_array_descriptor_load(
         prefix + ".descriptor",
-        *storage
+        storage
     );
     output << emit_dynamic_array_descriptor_field_projection(
         prefix + ".data",
@@ -2664,7 +2698,7 @@ auto lower_dynamic_array_push_statement(
     );
     output << emit_dynamic_array_descriptor_write_back(
         prefix + ".updated",
-        *storage
+        storage
     );
     if (auto consumed_name = consumed_owned_push_argument_name(
             expression.arguments.front(),

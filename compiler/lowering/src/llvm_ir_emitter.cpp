@@ -2551,10 +2551,16 @@ auto has_runtime_fixed_array_index_read(
 }
 
 auto has_dynamic_array_append_call(
-    syntax::FunctionSyntax const& function
+    syntax::FunctionSyntax const& function,
+    std::vector<syntax::ChoiceSyntax> const& choices,
+    LoweringContext const& context
 ) -> bool {
     auto owner_names = std::unordered_set<std::string> {};
+    auto state = FunctionLoweringState {};
     for (auto const& parameter : function.parameters) {
+        if (!parameter.name.empty() && !parameter.type.name.empty()) {
+            state.source_type_names[parameter.name] = render_source_type_name(parameter.type);
+        }
         if (!parameter.name.empty() && is_dynamic_array_source_type(parameter.type)) {
             owner_names.insert(parameter.name);
         }
@@ -2567,23 +2573,30 @@ auto has_dynamic_array_append_call(
     }
     for (auto const& statement : function.body_statements) {
         collect_dynamic_array_owner_names(statement, owner_names);
-    }
-    if (owner_names.empty()) {
-        return false;
+        collect_source_type_names(statement, choices, context, state.source_type_names);
     }
 
     auto found = false;
-    walk_function_expressions(function, [&owner_names, &found](syntax::ExpressionSyntax const& expression) {
+    walk_function_expressions(function, [&context, &found, &owner_names, &state](
+        syntax::ExpressionSyntax const& expression
+    ) {
         if (found ||
             expression.kind != syntax::ExpressionKind::call ||
             expression.left == nullptr ||
             expression.left->kind != syntax::ExpressionKind::member_access ||
             expression.left->text != "push" ||
-            expression.left->left == nullptr ||
-            expression.left->left->kind != syntax::ExpressionKind::name) {
+            expression.left->left == nullptr) {
             return;
         }
-        found = owner_names.contains(expression.left->left->text);
+        auto const& receiver = *expression.left->left;
+        if (receiver.kind == syntax::ExpressionKind::name &&
+            owner_names.contains(receiver.text)) {
+            found = true;
+            return;
+        }
+        auto source_type = source_type_name_for_expression(receiver, context, state);
+        found = source_type.has_value() &&
+            dynamic_array_element_source_type_name(*source_type).has_value();
     });
     return found;
 }
@@ -2670,23 +2683,24 @@ auto has_runtime_fixed_array_index_read(
 }
 
 auto has_dynamic_array_append_call(
-    syntax::ModuleSyntax const& module
+    syntax::ModuleSyntax const& module,
+    LoweringContext const& context
 ) -> bool {
     for (auto const& function : module.functions) {
-        if (has_dynamic_array_append_call(function)) {
+        if (has_dynamic_array_append_call(function, module.choices, context)) {
             return true;
         }
     }
     for (auto const& implementation : module.implementations) {
         for (auto const& method : implementation.methods) {
-            if (has_dynamic_array_append_call(method)) {
+            if (has_dynamic_array_append_call(method, module.choices, context)) {
                 return true;
             }
         }
     }
     for (auto const& extension : module.extensions) {
         for (auto const& method : extension.methods) {
-            if (has_dynamic_array_append_call(method)) {
+            if (has_dynamic_array_append_call(method, module.choices, context)) {
                 return true;
             }
         }
@@ -3785,7 +3799,7 @@ auto collect_dynamic_array_runtime_operations(
         }
         if (options.enable_dynamic_array_append_lowering &&
             source_plan_offset < plans.size() &&
-            has_dynamic_array_append_call(module)) {
+            has_dynamic_array_append_call(module, context)) {
             push_dynamic_array_runtime_operation_once(operations, DynamicArrayRuntimeOperation::grow);
         }
         if (dynamic_array_cleanup_emission_enabled(options) && source_plan_offset < plans.size()) {

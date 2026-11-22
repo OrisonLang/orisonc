@@ -2475,6 +2475,53 @@ auto main() -> int {
     assert(await_dynamic_array_push_value.stdout_text.empty());
     assert(await_dynamic_array_push_value.stderr_text.empty());
 
+    auto await_dynamic_array_record_field_push_value_path =
+        std::filesystem::path(ORISON_SOURCE_DIR) / "examples" /
+        "concurrency_await_dynamic_array_record_field_push_value_main.or";
+    auto await_dynamic_array_record_field_push_value_ir =
+        run_emit_llvm(app, await_dynamic_array_record_field_push_value_path);
+    assert_success_with_stdout_contains(
+        await_dynamic_array_record_field_push_value_ir,
+        {
+            "declare void @__orison_dynamic_array_grow(ptr sret({ ptr, i64, i64 }), "
+            "ptr byval({ ptr, i64, i64 }), i64, i64)",
+            "%tmp4 = getelementptr %record.Holder, ptr %holder.addr, i32 0, i32 0\n"
+            "  call void @__orison_task_await(ptr %pending)\n"
+            "  %tmp5 = load i32, ptr %pending.task.result\n"
+            "  call void @__orison_concurrency_handle_destroy(ptr %pending)\n"
+            "  %holder.values.dynamic_array_append6.descriptor = "
+            "load { ptr, i64, i64 }, ptr %tmp4",
+            "%holder.values.dynamic_array_append6.has_capacity = icmp ult i64 "
+            "%holder.values.dynamic_array_append6.length, "
+            "%holder.values.dynamic_array_append6.capacity\n"
+            "  br i1 %holder.values.dynamic_array_append6.has_capacity, "
+            "label %dynamic_array.append.ready.1, label %dynamic_array.append.grow.1",
+            "call void @__orison_dynamic_array_grow(ptr sret({ ptr, i64, i64 }) "
+            "%holder.values.dynamic_array_append6.grown.addr, ptr byval({ ptr, i64, i64 }) "
+            "%holder.values.dynamic_array_append6.grown.input, i64 4, "
+            "i64 %holder.values.dynamic_array_append6.next.capacity)",
+            "%holder.values.dynamic_array_append6.element.addr = getelementptr i32, "
+            "ptr %holder.values.dynamic_array_append6.active.data, "
+            "i64 %holder.values.dynamic_array_append6.active.length\n"
+            "  store i32 %tmp5, ptr %holder.values.dynamic_array_append6.element.addr",
+            "%holder.values.dynamic_array_append6.updated = insertvalue { ptr, i64, i64 } "
+            "%holder.values.dynamic_array_append6.active, "
+            "i64 %holder.values.dynamic_array_append6.next.length, 1\n"
+            "  store { ptr, i64, i64 } %holder.values.dynamic_array_append6.updated, ptr %tmp4",
+            "%tmp9 = load i32, ptr %holder.values.dynamic_array_element_path8.element.addr\n"
+            "  %tmp10 = sub i32 %tmp9, 47\n"
+            "  call void @__orison_owned_cleanup.Holder."
+            "examples.concurrency_await_dynamic_array_record_field_push_value(ptr %holder.addr)\n"
+            "  store %record.Holder zeroinitializer, ptr %holder.addr\n"
+            "  ret i32 %tmp10",
+        }
+    );
+    auto await_dynamic_array_record_field_push_value =
+        run_program(app, await_dynamic_array_record_field_push_value_path);
+    assert(await_dynamic_array_record_field_push_value.exit_code == 0);
+    assert(await_dynamic_array_record_field_push_value.stdout_text.empty());
+    assert(await_dynamic_array_record_field_push_value.stderr_text.empty());
+
     std::filesystem::remove_all(smoke_temp_root);
     return 0;
 }
