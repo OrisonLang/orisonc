@@ -2522,6 +2522,55 @@ auto main() -> int {
     assert(await_dynamic_array_record_field_push_value.stdout_text.empty());
     assert(await_dynamic_array_record_field_push_value.stderr_text.empty());
 
+    auto await_dynamic_array_nested_record_field_push_value_path =
+        std::filesystem::path(ORISON_SOURCE_DIR) / "examples" /
+        "concurrency_await_dynamic_array_nested_record_field_push_value_main.or";
+    auto await_dynamic_array_nested_record_field_push_value_ir =
+        run_emit_llvm(app, await_dynamic_array_nested_record_field_push_value_path);
+    assert_success_with_stdout_contains(
+        await_dynamic_array_nested_record_field_push_value_ir,
+        {
+            "%tmp6 = getelementptr %record.Outer, ptr %outer.addr, i32 0, i32 0\n"
+            "  %tmp7 = getelementptr %record.Inner, ptr %tmp6, i32 0, i32 0\n"
+            "  call void @__orison_task_await(ptr %pending)\n"
+            "  %tmp8 = load i32, ptr %pending.task.result\n"
+            "  call void @__orison_concurrency_handle_destroy(ptr %pending)",
+            "%outer.inner.values.dynamic_array_append9.descriptor = "
+            "load { ptr, i64, i64 }, ptr %tmp7\n"
+            "  %outer.inner.values.dynamic_array_append9.data = "
+            "extractvalue { ptr, i64, i64 } %outer.inner.values.dynamic_array_append9.descriptor, 0",
+            "%outer.inner.values.dynamic_array_append9.has_capacity = icmp ult i64 "
+            "%outer.inner.values.dynamic_array_append9.length, "
+            "%outer.inner.values.dynamic_array_append9.capacity\n"
+            "  br i1 %outer.inner.values.dynamic_array_append9.has_capacity, "
+            "label %dynamic_array.append.ready.1, label %dynamic_array.append.grow.1",
+            "call void @__orison_dynamic_array_grow(ptr sret({ ptr, i64, i64 }) "
+            "%outer.inner.values.dynamic_array_append9.grown.addr, "
+            "ptr byval({ ptr, i64, i64 }) %outer.inner.values.dynamic_array_append9.grown.input, "
+            "i64 4, i64 %outer.inner.values.dynamic_array_append9.next.capacity)",
+            "%outer.inner.values.dynamic_array_append9.element.addr = getelementptr i32, "
+            "ptr %outer.inner.values.dynamic_array_append9.active.data, "
+            "i64 %outer.inner.values.dynamic_array_append9.active.length\n"
+            "  store i32 %tmp8, ptr %outer.inner.values.dynamic_array_append9.element.addr",
+            "%outer.inner.values.dynamic_array_append9.updated = insertvalue { ptr, i64, i64 } "
+            "%outer.inner.values.dynamic_array_append9.active, "
+            "i64 %outer.inner.values.dynamic_array_append9.next.length, 1\n"
+            "  store { ptr, i64, i64 } %outer.inner.values.dynamic_array_append9.updated, ptr %tmp7",
+            "%tmp13 = load i32, ptr %outer.inner.values.dynamic_array_element_path12.element.addr\n"
+            "  %tmp14 = sub i32 %tmp13, 47\n"
+            "  call void @__orison_owned_cleanup.Outer."
+            "examples.concurrency_await_dynamic_array_nested_record_field_push_value(ptr %outer.addr)",
+            "call void @__orison_owned_cleanup.Inner."
+            "examples.concurrency_await_dynamic_array_nested_record_field_push_value"
+            "(ptr %Outer.drop.inner.addr)",
+        }
+    );
+    auto await_dynamic_array_nested_record_field_push_value =
+        run_program(app, await_dynamic_array_nested_record_field_push_value_path);
+    assert(await_dynamic_array_nested_record_field_push_value.exit_code == 0);
+    assert(await_dynamic_array_nested_record_field_push_value.stdout_text.empty());
+    assert(await_dynamic_array_nested_record_field_push_value.stderr_text.empty());
+
     std::filesystem::remove_all(smoke_temp_root);
     return 0;
 }

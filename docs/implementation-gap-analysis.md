@@ -220,5 +220,5 @@ This note is an implementation snapshot. It does not define language syntax or s
 
 ## Suggested Next Step
 
-- Audit a scalar task `await` used as the appended value of a nested `DynamicArray<UInt32>` record field, verifying
-  recursive receiver projection, growth, descriptor writeback, readback, and outer-to-inner cleanup.
+- Audit aggregate-field DynamicArray append safety boundaries, verifying immutable record receivers and consumed field
+  owners are rejected before append IR is emitted.

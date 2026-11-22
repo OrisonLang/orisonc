@@ -1,0 +1,16 @@
+package examples.concurrency_await_dynamic_array_nested_record_field_push_value
+
+record Inner
+    values: DynamicArray<UInt32>
+
+record Outer
+    inner: Inner
+
+async function main() -> UInt32
+    var values: DynamicArray<UInt32> = DynamicArray()
+    var outer: Outer = Outer(Inner(values))
+    let pending = task
+        47 as UInt32
+
+    outer.inner.values.push(await pending)
+    outer.inner.values[0] - 47 as UInt32

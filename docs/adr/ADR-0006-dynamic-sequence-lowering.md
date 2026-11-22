@@ -3328,6 +3328,8 @@ representation.
 - DynamicArray append lowering now accepts mutable aggregate-field receivers through the existing aggregate assignment
   target path. Runtime-symbol discovery infers aggregate receiver types, ensuring field append growth receives its
   prelude declaration. Awaited-value coverage pins projection, growth, field writeback, readback, and record cleanup.
+- Nested mutable aggregate-field append reuses the same receiver path through multiple record projections. Awaited-value
+  compile-link-run coverage pins descriptor growth and writeback at the nested field plus recursive outer cleanup.
 - Direct runtime-index aggregate computed loops now emit bounded descriptor-storage projections for owners such as
   `holder.buckets[selected].values`. The semantic owner remains bracketed for proof metadata while LLVM labels use the
   sanitized owner spelling.

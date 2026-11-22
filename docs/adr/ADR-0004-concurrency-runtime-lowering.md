@@ -374,6 +374,9 @@ drop/cleanup decisions.
 - `examples/concurrency_await_dynamic_array_record_field_push_value_main.or` uses a scalar task result as the appended
   value of a `DynamicArray<UInt32>` record field. Receiver projection precedes synchronization; task cleanup precedes
   growth, field-descriptor writeback, readback, and enclosing-record cleanup.
+- `examples/concurrency_await_dynamic_array_nested_record_field_push_value_main.or` extends awaited append through two
+  record projections. The nested descriptor receives growth writeback and readback while cleanup remains rooted at the
+  outer record and delegates through the inner record.
 
 ## Follow-up work
 

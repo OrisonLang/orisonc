@@ -4227,6 +4227,9 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-11-22: DynamicArray append lowering now supports mutable record-field receivers. Direct task `await` as the
   appended `UInt32` has compile-link-run coverage for field projection, task cleanup, growth, descriptor writeback,
   readback, and enclosing-record cleanup. No syntax or ABI changed.
+- 2026-11-22: Awaited DynamicArray append through nested mutable record fields now has compile-link-run coverage. IR
+  verifies two receiver projections, task cleanup, growth, nested descriptor writeback, readback, and recursive
+  outer-to-inner cleanup. No syntax or ABI changed.
 - 2026-11-18: Concrete generic record payloads containing nested fixed arrays of named records now have checked-in task
   and thread proof. `Result<Batch>` specializes two `T` payload fields to `{ %record.Batch, %record.Batch }`, where
   `%record.Batch` is `{ [2 x [2 x %record.Pair]] }`; it uses `{ i32, [64 x i8] }` with 68-byte result storage,
