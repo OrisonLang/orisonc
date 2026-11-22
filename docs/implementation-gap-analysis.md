@@ -220,5 +220,5 @@ This note is an implementation snapshot. It does not define language syntax or s
 
 ## Suggested Next Step
 
-- Audit a scalar task `await` used as the assignment index of a `DynamicArray<UInt32>` record field, verifying field
-  projection, descriptor-length bounds checking, indexed storage, readback, task cleanup, and aggregate cleanup.
+- Add the paired out-of-bounds awaited `DynamicArray<UInt32>` record-field assignment regression, verifying field
+  projection and task cleanup precede descriptor-length failure while the target store remains unreachable.
