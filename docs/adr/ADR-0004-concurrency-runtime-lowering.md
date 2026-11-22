@@ -344,6 +344,9 @@ drop/cleanup decisions.
 - `examples/concurrency_await_dynamic_array_assignment_index_out_of_bounds_main.or` proves the paired assignment
   failure path. Task cleanup precedes descriptor-length bounds dispatch, index `2` against runtime length `2` aborts,
   and the target element store remains isolated in the unexecuted in-bounds block.
+- `examples/concurrency_await_dynamic_array_record_field_index_main.or` composes a scalar task result with an owned
+  `DynamicArray<UInt32>` record field. The generated path projects the field, consumes the task, checks the descriptor
+  length, loads the selected element, and automatically cleans the aggregate-owned descriptor before return.
 
 ## Follow-up work
 

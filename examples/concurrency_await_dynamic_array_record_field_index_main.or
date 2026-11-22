@@ -1,0 +1,14 @@
+package examples.concurrency_await_dynamic_array_record_field_index
+
+record Holder
+    values: DynamicArray<UInt32>
+
+async function main() -> UInt32
+    var values: DynamicArray<UInt32> = DynamicArray()
+    values.push(11 as UInt32)
+    values.push(31 as UInt32)
+    var holder: Holder = Holder(values)
+    let pending = task
+        1 as UInt64
+
+    holder.values[await pending] - 31 as UInt32

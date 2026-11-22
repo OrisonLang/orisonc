@@ -3151,8 +3151,7 @@ auto lower_dynamic_array_element_path_read(
     }
 
     auto element_source_type = dynamic_array_element_source_type_name(owner_source_type_name);
-    if (!element_source_type.has_value() ||
-        !is_owned_transfer_source_type(*element_source_type, context.lowering)) {
+    if (!element_source_type.has_value()) {
         return std::nullopt;
     }
     auto const index_expression_text =

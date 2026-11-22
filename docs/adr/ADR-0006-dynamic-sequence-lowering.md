@@ -3302,6 +3302,9 @@ representation.
 - Owned `DynamicArray<T>` element scalar projection now has explicit production CLI coverage. The accepted
   `values[0].value` path is pinned beside rejected owned-element copy and owned aggregate projection fixtures, keeping
   the safety boundary visible in tests.
+- Named aggregate fields containing `DynamicArray<T>` now admit scalar element reads through the descriptor-aware
+  element-path lowerer. Field projection precedes descriptor loading and length checks, while aggregate-owned cleanup
+  remains attached to the enclosing record.
 - Direct runtime-index aggregate computed loops now emit bounded descriptor-storage projections for owners such as
   `holder.buckets[selected].values`. The semantic owner remains bracketed for proof metadata while LLVM labels use the
   sanitized owner spelling.

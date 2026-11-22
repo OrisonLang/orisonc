@@ -220,5 +220,5 @@ This note is an implementation snapshot. It does not define language syntax or s
 
 ## Suggested Next Step
 
-- Audit a scalar task `await` used to index a `DynamicArray<UInt32>` record field, verifying aggregate projection,
-  descriptor-length bounds checking, element loading, task cleanup, and automatic aggregate-owned array cleanup.
+- Add the paired out-of-bounds awaited `DynamicArray<UInt32>` record-field read regression, verifying task cleanup and
+  aggregate projection precede descriptor-length failure while element addressing and loading remain unreachable.

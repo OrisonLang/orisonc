@@ -2127,6 +2127,40 @@ auto main() -> int {
     assert(await_dynamic_array_assignment_index_out_of_bounds.stdout_text.empty());
     assert(await_dynamic_array_assignment_index_out_of_bounds.stderr_text.empty());
 
+    auto await_dynamic_array_record_field_index_path = std::filesystem::path(ORISON_SOURCE_DIR) /
+        "examples" / "concurrency_await_dynamic_array_record_field_index_main.or";
+    auto await_dynamic_array_record_field_index_ir =
+        run_emit_llvm(app, await_dynamic_array_record_field_index_path);
+    assert_success_with_stdout_contains(
+        await_dynamic_array_record_field_index_ir,
+        {
+            "%tmp6 = getelementptr %record.Holder, ptr %holder.addr, i32 0, i32 0\n"
+            "  call void @__orison_task_await(ptr %pending)\n"
+            "  %tmp7 = load i64, ptr %pending.task.result\n"
+            "  call void @__orison_concurrency_handle_destroy(ptr %pending)\n"
+            "  %holder.values.dynamic_array_element_path8.descriptor = load { ptr, i64, i64 }, ptr %tmp6",
+            "%holder.values.dynamic_array_element_path8.length = extractvalue { ptr, i64, i64 } "
+            "%holder.values.dynamic_array_element_path8.descriptor, 1\n"
+            "  %holder.values.dynamic_array_element_path8.in_bounds = icmp ult i64 %tmp7, "
+            "%holder.values.dynamic_array_element_path8.length",
+            "br i1 %holder.values.dynamic_array_element_path8.in_bounds, "
+            "label %dynamic_array.element_path.in_bounds.3, "
+            "label %dynamic_array.element_path.out_of_bounds.3",
+            "%holder.values.dynamic_array_element_path8.element.addr = getelementptr i32, "
+            "ptr %holder.values.dynamic_array_element_path8.data, i64 %tmp7\n"
+            "  %tmp9 = load i32, ptr %holder.values.dynamic_array_element_path8.element.addr",
+            "call void @__orison_owned_cleanup.Holder.examples.concurrency_await_dynamic_array_record_field_index"
+            "(ptr %holder.addr)\n"
+            "  store %record.Holder zeroinitializer, ptr %holder.addr\n"
+            "  ret i32 %tmp10",
+        }
+    );
+    auto await_dynamic_array_record_field_index =
+        run_program(app, await_dynamic_array_record_field_index_path);
+    assert(await_dynamic_array_record_field_index.exit_code == 0);
+    assert(await_dynamic_array_record_field_index.stdout_text.empty());
+    assert(await_dynamic_array_record_field_index.stderr_text.empty());
+
     std::filesystem::remove_all(smoke_temp_root);
     return 0;
 }
