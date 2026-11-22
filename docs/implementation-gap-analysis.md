@@ -220,5 +220,5 @@ This note is an implementation snapshot. It does not define language syntax or s
 
 ## Suggested Next Step
 
-- Audit a scalar task `await` used as the appended value of a `DynamicArray<UInt32>`, verifying synchronization and task
-  cleanup compose with capacity growth, descriptor update, appended-value readback, and automatic array cleanup.
+- Audit a scalar task `await` used as the appended value of a `DynamicArray<UInt32>` record field, verifying field
+  projection, synchronization, capacity growth, descriptor update, readback, and enclosing-record cleanup.

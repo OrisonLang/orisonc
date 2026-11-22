@@ -3322,6 +3322,9 @@ representation.
 - Paired runtime coverage for nested aggregate-field scalar assignment proves an out-of-bounds awaited index completes
   recursive projection and task cleanup before descriptor bounds failure, with replacement storage confined to the
   in-bounds block.
+- Local scalar append now has awaited-value compile-link-run coverage. Synchronization completes before capacity
+  selection, the zero-capacity descriptor grows, the awaited scalar is stored at the old length, and the updated
+  descriptor supports readback and automatic cleanup.
 - Direct runtime-index aggregate computed loops now emit bounded descriptor-storage projections for owners such as
   `holder.buckets[selected].values`. The semantic owner remains bracketed for proof metadata while LLVM labels use the
   sanitized owner spelling.

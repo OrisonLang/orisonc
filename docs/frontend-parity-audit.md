@@ -4221,6 +4221,9 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-11-22: The out-of-bounds awaited nested `DynamicArray<UInt32>` record-field assignment counterpart now has
   compile-link-run coverage. Recursive projection and task cleanup precede descriptor bounds failure; runtime exits
   with code `134` before element addressing or storage. No syntax or ABI changed.
+- 2026-11-22: Direct task `await` as a `DynamicArray<UInt32>.push()` value now has compile-link-run coverage. IR
+  verifies task cleanup, zero-capacity growth, awaited scalar storage, descriptor update, readback, and automatic array
+  cleanup. No syntax or ABI changed.
 - 2026-11-18: Concrete generic record payloads containing nested fixed arrays of named records now have checked-in task
   and thread proof. `Result<Batch>` specializes two `T` payload fields to `{ %record.Batch, %record.Batch }`, where
   `%record.Batch` is `{ [2 x [2 x %record.Pair]] }`; it uses `{ i32, [64 x i8] }` with 68-byte result storage,

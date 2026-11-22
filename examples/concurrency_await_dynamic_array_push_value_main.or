@@ -1,0 +1,9 @@
+package examples.concurrency_await_dynamic_array_push_value
+
+async function main() -> UInt32
+    var values: DynamicArray<UInt32> = DynamicArray()
+    let pending = task
+        47 as UInt32
+
+    values.push(await pending)
+    values[0] - 47 as UInt32

@@ -368,6 +368,9 @@ drop/cleanup decisions.
 - `examples/concurrency_await_dynamic_array_nested_record_field_assignment_index_out_of_bounds_main.or` proves the
   paired nested assignment failure path. Both record projections and task cleanup precede descriptor-length bounds
   dispatch, while the target element store remains isolated in the unexecuted in-bounds block.
+- `examples/concurrency_await_dynamic_array_push_value_main.or` uses a scalar task result as a
+  `DynamicArray<UInt32>.push()` argument. Task synchronization and handle cleanup precede append growth, element
+  storage, descriptor update, readback, and automatic array cleanup.
 
 ## Follow-up work
 
