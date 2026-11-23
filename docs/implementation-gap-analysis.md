@@ -220,5 +220,6 @@ This note is an implementation snapshot. It does not define language syntax or s
 
 ## Suggested Next Step
 
-- Audit an awaited record containing an owned DynamicArray field appended to an outer DynamicArray, verifying nested
-  task-result ownership transfer and nontrivial recursive element cleanup.
+- Generalize aggregate-path reads across two DynamicArray descriptors, then add readback coverage for
+  `payloads[0].values[0]`. The nested ownership transfer and recursive cleanup path now compiles, links, and runs, while
+  direct scalar observation through the second descriptor still reports `expected array` in lowering.

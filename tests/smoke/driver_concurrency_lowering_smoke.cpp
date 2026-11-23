@@ -2891,6 +2891,51 @@ auto main() -> int {
     assert(await_dynamic_array_owned_record_push_value.stdout_text.empty());
     assert(await_dynamic_array_owned_record_push_value.stderr_text.empty());
 
+    auto await_dynamic_array_nested_owned_record_push_value_path =
+        std::filesystem::path(ORISON_SOURCE_DIR) / "examples" /
+        "concurrency_await_dynamic_array_nested_owned_record_push_value_main.or";
+    auto await_dynamic_array_nested_owned_record_push_value_ir =
+        run_emit_llvm(app, await_dynamic_array_nested_owned_record_push_value_path);
+    assert_success_with_stdout_contains(
+        await_dynamic_array_nested_owned_record_push_value_ir,
+        {
+            "%record.Payload = type { { ptr, i64, i64 } }",
+            "%pending.task.result = alloca %record.Payload\n"
+            "  %pending = call ptr @__orison_task_spawn(ptr @__orison_task_thunk.main.12.0, "
+            "ptr %pending.task.env, ptr %pending.task.result, i64 24, ptr null)",
+            "call void @__orison_dynamic_array_allocate(ptr sret({ ptr, i64, i64 }) "
+            "%values.dynamic_array_alloc.addr, i64 4, i64 0)",
+            "store i32 47, ptr %values.dynamic_array_append0.element.addr",
+            "%tmp2 = insertvalue %record.Payload undef, { ptr, i64, i64 } %tmp1, 0\n"
+            "  store %record.Payload %tmp2, ptr %result_storage\n"
+            "  ret void",
+            "call void @__orison_task_await(ptr %pending)\n"
+            "  %tmp1 = load %record.Payload, ptr %pending.task.result\n"
+            "  call void @__orison_concurrency_handle_destroy(ptr %pending)",
+            "call void @__orison_dynamic_array_grow(ptr sret({ ptr, i64, i64 }) "
+            "%payloads.dynamic_array_append2.grown.addr, ptr byval({ ptr, i64, i64 }) "
+            "%payloads.dynamic_array_append2.grown.input, i64 24, "
+            "i64 %payloads.dynamic_array_append2.next.capacity)",
+            "store %record.Payload %tmp1, ptr %payloads.dynamic_array_append2.element.addr",
+            "define void @__orison_owned_cleanup.Payload."
+            "examples.concurrency_await_dynamic_array_nested_owned_record_push_value(ptr %value)",
+            "call void @__orison_dynamic_array_deallocate(ptr "
+            "%Payload.drop.values.cleanup.data, i64 4, "
+            "i64 %Payload.drop.values.cleanup.capacity)",
+            "call void @__orison_owned_cleanup.Payload."
+            "examples.concurrency_await_dynamic_array_nested_owned_record_push_value"
+            "(ptr %payloads.dynamic_array_cleanup3.drop.element.addr)",
+            "call void @__orison_dynamic_array_deallocate(ptr "
+            "%payloads.dynamic_array_cleanup3.cleanup.data, i64 24, "
+            "i64 %payloads.dynamic_array_cleanup3.cleanup.capacity)",
+        }
+    );
+    auto await_dynamic_array_nested_owned_record_push_value =
+        run_program(app, await_dynamic_array_nested_owned_record_push_value_path);
+    assert(await_dynamic_array_nested_owned_record_push_value.exit_code == 0);
+    assert(await_dynamic_array_nested_owned_record_push_value.stdout_text.empty());
+    assert(await_dynamic_array_nested_owned_record_push_value.stderr_text.empty());
+
     auto immutable_record_field_push_path = std::filesystem::path(ORISON_SOURCE_DIR) /
         "tests" / "fixtures" / "dynamic_array_record_field_push_immutable_rejected.or";
     auto immutable_record_field_push = run_emit_llvm(app, immutable_record_field_push_path);

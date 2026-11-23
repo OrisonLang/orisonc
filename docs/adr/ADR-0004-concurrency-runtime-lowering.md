@@ -400,6 +400,10 @@ drop/cleanup decisions.
 - `examples/concurrency_await_dynamic_array_owned_record_push_value_main.or` moves an awaited `Payload` task result
   into `DynamicArray<Payload>`. Typed result storage, handle cleanup, aggregate append, field readback, initialized-
   element cleanup, and descriptor deallocation all compile, link, and run.
+- `examples/concurrency_await_dynamic_array_nested_owned_record_push_value_main.or` moves an awaited `Payload`
+  containing an owned `DynamicArray<UInt32>` into `DynamicArray<Payload>`. The task constructs the inner descriptor,
+  transfers it through 24-byte typed result storage, and leaves recursive inner cleanup to the outer initialized-
+  element cleanup walk. Both descriptor allocations are released during linked execution.
 
 ## Follow-up work
 

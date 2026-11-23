@@ -3350,6 +3350,9 @@ representation.
 - Awaited owned-record append now has compile-link-run coverage. A `Payload` task result moves from typed concurrency
   storage into grown `DynamicArray<Payload>` storage, supports scalar field readback, then participates in the automatic
   initialized-element cleanup walk before descriptor deallocation.
+- Awaited nested-owned-record append now has compile-link-run coverage. The task creates a scalar DynamicArray and
+  transfers its descriptor inside `Payload`; outer `DynamicArray<Payload>` cleanup calls the generated `Payload`
+  cleanup for each initialized element before releasing its own 24-byte element storage.
 - Direct runtime-index aggregate computed loops now emit bounded descriptor-storage projections for owners such as
   `holder.buckets[selected].values`. The semantic owner remains bracketed for proof metadata while LLVM labels use the
   sanitized owner spelling.
