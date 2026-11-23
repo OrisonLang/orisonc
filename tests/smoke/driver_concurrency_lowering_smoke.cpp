@@ -2700,6 +2700,57 @@ auto main() -> int {
     assert(await_dynamic_array_runtime_indexed_record_field_push_value_out_of_bounds.stdout_text.empty());
     assert(await_dynamic_array_runtime_indexed_record_field_push_value_out_of_bounds.stderr_text.empty());
 
+    auto await_dynamic_array_nested_runtime_indexed_record_field_push_value_path =
+        std::filesystem::path(ORISON_SOURCE_DIR) / "examples" /
+        "concurrency_await_dynamic_array_nested_runtime_indexed_record_field_push_value_main.or";
+    auto await_dynamic_array_nested_runtime_indexed_record_field_push_value_ir =
+        run_emit_llvm(app, await_dynamic_array_nested_runtime_indexed_record_field_push_value_path);
+    assert_success_with_stdout_contains(
+        await_dynamic_array_nested_runtime_indexed_record_field_push_value_ir,
+        {
+            "%aggregate_path_index32.in_bounds = icmp ult i64 %row, 2\n"
+            "  br i1 %aggregate_path_index32.in_bounds, label %fixed_array.index.in_bounds.1, "
+            "label %fixed_array.index.out_of_bounds.1",
+            "%tmp33 = getelementptr [2 x %record.Group], ptr %tmp31, i64 0, i64 %row\n"
+            "  %tmp34 = getelementptr %record.Group, ptr %tmp33, i32 0, i32 0\n"
+            "  %aggregate_path_index35.in_bounds = icmp ult i64 %column, 2\n"
+            "  br i1 %aggregate_path_index35.in_bounds, label %fixed_array.index.in_bounds.2, "
+            "label %fixed_array.index.out_of_bounds.2",
+            "%tmp36 = getelementptr [2 x %record.Bucket], ptr %tmp34, i64 0, i64 %column\n"
+            "  %tmp37 = getelementptr %record.Bucket, ptr %tmp36, i32 0, i32 0\n"
+            "  call void @__orison_task_await(ptr %pending)\n"
+            "  %tmp38 = load i32, ptr %pending.task.result\n"
+            "  call void @__orison_concurrency_handle_destroy(ptr %pending)",
+            "%holder.groups.element.buckets.element.values.dynamic_array_append39.descriptor = "
+            "load { ptr, i64, i64 }, ptr %tmp37",
+            "store i32 %tmp38, ptr "
+            "%holder.groups.element.buckets.element.values.dynamic_array_append39.element.addr",
+            "store { ptr, i64, i64 } "
+            "%holder.groups.element.buckets.element.values.dynamic_array_append39.updated, ptr %tmp37",
+            "%aggregate_path_index41.in_bounds = icmp ult i64 %row, 2",
+            "%aggregate_path_index44.in_bounds = icmp ult i64 %column, 2",
+            "%holder.groups.element.buckets.element.values.dynamic_array_element_path47.descriptor = "
+            "load { ptr, i64, i64 }, ptr %tmp46",
+            "%tmp48 = load i32, ptr "
+            "%holder.groups.element.buckets.element.values.dynamic_array_element_path47.element.addr\n"
+            "  %tmp49 = sub i32 %tmp48, 47\n"
+            "  call void @__orison_owned_cleanup.Holder."
+            "examples.concurrency_await_dynamic_array_nested_runtime_indexed_record_field_push_value"
+            "(ptr %holder.addr)",
+            "call void @__orison_owned_cleanup.Group."
+            "examples.concurrency_await_dynamic_array_nested_runtime_indexed_record_field_push_value"
+            "(ptr %Holder.drop.groups.drop.element.addr)",
+            "call void @__orison_owned_cleanup.Bucket."
+            "examples.concurrency_await_dynamic_array_nested_runtime_indexed_record_field_push_value"
+            "(ptr %Group.drop.buckets.drop.element.addr)",
+        }
+    );
+    auto await_dynamic_array_nested_runtime_indexed_record_field_push_value =
+        run_program(app, await_dynamic_array_nested_runtime_indexed_record_field_push_value_path);
+    assert(await_dynamic_array_nested_runtime_indexed_record_field_push_value.exit_code == 0);
+    assert(await_dynamic_array_nested_runtime_indexed_record_field_push_value.stdout_text.empty());
+    assert(await_dynamic_array_nested_runtime_indexed_record_field_push_value.stderr_text.empty());
+
     auto immutable_record_field_push_path = std::filesystem::path(ORISON_SOURCE_DIR) /
         "tests" / "fixtures" / "dynamic_array_record_field_push_immutable_rejected.or";
     auto immutable_record_field_push = run_emit_llvm(app, immutable_record_field_push_path);

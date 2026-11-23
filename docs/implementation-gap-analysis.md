@@ -220,5 +220,5 @@ This note is an implementation snapshot. It does not define language syntax or s
 
 ## Suggested Next Step
 
-- Audit awaited DynamicArray append through nested runtime-selected fixed-array record receivers, verifying each
-  aggregate dimension performs bounds checking before descriptor growth and writeback.
+- Add the outer-dimension out-of-bounds nested runtime-selected append counterpart, verifying row failure occurs before
+  column projection, task synchronization, DynamicArray growth, descriptor writeback, or readback.
