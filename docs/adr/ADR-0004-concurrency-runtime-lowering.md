@@ -405,6 +405,9 @@ drop/cleanup decisions.
   transfers it through 24-byte typed result storage, and supports scalar readback through both checked descriptors.
   Recursive inner cleanup remains delegated to the outer initialized-element cleanup walk, and both descriptor
   allocations are released during linked execution.
+- `examples/concurrency_await_dynamic_array_nested_owned_record_push_value_inner_out_of_bounds_main.or` proves the
+  inner descriptor failure path. Outer index `0` reaches the record field; inner index `1` against length `1` aborts
+  before inner data projection, element addressing, or scalar loading.
 
 ## Follow-up work
 

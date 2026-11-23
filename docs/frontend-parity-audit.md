@@ -4262,6 +4262,9 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-11-23: Aggregate-path scalar reads now cross multiple DynamicArray descriptors. The awaited nested-owned-record
   fixture reads `payloads[0].values[0]` through independent outer and inner bounds checks, then retains recursive inner-
   before-outer cleanup. No syntax or ABI changed.
+- 2026-11-23: The nested DynamicArray inner bounds-failure counterpart now has compile-link-run coverage. Outer index
+  `0` succeeds, inner index `1` against length `1` exits with code `134`, and inner data projection plus scalar loading
+  remain isolated in the unexecuted in-bounds block. No syntax or ABI changed.
 - 2026-11-18: Concrete generic record payloads containing nested fixed arrays of named records now have checked-in task
   and thread proof. `Result<Batch>` specializes two `T` payload fields to `{ %record.Batch, %record.Batch }`, where
   `%record.Batch` is `{ [2 x [2 x %record.Pair]] }`; it uses `{ i32, [64 x i8] }` with 68-byte result storage,

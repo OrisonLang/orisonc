@@ -220,6 +220,6 @@ This note is an implementation snapshot. It does not define language syntax or s
 
 ## Suggested Next Step
 
-- Add the inner-descriptor out-of-bounds counterpart for `payloads[0].values[1]`. Verify the outer index succeeds, the
-  inner bounds failure occurs before inner data projection or scalar loading, and automatic process cleanup behavior
-  remains consistent with existing bounds-abort paths.
+- Add the outer-descriptor out-of-bounds counterpart for `payloads[1].values[0]`. Verify the first bounds failure occurs
+  before record-element addressing, field projection, or inner descriptor loading, completing the two-level failure
+  matrix for nested DynamicArray scalar reads.

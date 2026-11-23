@@ -2954,6 +2954,58 @@ auto main() -> int {
     assert(await_dynamic_array_nested_owned_record_push_value.stdout_text.empty());
     assert(await_dynamic_array_nested_owned_record_push_value.stderr_text.empty());
 
+    auto await_dynamic_array_nested_owned_record_push_value_inner_out_of_bounds_path =
+        std::filesystem::path(ORISON_SOURCE_DIR) / "examples" /
+        "concurrency_await_dynamic_array_nested_owned_record_push_value_inner_out_of_bounds_main.or";
+    auto await_dynamic_array_nested_owned_record_push_value_inner_out_of_bounds_ir =
+        run_emit_llvm(
+            app,
+            await_dynamic_array_nested_owned_record_push_value_inner_out_of_bounds_path
+        );
+    assert_success_with_stdout_contains(
+        await_dynamic_array_nested_owned_record_push_value_inner_out_of_bounds_ir,
+        {
+            "call void @__orison_task_await(ptr %pending)\n"
+            "  %tmp1 = load %record.Payload, ptr %pending.task.result\n"
+            "  call void @__orison_concurrency_handle_destroy(ptr %pending)",
+            "store %record.Payload %tmp1, ptr %payloads.dynamic_array_append2.element.addr",
+            "%payloads.dynamic_array_element_path3.in_bounds = icmp ult i64 0, "
+            "%payloads.dynamic_array_element_path3.length\n"
+            "  br i1 %payloads.dynamic_array_element_path3.in_bounds, "
+            "label %dynamic_array.element_path.in_bounds.2, "
+            "label %dynamic_array.element_path.out_of_bounds.2",
+            "dynamic_array.element_path.in_bounds.2:\n"
+            "  %payloads.dynamic_array_element_path3.data = "
+            "extractvalue { ptr, i64, i64 } %payloads.dynamic_array_element_path3.descriptor, 0\n"
+            "  %payloads.dynamic_array_element_path3.element.addr = "
+            "getelementptr %record.Payload, ptr %payloads.dynamic_array_element_path3.data, i64 0\n"
+            "  %tmp4 = getelementptr %record.Payload, "
+            "ptr %payloads.dynamic_array_element_path3.element.addr, i32 0, i32 0",
+            "%aggregate_path_dynamic_array_index5.in_bounds = icmp ult i64 1, "
+            "%aggregate_path_dynamic_array_index5.length\n"
+            "  br i1 %aggregate_path_dynamic_array_index5.in_bounds, "
+            "label %aggregate_path.dynamic_array.in_bounds.3, "
+            "label %aggregate_path.dynamic_array.out_of_bounds.3\n"
+            "aggregate_path.dynamic_array.out_of_bounds.3:\n"
+            "  call void @__orison_dynamic_array_bounds_failed()\n"
+            "  unreachable\n"
+            "aggregate_path.dynamic_array.in_bounds.3:\n"
+            "  %aggregate_path_dynamic_array_index5.data = "
+            "extractvalue { ptr, i64, i64 } %aggregate_path_dynamic_array_index5.descriptor, 0\n"
+            "  %aggregate_path_dynamic_array_index5.element.addr = getelementptr i32, "
+            "ptr %aggregate_path_dynamic_array_index5.data, i64 1\n"
+            "  %tmp6 = load i32, ptr %aggregate_path_dynamic_array_index5.element.addr",
+        }
+    );
+    auto await_dynamic_array_nested_owned_record_push_value_inner_out_of_bounds =
+        run_program(
+            app,
+            await_dynamic_array_nested_owned_record_push_value_inner_out_of_bounds_path
+        );
+    assert(await_dynamic_array_nested_owned_record_push_value_inner_out_of_bounds.exit_code == 134);
+    assert(await_dynamic_array_nested_owned_record_push_value_inner_out_of_bounds.stdout_text.empty());
+    assert(await_dynamic_array_nested_owned_record_push_value_inner_out_of_bounds.stderr_text.empty());
+
     auto immutable_record_field_push_path = std::filesystem::path(ORISON_SOURCE_DIR) /
         "tests" / "fixtures" / "dynamic_array_record_field_push_immutable_rejected.or";
     auto immutable_record_field_push = run_emit_llvm(app, immutable_record_field_push_path);
