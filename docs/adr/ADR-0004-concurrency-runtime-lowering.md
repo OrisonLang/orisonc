@@ -411,6 +411,9 @@ drop/cleanup decisions.
 - `examples/concurrency_await_dynamic_array_nested_owned_record_push_value_outer_out_of_bounds_main.or` proves the
   outer descriptor failure path. Outer index `1` against length `1` aborts before record-element addressing, field
   projection, or inner descriptor loading.
+- `examples/concurrency_await_dynamic_array_nested_owned_record_push_value_runtime_indexed_main.or` proves runtime-
+  selected nested readback. Distinct `UInt64` bindings drive the outer and inner descriptor checks and element
+  addresses, scalar readback returns `47`, and recursive cleanup remains unchanged.
 
 ## Follow-up work
 

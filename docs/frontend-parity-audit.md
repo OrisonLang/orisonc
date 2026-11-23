@@ -4268,6 +4268,9 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-11-23: The nested DynamicArray outer bounds-failure counterpart now has compile-link-run coverage. Outer index
   `1` against length `1` exits with code `134`; record-element addressing, field projection, inner descriptor loading,
   and scalar loading remain isolated in the unexecuted outer in-bounds block. No syntax or ABI changed.
+- 2026-11-23: Runtime-selected nested DynamicArray scalar readback now has compile-link-run coverage. Separate `UInt64`
+  bindings drive the outer and inner bounds checks plus their respective GEPs, scalar readback succeeds, and recursive
+  inner-before-outer cleanup remains intact. No syntax or ABI changed.
 - 2026-11-18: Concrete generic record payloads containing nested fixed arrays of named records now have checked-in task
   and thread proof. `Result<Batch>` specializes two `T` payload fields to `{ %record.Batch, %record.Batch }`, where
   `%record.Batch` is `{ [2 x [2 x %record.Pair]] }`; it uses `{ i32, [64 x i8] }` with 68-byte result storage,

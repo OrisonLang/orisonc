@@ -220,6 +220,5 @@ This note is an implementation snapshot. It does not define language syntax or s
 
 ## Suggested Next Step
 
-- Audit runtime-selected outer and inner indices for nested DynamicArray scalar reads. Verify both nonliteral `UInt64`
-  values feed their respective descriptor bounds checks and element addresses while preserving task-result ownership
-  transfer and recursive cleanup.
+- Add the runtime-selected inner out-of-bounds counterpart with outer index `0` and inner index `1`. Verify the outer
+  value reaches record projection, while the inner value exits before inner data projection or scalar loading.
