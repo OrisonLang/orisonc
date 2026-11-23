@@ -1,0 +1,24 @@
+package examples.concurrency_await_dynamic_array_nested_runtime_indexed_record_field_push_value_inner_out_of_bounds
+
+record Bucket
+    values: DynamicArray<UInt32>
+
+record Group
+    buckets: Array<Bucket, 2>
+
+record Holder
+    groups: Array<Group, 2>
+
+async function main() -> UInt32
+    var first: DynamicArray<UInt32> = DynamicArray()
+    var second: DynamicArray<UInt32> = DynamicArray()
+    var third: DynamicArray<UInt32> = DynamicArray()
+    var fourth: DynamicArray<UInt32> = DynamicArray()
+    var holder: Holder = Holder([Group([Bucket(first), Bucket(second)]), Group([Bucket(third), Bucket(fourth)])])
+    let row: UInt64 = 1 as UInt64
+    let column: UInt64 = 2 as UInt64
+    let pending = task
+        47 as UInt32
+
+    holder.groups[row].buckets[column].values.push(await pending)
+    holder.groups[row].buckets[column].values[0] - 47 as UInt32

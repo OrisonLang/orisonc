@@ -4250,6 +4250,9 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-11-22: The outer-dimension out-of-bounds nested append counterpart now has compile-link-run coverage. Row index
   `2` against length `2` exits with code `134` before `Group` projection, column bounds, task synchronization,
   DynamicArray growth, descriptor writeback, or readback. No syntax or ABI changed.
+- 2026-11-22: The inner-dimension out-of-bounds nested append counterpart now has compile-link-run coverage. A valid
+  row projection reaches column index `2`, which exits with code `134` before `Bucket` projection, task synchronization,
+  DynamicArray growth, descriptor writeback, or readback. No syntax or ABI changed.
 - 2026-11-18: Concrete generic record payloads containing nested fixed arrays of named records now have checked-in task
   and thread proof. `Result<Batch>` specializes two `T` payload fields to `{ %record.Batch, %record.Batch }`, where
   `%record.Batch` is `{ [2 x [2 x %record.Pair]] }`; it uses `{ i32, [64 x i8] }` with 68-byte result storage,

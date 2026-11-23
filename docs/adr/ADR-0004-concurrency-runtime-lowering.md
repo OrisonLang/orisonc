@@ -394,6 +394,9 @@ drop/cleanup decisions.
 - `examples/concurrency_await_dynamic_array_nested_runtime_indexed_record_field_push_value_outer_out_of_bounds_main.or`
   proves the outer failure path. Row index `2` against length `2` aborts before `Group` projection, column bounds,
   synchronization, DynamicArray growth, descriptor writeback, or readback.
+- `examples/concurrency_await_dynamic_array_nested_runtime_indexed_record_field_push_value_inner_out_of_bounds_main.or`
+  proves the inner failure path. Valid row projection reaches column index `2`, which aborts before `Bucket` projection,
+  synchronization, DynamicArray growth, descriptor writeback, or readback.
 
 ## Follow-up work
 
