@@ -3338,6 +3338,8 @@ representation.
 - Runtime-selected fixed-array record-field append now has compile-link-run coverage. DynamicArray element-path reads
   preserve bracketed semantic owner names for ownership analysis while using sanitized `.element` names in LLVM IR;
   fixed-array bounds checks guard both append and readback projections.
+- The paired out-of-bounds runtime-selected receiver exits through the fixed-array bounds abort before entering the
+  append continuation. Await, growth, descriptor writeback, and readback remain isolated in the in-bounds CFG path.
 - Direct runtime-index aggregate computed loops now emit bounded descriptor-storage projections for owners such as
   `holder.buckets[selected].values`. The semantic owner remains bracketed for proof metadata while LLVM labels use the
   sanitized owner spelling.

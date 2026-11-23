@@ -2666,6 +2666,40 @@ auto main() -> int {
     assert(await_dynamic_array_runtime_indexed_record_field_push_value.stdout_text.empty());
     assert(await_dynamic_array_runtime_indexed_record_field_push_value.stderr_text.empty());
 
+    auto await_dynamic_array_runtime_indexed_record_field_push_value_out_of_bounds_path =
+        std::filesystem::path(ORISON_SOURCE_DIR) / "examples" /
+        "concurrency_await_dynamic_array_runtime_indexed_record_field_push_value_out_of_bounds_main.or";
+    auto await_dynamic_array_runtime_indexed_record_field_push_value_out_of_bounds_ir =
+        run_emit_llvm(app, await_dynamic_array_runtime_indexed_record_field_push_value_out_of_bounds_path);
+    assert_success_with_stdout_contains(
+        await_dynamic_array_runtime_indexed_record_field_push_value_out_of_bounds_ir,
+        {
+            "%selected = add i64 0, 2",
+            "%aggregate_path_index14.in_bounds = icmp ult i64 %selected, 2\n"
+            "  br i1 %aggregate_path_index14.in_bounds, label %fixed_array.index.in_bounds.1, "
+            "label %fixed_array.index.out_of_bounds.1\n"
+            "fixed_array.index.out_of_bounds.1:\n"
+            "  call void @__orison_dynamic_array_bounds_failed()\n"
+            "  unreachable\n"
+            "fixed_array.index.in_bounds.1:\n"
+            "  %tmp15 = getelementptr [2 x %record.Bucket], ptr %tmp13, i64 0, i64 %selected\n"
+            "  %tmp16 = getelementptr %record.Bucket, ptr %tmp15, i32 0, i32 0\n"
+            "  call void @__orison_task_await(ptr %pending)",
+            "call void @__orison_dynamic_array_grow(ptr sret({ ptr, i64, i64 }) "
+            "%holder.buckets.element.values.dynamic_array_append18.grown.addr",
+            "store { ptr, i64, i64 } "
+            "%holder.buckets.element.values.dynamic_array_append18.updated, ptr %tmp16",
+            "%aggregate_path_index20.in_bounds = icmp ult i64 %selected, 2",
+            "%holder.buckets.element.values.dynamic_array_element_path23.descriptor = "
+            "load { ptr, i64, i64 }, ptr %tmp22",
+        }
+    );
+    auto await_dynamic_array_runtime_indexed_record_field_push_value_out_of_bounds =
+        run_program(app, await_dynamic_array_runtime_indexed_record_field_push_value_out_of_bounds_path);
+    assert(await_dynamic_array_runtime_indexed_record_field_push_value_out_of_bounds.exit_code == 134);
+    assert(await_dynamic_array_runtime_indexed_record_field_push_value_out_of_bounds.stdout_text.empty());
+    assert(await_dynamic_array_runtime_indexed_record_field_push_value_out_of_bounds.stderr_text.empty());
+
     auto immutable_record_field_push_path = std::filesystem::path(ORISON_SOURCE_DIR) /
         "tests" / "fixtures" / "dynamic_array_record_field_push_immutable_rejected.or";
     auto immutable_record_field_push = run_emit_llvm(app, immutable_record_field_push_path);

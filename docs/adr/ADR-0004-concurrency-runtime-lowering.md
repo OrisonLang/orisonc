@@ -385,6 +385,9 @@ drop/cleanup decisions.
 - `examples/concurrency_await_dynamic_array_runtime_indexed_record_field_push_value_main.or` selects that record
   element through a runtime `UInt64`. Fixed-array bounds checks guard append and readback projections, while task
   synchronization, descriptor writeback, and enclosing cleanup retain their prior ordering.
+- `examples/concurrency_await_dynamic_array_runtime_indexed_record_field_push_value_out_of_bounds_main.or` proves the
+  paired receiver failure path. Selection index `2` against length `2` reaches the fixed-array bounds abort before task
+  synchronization, DynamicArray growth, descriptor writeback, or readback.
 
 ## Follow-up work
 

@@ -4241,6 +4241,9 @@ This file tracks which source-language frontend slices are reflected in the curr
   coverage. IR verifies fixed-array bounds checks for append and readback, indexed descriptor writeback, task cleanup,
   and enclosing-record cleanup. Runtime-index semantic names are sanitized only when rendered as LLVM temporaries. No
   syntax or ABI changed.
+- 2026-11-22: The out-of-bounds runtime-selected fixed-array record-field append counterpart now has compile-link-run
+  coverage. Index `2` against length `2` exits with code `134` before task synchronization, DynamicArray growth,
+  descriptor writeback, or readback. No syntax or ABI changed.
 - 2026-11-18: Concrete generic record payloads containing nested fixed arrays of named records now have checked-in task
   and thread proof. `Result<Batch>` specializes two `T` payload fields to `{ %record.Batch, %record.Batch }`, where
   `%record.Batch` is `{ [2 x [2 x %record.Pair]] }`; it uses `{ i32, [64 x i8] }` with 68-byte result storage,
