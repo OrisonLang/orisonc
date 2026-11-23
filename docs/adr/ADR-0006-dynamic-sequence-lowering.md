@@ -3335,6 +3335,9 @@ representation.
 - Fixed-array indexed record-field append now has compile-link-run coverage. Aggregate-path reads distinguish inline
   array indices from the later DynamicArray index, allowing post-append scalar readback while descriptor writeback and
   cleanup remain rooted at the indexed field and enclosing record.
+- Runtime-selected fixed-array record-field append now has compile-link-run coverage. DynamicArray element-path reads
+  preserve bracketed semantic owner names for ownership analysis while using sanitized `.element` names in LLVM IR;
+  fixed-array bounds checks guard both append and readback projections.
 - Direct runtime-index aggregate computed loops now emit bounded descriptor-storage projections for owners such as
   `holder.buckets[selected].values`. The semantic owner remains bracketed for proof metadata while LLVM labels use the
   sanitized owner spelling.

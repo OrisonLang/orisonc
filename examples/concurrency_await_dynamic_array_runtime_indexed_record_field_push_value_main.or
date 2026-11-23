@@ -1,0 +1,18 @@
+package examples.concurrency_await_dynamic_array_runtime_indexed_record_field_push_value
+
+record Bucket
+    values: DynamicArray<UInt32>
+
+record Holder
+    buckets: Array<Bucket, 2>
+
+async function main() -> UInt32
+    var first: DynamicArray<UInt32> = DynamicArray()
+    var second: DynamicArray<UInt32> = DynamicArray()
+    var holder: Holder = Holder([Bucket(first), Bucket(second)])
+    let selected: UInt64 = 1 as UInt64
+    let pending = task
+        47 as UInt32
+
+    holder.buckets[selected].values.push(await pending)
+    holder.buckets[selected].values[0] - 47 as UInt32

@@ -3120,6 +3120,7 @@ auto lower_dynamic_array_element_path_read(
     }
 
     auto owner_name = path->base_expression->text;
+    auto llvm_owner_name = owner_name;
     auto base_source_type = session.state.source_type_names.find(path->base_expression->text);
     if (base_source_type == session.state.source_type_names.end()) {
         return std::nullopt;
@@ -3138,6 +3139,10 @@ auto lower_dynamic_array_element_path_read(
                 return std::nullopt;
             }
             owner_name += aggregate_index_owner_suffix(*step.index_expression);
+            llvm_owner_name += ".element";
+            if (auto literal_text = decimal_integer_literal_text(*step.index_expression)) {
+                llvm_owner_name += *literal_text;
+            }
             owner_source_type_name = std::move(*element_source_type);
             continue;
         }
@@ -3152,6 +3157,8 @@ auto lower_dynamic_array_element_path_read(
         }
         owner_name += ".";
         owner_name += step.field_name;
+        llvm_owner_name += ".";
+        llvm_owner_name += step.field_name;
         owner_source_type_name = field->source_type_name;
     }
     if (!index_step_index.has_value() ||
@@ -3338,7 +3345,7 @@ auto lower_dynamic_array_element_path_read(
         return std::nullopt;
     }
 
-    auto prefix = "%" + owner_name + ".dynamic_array_element_path" +
+    auto prefix = "%" + llvm_owner_name + ".dynamic_array_element_path" +
         std::to_string(session.state.next_temporary_index++);
     output << emit_dynamic_array_descriptor_load(
         prefix + ".descriptor",

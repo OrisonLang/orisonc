@@ -382,6 +382,9 @@ drop/cleanup decisions.
 - `examples/concurrency_await_dynamic_array_indexed_record_field_push_value_main.or` composes awaited append through a
   fixed-array record element. Indexed projection precedes synchronization; task cleanup precedes descriptor growth,
   writeback, readback, and recursive cleanup of every array element.
+- `examples/concurrency_await_dynamic_array_runtime_indexed_record_field_push_value_main.or` selects that record
+  element through a runtime `UInt64`. Fixed-array bounds checks guard append and readback projections, while task
+  synchronization, descriptor writeback, and enclosing cleanup retain their prior ordering.
 
 ## Follow-up work
 

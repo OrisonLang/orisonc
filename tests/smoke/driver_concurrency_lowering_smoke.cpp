@@ -2618,6 +2618,54 @@ auto main() -> int {
     assert(await_dynamic_array_indexed_record_field_push_value.stdout_text.empty());
     assert(await_dynamic_array_indexed_record_field_push_value.stderr_text.empty());
 
+    auto await_dynamic_array_runtime_indexed_record_field_push_value_path =
+        std::filesystem::path(ORISON_SOURCE_DIR) / "examples" /
+        "concurrency_await_dynamic_array_runtime_indexed_record_field_push_value_main.or";
+    auto await_dynamic_array_runtime_indexed_record_field_push_value_ir =
+        run_emit_llvm(app, await_dynamic_array_runtime_indexed_record_field_push_value_path);
+    assert_success_with_stdout_contains(
+        await_dynamic_array_runtime_indexed_record_field_push_value_ir,
+        {
+            "%aggregate_path_index14.in_bounds = icmp ult i64 %selected, 2\n"
+            "  br i1 %aggregate_path_index14.in_bounds, label %fixed_array.index.in_bounds.1, "
+            "label %fixed_array.index.out_of_bounds.1",
+            "%tmp15 = getelementptr [2 x %record.Bucket], ptr %tmp13, i64 0, i64 %selected\n"
+            "  %tmp16 = getelementptr %record.Bucket, ptr %tmp15, i32 0, i32 0\n"
+            "  call void @__orison_task_await(ptr %pending)\n"
+            "  %tmp17 = load i32, ptr %pending.task.result\n"
+            "  call void @__orison_concurrency_handle_destroy(ptr %pending)",
+            "%holder.buckets.element.values.dynamic_array_append18.descriptor = "
+            "load { ptr, i64, i64 }, ptr %tmp16",
+            "store i32 %tmp17, ptr "
+            "%holder.buckets.element.values.dynamic_array_append18.element.addr",
+            "store { ptr, i64, i64 } "
+            "%holder.buckets.element.values.dynamic_array_append18.updated, ptr %tmp16",
+            "%aggregate_path_index20.in_bounds = icmp ult i64 %selected, 2\n"
+            "  br i1 %aggregate_path_index20.in_bounds, label %fixed_array.index.in_bounds.3, "
+            "label %fixed_array.index.out_of_bounds.3",
+            "%tmp21 = getelementptr [2 x %record.Bucket], ptr %tmp19, i64 0, i64 %selected\n"
+            "  %tmp22 = getelementptr %record.Bucket, ptr %tmp21, i32 0, i32 0\n"
+            "  %holder.buckets.element.values.dynamic_array_element_path23.descriptor = "
+            "load { ptr, i64, i64 }, ptr %tmp22",
+            "%tmp24 = load i32, ptr "
+            "%holder.buckets.element.values.dynamic_array_element_path23.element.addr\n"
+            "  %tmp25 = sub i32 %tmp24, 47\n"
+            "  call void @__orison_owned_cleanup.Holder."
+            "examples.concurrency_await_dynamic_array_runtime_indexed_record_field_push_value"
+            "(ptr %holder.addr)",
+        }
+    );
+    assert(
+        await_dynamic_array_runtime_indexed_record_field_push_value_ir.stdout_text.find(
+            "%holder.buckets[selected]"
+        ) == std::string::npos
+    );
+    auto await_dynamic_array_runtime_indexed_record_field_push_value =
+        run_program(app, await_dynamic_array_runtime_indexed_record_field_push_value_path);
+    assert(await_dynamic_array_runtime_indexed_record_field_push_value.exit_code == 0);
+    assert(await_dynamic_array_runtime_indexed_record_field_push_value.stdout_text.empty());
+    assert(await_dynamic_array_runtime_indexed_record_field_push_value.stderr_text.empty());
+
     auto immutable_record_field_push_path = std::filesystem::path(ORISON_SOURCE_DIR) /
         "tests" / "fixtures" / "dynamic_array_record_field_push_immutable_rejected.or";
     auto immutable_record_field_push = run_emit_llvm(app, immutable_record_field_push_path);

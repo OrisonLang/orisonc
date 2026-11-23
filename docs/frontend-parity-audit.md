@@ -4237,6 +4237,10 @@ This file tracks which source-language frontend slices are reflected in the curr
   IR verifies indexed projection, task cleanup, descriptor growth and writeback, scalar readback, and recursive
   enclosing-record cleanup. Aggregate-path read lowering now crosses fixed-array indices before DynamicArray reads. No
   syntax or ABI changed.
+- 2026-11-22: Awaited DynamicArray append through a runtime-selected fixed-array record field now has compile-link-run
+  coverage. IR verifies fixed-array bounds checks for append and readback, indexed descriptor writeback, task cleanup,
+  and enclosing-record cleanup. Runtime-index semantic names are sanitized only when rendered as LLVM temporaries. No
+  syntax or ABI changed.
 - 2026-11-18: Concrete generic record payloads containing nested fixed arrays of named records now have checked-in task
   and thread proof. `Result<Batch>` specializes two `T` payload fields to `{ %record.Batch, %record.Batch }`, where
   `%record.Batch` is `{ [2 x [2 x %record.Pair]] }`; it uses `{ i32, [64 x i8] }` with 68-byte result storage,

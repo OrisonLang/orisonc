@@ -220,5 +220,5 @@ This note is an implementation snapshot. It does not define language syntax or s
 
 ## Suggested Next Step
 
-- Audit awaited DynamicArray append through a runtime-selected fixed-array record receiver, verifying fixed-array
-  bounds checks, indexed descriptor writeback, readback, and enclosing aggregate cleanup.
+- Add the out-of-bounds runtime-selected fixed-array record receiver counterpart, verifying failure occurs before
+  task synchronization, DynamicArray growth, descriptor writeback, or readback.
