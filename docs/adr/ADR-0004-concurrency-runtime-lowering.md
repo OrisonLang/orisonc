@@ -397,6 +397,9 @@ drop/cleanup decisions.
 - `examples/concurrency_await_dynamic_array_nested_runtime_indexed_record_field_push_value_inner_out_of_bounds_main.or`
   proves the inner failure path. Valid row projection reaches column index `2`, which aborts before `Bucket` projection,
   synchronization, DynamicArray growth, descriptor writeback, or readback.
+- `examples/concurrency_await_dynamic_array_owned_record_push_value_main.or` moves an awaited `Payload` task result
+  into `DynamicArray<Payload>`. Typed result storage, handle cleanup, aggregate append, field readback, initialized-
+  element cleanup, and descriptor deallocation all compile, link, and run.
 
 ## Follow-up work
 

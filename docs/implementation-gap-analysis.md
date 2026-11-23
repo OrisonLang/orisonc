@@ -220,5 +220,5 @@ This note is an implementation snapshot. It does not define language syntax or s
 
 ## Suggested Next Step
 
-- Audit an awaited owned record appended to `DynamicArray<Payload>`, verifying task-result ownership transfer, growth,
-  aggregate element storage, and automatic element cleanup.
+- Audit an awaited record containing an owned DynamicArray field appended to an outer DynamicArray, verifying nested
+  task-result ownership transfer and nontrivial recursive element cleanup.

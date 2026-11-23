@@ -3347,6 +3347,9 @@ representation.
   `Group`. Column bounds, await, growth, descriptor writeback, and readback remain isolated in the outer in-bounds path.
 - The inner-dimension counterpart crosses a valid row projection and exits through the column bounds abort before
   projecting a `Bucket`. Await, growth, descriptor writeback, and readback remain isolated in the inner in-bounds path.
+- Awaited owned-record append now has compile-link-run coverage. A `Payload` task result moves from typed concurrency
+  storage into grown `DynamicArray<Payload>` storage, supports scalar field readback, then participates in the automatic
+  initialized-element cleanup walk before descriptor deallocation.
 - Direct runtime-index aggregate computed loops now emit bounded descriptor-storage projections for owners such as
   `holder.buckets[selected].values`. The semantic owner remains bracketed for proof metadata while LLVM labels use the
   sanitized owner spelling.

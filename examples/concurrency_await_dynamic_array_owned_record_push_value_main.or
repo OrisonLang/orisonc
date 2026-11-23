@@ -1,0 +1,16 @@
+package examples.concurrency_await_dynamic_array_owned_record_push_value
+
+record Payload
+    value: UInt32
+
+implements Shareable for Payload
+    function placeholder(this: shared This) -> Unit
+        return
+
+async function main() -> UInt32
+    var values: DynamicArray<Payload> = DynamicArray()
+    let pending = task
+        Payload(47 as UInt32)
+
+    values.push(await pending)
+    values[0].value - 47 as UInt32
