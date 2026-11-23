@@ -3358,6 +3358,9 @@ representation.
 - The inner-descriptor out-of-bounds counterpart reaches the second bounds branch only after the outer projection
   succeeds. The abort block dominates no inner data projection or scalar load, and linked execution exits with code
   `134`.
+- The outer-descriptor out-of-bounds counterpart exits through the first bounds branch before record-element
+  addressing, field projection, or inner descriptor loading. Together, the success and two failure fixtures cover the
+  complete two-level literal-index bounds matrix.
 - Direct runtime-index aggregate computed loops now emit bounded descriptor-storage projections for owners such as
   `holder.buckets[selected].values`. The semantic owner remains bracketed for proof metadata while LLVM labels use the
   sanitized owner spelling.

@@ -408,6 +408,9 @@ drop/cleanup decisions.
 - `examples/concurrency_await_dynamic_array_nested_owned_record_push_value_inner_out_of_bounds_main.or` proves the
   inner descriptor failure path. Outer index `0` reaches the record field; inner index `1` against length `1` aborts
   before inner data projection, element addressing, or scalar loading.
+- `examples/concurrency_await_dynamic_array_nested_owned_record_push_value_outer_out_of_bounds_main.or` proves the
+  outer descriptor failure path. Outer index `1` against length `1` aborts before record-element addressing, field
+  projection, or inner descriptor loading.
 
 ## Follow-up work
 

@@ -220,6 +220,6 @@ This note is an implementation snapshot. It does not define language syntax or s
 
 ## Suggested Next Step
 
-- Add the outer-descriptor out-of-bounds counterpart for `payloads[1].values[0]`. Verify the first bounds failure occurs
-  before record-element addressing, field projection, or inner descriptor loading, completing the two-level failure
-  matrix for nested DynamicArray scalar reads.
+- Audit runtime-selected outer and inner indices for nested DynamicArray scalar reads. Verify both nonliteral `UInt64`
+  values feed their respective descriptor bounds checks and element addresses while preserving task-result ownership
+  transfer and recursive cleanup.
