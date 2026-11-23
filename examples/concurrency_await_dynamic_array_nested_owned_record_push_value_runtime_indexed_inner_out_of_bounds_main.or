@@ -1,0 +1,20 @@
+package examples.concurrency_await_dynamic_array_nested_owned_record_push_value_runtime_indexed_inner_out_of_bounds
+
+record Payload
+    values: DynamicArray<UInt32>
+
+implements Shareable for Payload
+    function placeholder(this: shared This) -> Unit
+        return
+
+async function main() -> UInt32
+    var payloads: DynamicArray<Payload> = DynamicArray()
+    let outer: UInt64 = 0 as UInt64
+    let inner: UInt64 = 1 as UInt64
+    let pending = task
+        var values: DynamicArray<UInt32> = DynamicArray()
+        values.push(47 as UInt32)
+        Payload(values)
+
+    payloads.push(await pending)
+    payloads[outer].values[inner]

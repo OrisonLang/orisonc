@@ -220,5 +220,6 @@ This note is an implementation snapshot. It does not define language syntax or s
 
 ## Suggested Next Step
 
-- Add the runtime-selected inner out-of-bounds counterpart with outer index `0` and inner index `1`. Verify the outer
-  value reaches record projection, while the inner value exits before inner data projection or scalar loading.
+- Add the runtime-selected outer out-of-bounds counterpart with outer index `1` and inner index `0`. Verify the outer
+  value exits before record-element addressing, field projection, or inner descriptor loading, completing the runtime-
+  selected nested bounds matrix.

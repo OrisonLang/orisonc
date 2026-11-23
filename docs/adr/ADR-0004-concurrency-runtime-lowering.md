@@ -414,6 +414,9 @@ drop/cleanup decisions.
 - `examples/concurrency_await_dynamic_array_nested_owned_record_push_value_runtime_indexed_main.or` proves runtime-
   selected nested readback. Distinct `UInt64` bindings drive the outer and inner descriptor checks and element
   addresses, scalar readback returns `47`, and recursive cleanup remains unchanged.
+- `examples/concurrency_await_dynamic_array_nested_owned_record_push_value_runtime_indexed_inner_out_of_bounds_main.or`
+  proves the runtime-selected inner failure path. Outer value `0` reaches the record field; inner value `1` exits with
+  code `134` before inner data projection, element addressing, or scalar loading.
 
 ## Follow-up work
 

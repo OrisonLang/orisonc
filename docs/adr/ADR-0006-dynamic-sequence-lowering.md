@@ -3364,6 +3364,8 @@ representation.
 - Runtime-selected nested scalar readback preserves each nonliteral `UInt64` through its corresponding descriptor
   bounds check and element address. The outer value selects the `Payload`; the inner value selects its scalar element,
   and recursive owned-element cleanup retains the same order.
+- The runtime-selected inner failure counterpart preserves both SSA index values. The outer value reaches record
+  projection, while the inner value reaches the second bounds abort before inner data projection or scalar loading.
 - Direct runtime-index aggregate computed loops now emit bounded descriptor-storage projections for owners such as
   `holder.buckets[selected].values`. The semantic owner remains bracketed for proof metadata while LLVM labels use the
   sanitized owner spelling.
