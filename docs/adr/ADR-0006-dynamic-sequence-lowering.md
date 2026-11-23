@@ -3343,6 +3343,8 @@ representation.
 - Nested runtime-selected fixed-array record-field append now has compile-link-run coverage. Both aggregate dimensions
   perform bounds checks before append, descriptor writeback targets the twice-indexed field, readback repeats both
   checks, and enclosing record cleanup delegates through both record layers.
+- The outer-dimension out-of-bounds counterpart exits through the row bounds abort before projecting the selected
+  `Group`. Column bounds, await, growth, descriptor writeback, and readback remain isolated in the outer in-bounds path.
 - Direct runtime-index aggregate computed loops now emit bounded descriptor-storage projections for owners such as
   `holder.buckets[selected].values`. The semantic owner remains bracketed for proof metadata while LLVM labels use the
   sanitized owner spelling.

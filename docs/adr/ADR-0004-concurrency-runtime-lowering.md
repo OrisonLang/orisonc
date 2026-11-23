@@ -391,6 +391,9 @@ drop/cleanup decisions.
 - `examples/concurrency_await_dynamic_array_nested_runtime_indexed_record_field_push_value_main.or` composes awaited
   append through `holder.groups[row].buckets[column].values`. Independent row and column bounds checks precede task
   synchronization; writeback, readback, and `Holder`-to-`Group`-to-`Bucket` cleanup complete successfully.
+- `examples/concurrency_await_dynamic_array_nested_runtime_indexed_record_field_push_value_outer_out_of_bounds_main.or`
+  proves the outer failure path. Row index `2` against length `2` aborts before `Group` projection, column bounds,
+  synchronization, DynamicArray growth, descriptor writeback, or readback.
 
 ## Follow-up work
 

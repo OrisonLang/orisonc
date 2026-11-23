@@ -220,5 +220,5 @@ This note is an implementation snapshot. It does not define language syntax or s
 
 ## Suggested Next Step
 
-- Add the outer-dimension out-of-bounds nested runtime-selected append counterpart, verifying row failure occurs before
-  column projection, task synchronization, DynamicArray growth, descriptor writeback, or readback.
+- Add the inner-dimension out-of-bounds nested runtime-selected append counterpart, verifying column failure occurs
+  after valid row projection but before task synchronization, DynamicArray growth, descriptor writeback, or readback.
