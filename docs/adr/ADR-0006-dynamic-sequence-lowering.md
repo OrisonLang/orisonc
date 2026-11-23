@@ -3352,7 +3352,9 @@ representation.
   initialized-element cleanup walk before descriptor deallocation.
 - Awaited nested-owned-record append now has compile-link-run coverage. The task creates a scalar DynamicArray and
   transfers its descriptor inside `Payload`; outer `DynamicArray<Payload>` cleanup calls the generated `Payload`
-  cleanup for each initialized element before releasing its own 24-byte element storage.
+  cleanup for each initialized element before releasing its own 24-byte element storage. Aggregate-path scalar reads
+  can cross the outer descriptor, a record field, and the inner descriptor with an independent bounds check at each
+  dynamic index.
 - Direct runtime-index aggregate computed loops now emit bounded descriptor-storage projections for owners such as
   `holder.buckets[selected].values`. The semantic owner remains bracketed for proof metadata while LLVM labels use the
   sanitized owner spelling.

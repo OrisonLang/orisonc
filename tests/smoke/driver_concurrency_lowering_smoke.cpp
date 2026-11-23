@@ -2917,6 +2917,24 @@ auto main() -> int {
             "%payloads.dynamic_array_append2.grown.input, i64 24, "
             "i64 %payloads.dynamic_array_append2.next.capacity)",
             "store %record.Payload %tmp1, ptr %payloads.dynamic_array_append2.element.addr",
+            "%payloads.dynamic_array_element_path3.in_bounds = icmp ult i64 0, "
+            "%payloads.dynamic_array_element_path3.length\n"
+            "  br i1 %payloads.dynamic_array_element_path3.in_bounds, "
+            "label %dynamic_array.element_path.in_bounds.2, "
+            "label %dynamic_array.element_path.out_of_bounds.2",
+            "%tmp4 = getelementptr %record.Payload, "
+            "ptr %payloads.dynamic_array_element_path3.element.addr, i32 0, i32 0\n"
+            "  %aggregate_path_dynamic_array_index5.descriptor = "
+            "load { ptr, i64, i64 }, ptr %tmp4",
+            "%aggregate_path_dynamic_array_index5.in_bounds = icmp ult i64 0, "
+            "%aggregate_path_dynamic_array_index5.length\n"
+            "  br i1 %aggregate_path_dynamic_array_index5.in_bounds, "
+            "label %aggregate_path.dynamic_array.in_bounds.3, "
+            "label %aggregate_path.dynamic_array.out_of_bounds.3",
+            "%aggregate_path_dynamic_array_index5.element.addr = getelementptr i32, "
+            "ptr %aggregate_path_dynamic_array_index5.data, i64 0\n"
+            "  %tmp6 = load i32, ptr %aggregate_path_dynamic_array_index5.element.addr\n"
+            "  %tmp7 = sub i32 %tmp6, 47",
             "define void @__orison_owned_cleanup.Payload."
             "examples.concurrency_await_dynamic_array_nested_owned_record_push_value(ptr %value)",
             "call void @__orison_dynamic_array_deallocate(ptr "
@@ -2924,10 +2942,10 @@ auto main() -> int {
             "i64 %Payload.drop.values.cleanup.capacity)",
             "call void @__orison_owned_cleanup.Payload."
             "examples.concurrency_await_dynamic_array_nested_owned_record_push_value"
-            "(ptr %payloads.dynamic_array_cleanup3.drop.element.addr)",
+            "(ptr %payloads.dynamic_array_cleanup8.drop.element.addr)",
             "call void @__orison_dynamic_array_deallocate(ptr "
-            "%payloads.dynamic_array_cleanup3.cleanup.data, i64 24, "
-            "i64 %payloads.dynamic_array_cleanup3.cleanup.capacity)",
+            "%payloads.dynamic_array_cleanup8.cleanup.data, i64 24, "
+            "i64 %payloads.dynamic_array_cleanup8.cleanup.capacity)",
         }
     );
     auto await_dynamic_array_nested_owned_record_push_value =

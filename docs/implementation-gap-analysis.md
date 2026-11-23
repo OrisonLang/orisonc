@@ -220,6 +220,6 @@ This note is an implementation snapshot. It does not define language syntax or s
 
 ## Suggested Next Step
 
-- Generalize aggregate-path reads across two DynamicArray descriptors, then add readback coverage for
-  `payloads[0].values[0]`. The nested ownership transfer and recursive cleanup path now compiles, links, and runs, while
-  direct scalar observation through the second descriptor still reports `expected array` in lowering.
+- Add the inner-descriptor out-of-bounds counterpart for `payloads[0].values[1]`. Verify the outer index succeeds, the
+  inner bounds failure occurs before inner data projection or scalar loading, and automatic process cleanup behavior
+  remains consistent with existing bounds-abort paths.

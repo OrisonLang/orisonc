@@ -15,4 +15,4 @@ async function main() -> UInt32
         Payload(values)
 
     payloads.push(await pending)
-    0 as UInt32
+    payloads[0].values[0] - 47 as UInt32

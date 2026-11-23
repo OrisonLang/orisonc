@@ -2812,6 +2812,77 @@ auto lower_aggregate_path_read_from_storage(
         if (!lowered_index.has_value()) {
             return std::nullopt;
         }
+        if (auto dynamic_element_source_type =
+                dynamic_array_element_source_type_name(cursor->source_type_name)) {
+            auto cleanup_plan = plan_dynamic_array_descriptor_cleanup(
+                "aggregate_path_dynamic_array",
+                cursor->source_type_name,
+                context.lowering
+            );
+            if (!cleanup_plan.has_value()) {
+                return std::nullopt;
+            }
+
+            auto prefix = "%aggregate_path_dynamic_array_index" +
+                std::to_string(session.state.next_temporary_index++);
+            output << emit_dynamic_array_descriptor_load(
+                prefix + ".descriptor",
+                cursor->pointer
+            );
+            output << emit_dynamic_array_descriptor_field_projection(
+                prefix + ".length",
+                prefix + ".descriptor",
+                DynamicArrayDescriptorField::length
+            );
+            output << emit_dynamic_array_bounds_check(
+                prefix + ".in_bounds",
+                lowered_index->value,
+                prefix + ".length",
+                DynamicArrayBoundsCheckKind::index_within_length
+            );
+            auto block_index = next_llvm_block_index(session.state.next_block_index);
+            auto value_block = llvm_block_name(
+                "aggregate_path.dynamic_array.in_bounds",
+                block_index
+            );
+            auto failure_block = llvm_block_name(
+                "aggregate_path.dynamic_array.out_of_bounds",
+                block_index
+            );
+            emit_llvm_conditional_branch(
+                output,
+                prefix + ".in_bounds",
+                value_block,
+                failure_block
+            );
+            emit_llvm_block_label(output, failure_block);
+            output << "  call void @__orison_dynamic_array_bounds_failed()\n";
+            emit_llvm_unreachable(output);
+            emit_llvm_block_label(output, value_block);
+            session.state.current_block = value_block;
+            output << emit_dynamic_array_descriptor_field_projection(
+                prefix + ".data",
+                prefix + ".descriptor",
+                DynamicArrayDescriptorField::data
+            );
+            output << emit_dynamic_array_element_address(
+                *cleanup_plan,
+                prefix + ".element.addr",
+                prefix + ".data",
+                lowered_index->value
+            );
+
+            auto next_cursor = initialize_aggregate_path_cursor(
+                prefix + ".element.addr",
+                *dynamic_element_source_type,
+                context.lowering
+            );
+            if (!next_cursor.has_value()) {
+                return std::nullopt;
+            }
+            cursor = std::move(*next_cursor);
+            continue;
+        }
         if (runtime_index) {
             auto array_type = parse_llvm_array_type(cursor->llvm_type_name);
             if (!array_type.has_value()) {
@@ -3221,7 +3292,10 @@ auto lower_dynamic_array_element_path_read(
             continue;
         }
 
-        auto element = array_element_source_type_name(*projected_source_type);
+        auto element = dynamic_array_element_source_type_name(*projected_source_type);
+        if (!element.has_value()) {
+            element = array_element_source_type_name(*projected_source_type);
+        }
         if (!element.has_value()) {
             projected_source_type = std::nullopt;
             break;
