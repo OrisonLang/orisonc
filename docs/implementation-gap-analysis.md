@@ -220,5 +220,5 @@ This note is an implementation snapshot. It does not define language syntax or s
 
 ## Suggested Next Step
 
-- Audit awaited DynamicArray append through a fixed-array indexed record receiver, verifying indexed aggregate
-  projection, descriptor growth/writeback, readback, and enclosing aggregate cleanup.
+- Audit awaited DynamicArray append through a runtime-selected fixed-array record receiver, verifying fixed-array
+  bounds checks, indexed descriptor writeback, readback, and enclosing aggregate cleanup.

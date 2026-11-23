@@ -4233,6 +4233,10 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-11-22: Aggregate-field DynamicArray append safety boundaries now have source-backed diagnostics coverage.
   Immutable record roots and transferred fields are rejected before append IR emission, preserving mutability and
   ownership checks after receiver generalization. No syntax or ABI changed.
+- 2026-11-22: Awaited DynamicArray append through a fixed-array indexed record field now has compile-link-run coverage.
+  IR verifies indexed projection, task cleanup, descriptor growth and writeback, scalar readback, and recursive
+  enclosing-record cleanup. Aggregate-path read lowering now crosses fixed-array indices before DynamicArray reads. No
+  syntax or ABI changed.
 - 2026-11-18: Concrete generic record payloads containing nested fixed arrays of named records now have checked-in task
   and thread proof. `Result<Batch>` specializes two `T` payload fields to `{ %record.Batch, %record.Batch }`, where
   `%record.Batch` is `{ [2 x [2 x %record.Pair]] }`; it uses `{ i32, [64 x i8] }` with 68-byte result storage,

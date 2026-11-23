@@ -3332,6 +3332,9 @@ representation.
   compile-link-run coverage pins descriptor growth and writeback at the nested field plus recursive outer cleanup.
 - Aggregate-field append safety coverage proves immutable record roots and previously transferred DynamicArray fields
   remain rejected before append IR emission. The receiver generalization does not weaken mutability or ownership gates.
+- Fixed-array indexed record-field append now has compile-link-run coverage. Aggregate-path reads distinguish inline
+  array indices from the later DynamicArray index, allowing post-append scalar readback while descriptor writeback and
+  cleanup remain rooted at the indexed field and enclosing record.
 - Direct runtime-index aggregate computed loops now emit bounded descriptor-storage projections for owners such as
   `holder.buckets[selected].values`. The semantic owner remains bracketed for proof metadata while LLVM labels use the
   sanitized owner spelling.

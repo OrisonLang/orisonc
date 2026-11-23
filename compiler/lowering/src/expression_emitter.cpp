@@ -3129,8 +3129,17 @@ auto lower_dynamic_array_element_path_read(
     for (auto step_index = std::size_t {0}; step_index < path->steps.size(); ++step_index) {
         auto const& step = path->steps[step_index];
         if (step.kind == AggregatePathStepKind::index) {
-            index_step_index = step_index;
-            break;
+            if (dynamic_array_element_source_type_name(owner_source_type_name).has_value()) {
+                index_step_index = step_index;
+                break;
+            }
+            auto element_source_type = array_element_source_type_name(owner_source_type_name);
+            if (!element_source_type.has_value() || step.index_expression == nullptr) {
+                return std::nullopt;
+            }
+            owner_name += aggregate_index_owner_suffix(*step.index_expression);
+            owner_source_type_name = std::move(*element_source_type);
+            continue;
         }
 
         auto record = context.lowering.records.find(owner_source_type_name);
@@ -3239,9 +3248,61 @@ auto lower_dynamic_array_element_path_read(
         return std::nullopt;
     }
     for (auto step_index = std::size_t {0}; step_index < *index_step_index; ++step_index) {
-        auto result = advance_aggregate_path_member_with_temporary(
+        auto const& step = path->steps[step_index];
+        if (step.kind == AggregatePathStepKind::member) {
+            auto result = advance_aggregate_path_member_with_temporary(
+                *cursor,
+                step.field_name,
+                context.lowering,
+                session.state.next_temporary_index,
+                output
+            );
+            if (result.error != AggregatePathError::none) {
+                record_unsupported_aggregate_path_failure(
+                    session.failures,
+                    "dynamic array owner path '" + owner_name + "'",
+                    result.error
+                );
+                return std::nullopt;
+            }
+            continue;
+        }
+
+        if (step.index_expression == nullptr) {
+            return std::nullopt;
+        }
+        auto lowered_index = lowered_expression(
+            *step.index_expression,
+            "i64",
+            IntegerSignedness::unsigned_integer,
+            context,
+            session,
+            output
+        );
+        if (!lowered_index.has_value()) {
+            return std::nullopt;
+        }
+        if (is_runtime_index_expression(*step.index_expression)) {
+            auto array_type = parse_llvm_array_type(cursor->llvm_type_name);
+            if (!array_type.has_value()) {
+                record_unsupported_aggregate_path_failure(
+                    session.failures,
+                    "dynamic array owner path '" + owner_name + "'",
+                    AggregatePathError::expected_array
+                );
+                return std::nullopt;
+            }
+            emit_fixed_array_runtime_index_bounds_check(
+                "aggregate_path_index",
+                lowered_index->value,
+                array_type->length,
+                session,
+                output
+            );
+        }
+        auto result = advance_aggregate_path_index_with_temporary(
             *cursor,
-            path->steps[step_index].field_name,
+            lowered_index->value,
             context.lowering,
             session.state.next_temporary_index,
             output
