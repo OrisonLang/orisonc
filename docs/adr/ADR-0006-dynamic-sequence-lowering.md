@@ -3366,6 +3366,9 @@ representation.
   and recursive owned-element cleanup retains the same order.
 - The runtime-selected inner failure counterpart preserves both SSA index values. The outer value reaches record
   projection, while the inner value reaches the second bounds abort before inner data projection or scalar loading.
+- The runtime-selected outer failure counterpart reaches the first bounds abort before record-element addressing,
+  field projection, or inner descriptor loading. Runtime-selected nested reads now have complete success and two-level
+  failure coverage.
 - Direct runtime-index aggregate computed loops now emit bounded descriptor-storage projections for owners such as
   `holder.buckets[selected].values`. The semantic owner remains bracketed for proof metadata while LLVM labels use the
   sanitized owner spelling.

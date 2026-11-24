@@ -220,6 +220,6 @@ This note is an implementation snapshot. It does not define language syntax or s
 
 ## Suggested Next Step
 
-- Add the runtime-selected outer out-of-bounds counterpart with outer index `1` and inner index `0`. Verify the outer
-  value exits before record-element addressing, field projection, or inner descriptor loading, completing the runtime-
-  selected nested bounds matrix.
+- Audit runtime-selected scalar assignment through two DynamicArray descriptors, such as
+  `payloads[outer].values[inner] = 53 as UInt32`, followed by nested readback. This will establish whether assignment
+  lowering has parity with the completed nested read path.
