@@ -432,6 +432,9 @@ drop/cleanup decisions.
 - `examples/concurrency_await_dynamic_array_nested_owned_record_awaited_inner_assignment_index_main.or` composes a
   direct awaited `UInt64` with nested DynamicArray assignment. A valid outer projection precedes index synchronization
   and handle cleanup; inner bounds, scalar storage, readback, and recursive cleanup then complete successfully.
+- `examples/concurrency_await_dynamic_array_nested_owned_record_awaited_inner_assignment_index_out_of_bounds_main.or`
+  proves the paired failure path. Index synchronization and handle cleanup precede the inner bounds abort; scalar
+  addressing and storage remain in the unexecuted in-bounds block.
 
 ## Follow-up work
 
