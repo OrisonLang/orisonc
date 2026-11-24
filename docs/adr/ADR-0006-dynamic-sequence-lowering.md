@@ -3377,6 +3377,9 @@ representation.
 - The runtime-selected outer assignment failure counterpart exits through the first bounds abort before record
   projection, inner descriptor inspection, or scalar storage. The two-level runtime-selected assignment bounds matrix
   now covers success plus both failure levels.
+- A direct awaited `UInt64` now composes as the inner assignment index after a valid outer DynamicArray projection.
+  Synchronization and consumed-handle cleanup precede inner descriptor bounds, scalar storage, readback, and recursive
+  owned-element cleanup.
 - Generic aggregate-path fallback no longer bypasses the owned-element read boundary after specialized DynamicArray
   index lowering rejects a value copy. Existing receiver and local negative fixtures retain their diagnostic.
 - Direct runtime-index aggregate computed loops now emit bounded descriptor-storage projections for owners such as

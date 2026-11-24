@@ -429,6 +429,9 @@ drop/cleanup decisions.
 - `examples/concurrency_await_dynamic_array_nested_owned_record_runtime_indexed_assignment_outer_out_of_bounds_main.or`
   proves the outer assignment failure path. Outer value `1` exits with code `134` before record projection, inner
   descriptor inspection, or scalar storage.
+- `examples/concurrency_await_dynamic_array_nested_owned_record_awaited_inner_assignment_index_main.or` composes a
+  direct awaited `UInt64` with nested DynamicArray assignment. A valid outer projection precedes index synchronization
+  and handle cleanup; inner bounds, scalar storage, readback, and recursive cleanup then complete successfully.
 
 ## Follow-up work
 

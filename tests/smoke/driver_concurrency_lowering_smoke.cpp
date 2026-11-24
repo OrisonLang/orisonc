@@ -3362,6 +3362,57 @@ auto main() -> int {
         await_dynamic_array_nested_owned_record_runtime_indexed_assignment_outer_out_of_bounds.stderr_text.empty()
     );
 
+    auto await_dynamic_array_nested_owned_record_awaited_inner_assignment_index_path =
+        std::filesystem::path(ORISON_SOURCE_DIR) / "examples" /
+        "concurrency_await_dynamic_array_nested_owned_record_awaited_inner_assignment_index_main.or";
+    auto await_dynamic_array_nested_owned_record_awaited_inner_assignment_index_ir =
+        run_emit_llvm(
+            app,
+            await_dynamic_array_nested_owned_record_awaited_inner_assignment_index_path
+        );
+    assert_success_with_stdout_contains(
+        await_dynamic_array_nested_owned_record_awaited_inner_assignment_index_ir,
+        {
+            "%pending_payload.task.result = alloca %record.Payload",
+            "%pending_index.task.result = alloca i64",
+            "call void @__orison_task_await(ptr %pending_payload)\n"
+            "  %tmp2 = load %record.Payload, ptr %pending_payload.task.result\n"
+            "  call void @__orison_concurrency_handle_destroy(ptr %pending_payload)",
+            "%payloads.dynamic_array_index4.in_bounds = icmp ult i64 %outer, "
+            "%payloads.dynamic_array_index4.length",
+            "dynamic_array.aggregate_index.in_bounds.3:\n"
+            "  %payloads.dynamic_array_index4.element.addr = getelementptr %record.Payload, "
+            "ptr %payloads.dynamic_array_index4.data, i64 %outer\n"
+            "  %tmp5 = getelementptr %record.Payload, "
+            "ptr %payloads.dynamic_array_index4.element.addr, i32 0, i32 0\n"
+            "  call void @__orison_task_await(ptr %pending_index)\n"
+            "  %tmp6 = load i64, ptr %pending_index.task.result\n"
+            "  call void @__orison_concurrency_handle_destroy(ptr %pending_index)",
+            "%payloads.element.values.dynamic_array_index7.descriptor = "
+            "load { ptr, i64, i64 }, ptr %tmp5",
+            "%payloads.element.values.dynamic_array_index7.in_bounds = icmp ult i64 %tmp6, "
+            "%payloads.element.values.dynamic_array_index7.length",
+            "%payloads.element.values.dynamic_array_index7.element.addr = getelementptr i32, "
+            "ptr %payloads.element.values.dynamic_array_index7.data, i64 %tmp6\n"
+            "  store i32 53, ptr %payloads.element.values.dynamic_array_index7.element.addr",
+            "%aggregate_path_dynamic_array_index10.element.addr = getelementptr i32, "
+            "ptr %aggregate_path_dynamic_array_index10.data, i64 0\n"
+            "  %tmp11 = load i32, ptr %aggregate_path_dynamic_array_index10.element.addr\n"
+            "  %tmp12 = sub i32 %tmp11, 53",
+            "call void @__orison_owned_cleanup.Payload."
+            "examples.concurrency_await_dynamic_array_nested_owned_record_awaited_inner_assignment_index"
+            "(ptr %payloads.dynamic_array_cleanup13.drop.element.addr)",
+        }
+    );
+    auto await_dynamic_array_nested_owned_record_awaited_inner_assignment_index =
+        run_program(
+            app,
+            await_dynamic_array_nested_owned_record_awaited_inner_assignment_index_path
+        );
+    assert(await_dynamic_array_nested_owned_record_awaited_inner_assignment_index.exit_code == 0);
+    assert(await_dynamic_array_nested_owned_record_awaited_inner_assignment_index.stdout_text.empty());
+    assert(await_dynamic_array_nested_owned_record_awaited_inner_assignment_index.stderr_text.empty());
+
     auto immutable_record_field_push_path = std::filesystem::path(ORISON_SOURCE_DIR) /
         "tests" / "fixtures" / "dynamic_array_record_field_push_immutable_rejected.or";
     auto immutable_record_field_push = run_emit_llvm(app, immutable_record_field_push_path);

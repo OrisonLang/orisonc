@@ -4289,6 +4289,9 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-11-24: Runtime-selected outer assignment bounds failure through two DynamicArray descriptors now has compile-
   link-run coverage. Outer value `1` exits with code `134` before record projection, inner descriptor inspection, or
   scalar storage. The two-level runtime-selected assignment bounds matrix is complete. No syntax or ABI changed.
+- 2026-11-24: Direct task `await` now composes as the inner assignment index after a valid outer DynamicArray
+  projection. IR verifies index synchronization and handle cleanup before inner bounds and storage; readback and
+  recursive cleanup complete during linked execution. No syntax or ABI changed.
 - 2026-11-18: Concrete generic record payloads containing nested fixed arrays of named records now have checked-in task
   and thread proof. `Result<Batch>` specializes two `T` payload fields to `{ %record.Batch, %record.Batch }`, where
   `%record.Batch` is `{ [2 x [2 x %record.Pair]] }`; it uses `{ i32, [64 x i8] }` with 68-byte result storage,

@@ -220,5 +220,5 @@ This note is an implementation snapshot. It does not define language syntax or s
 
 ## Suggested Next Step
 
-- Compose a direct awaited `UInt64` as the inner assignment index after a valid outer DynamicArray projection. Verify
-  synchronization and consumed-handle cleanup precede the inner bounds check, scalar store, and recursive cleanup.
+- Add the out-of-bounds awaited inner assignment-index counterpart returning `1`. Verify synchronization and consumed-
+  handle cleanup precede the inner bounds abort and that scalar storage remains in the unexecuted in-bounds block.
