@@ -420,6 +420,9 @@ drop/cleanup decisions.
 - `examples/concurrency_await_dynamic_array_nested_owned_record_push_value_runtime_indexed_outer_out_of_bounds_main.or`
   proves the runtime-selected outer failure path. Outer value `1` exits with code `134` before record-element
   addressing, field projection, or inner descriptor loading.
+- `examples/concurrency_await_dynamic_array_nested_owned_record_runtime_indexed_assignment_main.or` proves runtime-
+  selected scalar assignment through both descriptors. Both index values drive assignment bounds and element
+  addresses, `53` is stored and read back through repeated checks, and recursive cleanup remains intact.
 
 ## Follow-up work
 

@@ -220,6 +220,6 @@ This note is an implementation snapshot. It does not define language syntax or s
 
 ## Suggested Next Step
 
-- Audit runtime-selected scalar assignment through two DynamicArray descriptors, such as
-  `payloads[outer].values[inner] = 53 as UInt32`, followed by nested readback. This will establish whether assignment
-  lowering has parity with the completed nested read path.
+- Add the runtime-selected inner assignment out-of-bounds counterpart with outer index `0` and inner index `1`.
+  Verify the outer assignment projection succeeds and the inner bounds abort occurs before scalar element addressing
+  or storage.

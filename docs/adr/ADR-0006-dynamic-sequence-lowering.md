@@ -3369,6 +3369,9 @@ representation.
 - The runtime-selected outer failure counterpart reaches the first bounds abort before record-element addressing,
   field projection, or inner descriptor loading. Runtime-selected nested reads now have complete success and two-level
   failure coverage.
+- Runtime-selected nested scalar assignment has compile-link-run coverage. Assignment lowering checks both descriptors
+  before storing the scalar, read lowering repeats both checked projections, and recursive owned-element cleanup keeps
+  the same inner-before-outer order.
 - Direct runtime-index aggregate computed loops now emit bounded descriptor-storage projections for owners such as
   `holder.buckets[selected].values`. The semantic owner remains bracketed for proof metadata while LLVM labels use the
   sanitized owner spelling.
