@@ -4280,6 +4280,12 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-11-23: Runtime-selected scalar assignment through two DynamicArray descriptors now has compile-link-run
   coverage. Both assignment checks and GEPs consume their corresponding `UInt64`, `53` stores and reads back through
   repeated checked projections, and recursive cleanup remains intact. No syntax or ABI changed.
+- 2026-11-23: Runtime-selected inner assignment bounds failure through two DynamicArray descriptors now has compile-
+  link-run coverage. Outer value `0` reaches record projection; inner value `1` exits with code `134` before scalar
+  element addressing or storage. No syntax or ABI changed.
+- 2026-11-23: Generic aggregate-path fallback no longer accepts an owned DynamicArray element read rejected by the
+  specialized index path. Receiver and local negative fixtures retain the required non-owning-projection diagnostic.
+  No syntax or ABI changed.
 - 2026-11-18: Concrete generic record payloads containing nested fixed arrays of named records now have checked-in task
   and thread proof. `Result<Batch>` specializes two `T` payload fields to `{ %record.Batch, %record.Batch }`, where
   `%record.Batch` is `{ [2 x [2 x %record.Pair]] }`; it uses `{ i32, [64 x i8] }` with 68-byte result storage,

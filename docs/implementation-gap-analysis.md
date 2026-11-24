@@ -220,6 +220,5 @@ This note is an implementation snapshot. It does not define language syntax or s
 
 ## Suggested Next Step
 
-- Add the runtime-selected inner assignment out-of-bounds counterpart with outer index `0` and inner index `1`.
-  Verify the outer assignment projection succeeds and the inner bounds abort occurs before scalar element addressing
-  or storage.
+- Add the runtime-selected outer assignment out-of-bounds counterpart with outer index `1` and inner index `0`.
+  Verify the outer bounds abort occurs before record projection, inner descriptor inspection, or scalar storage.

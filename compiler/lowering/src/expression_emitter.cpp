@@ -2956,6 +2956,22 @@ auto lower_addressable_aggregate_path_read(
         return std::nullopt;
     }
 
+    auto projected_source_type = source_type_name_for_expression(
+        expression,
+        context,
+        session.state
+    );
+    if (dynamic_array_element_source_type_name(*storage->source_type_name).has_value() &&
+        projected_source_type.has_value() &&
+        is_owned_transfer_source_type(*projected_source_type, context.lowering)) {
+        record_expression_lowering_failure(
+            session.failures,
+            ExpressionLoweringFailureReason::unsupported_expression,
+            "DynamicArray index read of owned element requires a non-owning projection"
+        );
+        return std::nullopt;
+    }
+
     return lower_aggregate_path_read_from_storage(
         expression,
         *path,

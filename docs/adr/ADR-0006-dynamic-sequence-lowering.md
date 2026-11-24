@@ -3372,6 +3372,10 @@ representation.
 - Runtime-selected nested scalar assignment has compile-link-run coverage. Assignment lowering checks both descriptors
   before storing the scalar, read lowering repeats both checked projections, and recursive owned-element cleanup keeps
   the same inner-before-outer order.
+- The runtime-selected inner assignment failure counterpart crosses the valid outer projection, then exits through the
+  inner bounds abort before scalar element addressing or storage.
+- Generic aggregate-path fallback no longer bypasses the owned-element read boundary after specialized DynamicArray
+  index lowering rejects a value copy. Existing receiver and local negative fixtures retain their diagnostic.
 - Direct runtime-index aggregate computed loops now emit bounded descriptor-storage projections for owners such as
   `holder.buckets[selected].values`. The semantic owner remains bracketed for proof metadata while LLVM labels use the
   sanitized owner spelling.
