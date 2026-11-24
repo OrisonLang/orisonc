@@ -426,6 +426,9 @@ drop/cleanup decisions.
 - `examples/concurrency_await_dynamic_array_nested_owned_record_runtime_indexed_assignment_inner_out_of_bounds_main.or`
   proves the inner assignment failure path. Outer value `0` reaches the inner descriptor; inner value `1` exits with
   code `134` before scalar element addressing or storage.
+- `examples/concurrency_await_dynamic_array_nested_owned_record_runtime_indexed_assignment_outer_out_of_bounds_main.or`
+  proves the outer assignment failure path. Outer value `1` exits with code `134` before record projection, inner
+  descriptor inspection, or scalar storage.
 
 ## Follow-up work
 

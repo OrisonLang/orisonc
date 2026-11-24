@@ -3374,6 +3374,9 @@ representation.
   the same inner-before-outer order.
 - The runtime-selected inner assignment failure counterpart crosses the valid outer projection, then exits through the
   inner bounds abort before scalar element addressing or storage.
+- The runtime-selected outer assignment failure counterpart exits through the first bounds abort before record
+  projection, inner descriptor inspection, or scalar storage. The two-level runtime-selected assignment bounds matrix
+  now covers success plus both failure levels.
 - Generic aggregate-path fallback no longer bypasses the owned-element read boundary after specialized DynamicArray
   index lowering rejects a value copy. Existing receiver and local negative fixtures retain their diagnostic.
 - Direct runtime-index aggregate computed loops now emit bounded descriptor-storage projections for owners such as

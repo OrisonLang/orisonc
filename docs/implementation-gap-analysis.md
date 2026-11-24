@@ -220,5 +220,5 @@ This note is an implementation snapshot. It does not define language syntax or s
 
 ## Suggested Next Step
 
-- Add the runtime-selected outer assignment out-of-bounds counterpart with outer index `1` and inner index `0`.
-  Verify the outer bounds abort occurs before record projection, inner descriptor inspection, or scalar storage.
+- Compose a direct awaited `UInt64` as the inner assignment index after a valid outer DynamicArray projection. Verify
+  synchronization and consumed-handle cleanup precede the inner bounds check, scalar store, and recursive cleanup.
