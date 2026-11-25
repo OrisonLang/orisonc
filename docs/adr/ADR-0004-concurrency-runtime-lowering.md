@@ -444,6 +444,9 @@ drop/cleanup decisions.
 - `examples/concurrency_await_dynamic_array_nested_owned_record_awaited_assignment_indices_main.or` composes direct
   awaited `UInt64` values as both assignment indices. Outer synchronization and cleanup precede outer bounds and
   projection; inner synchronization and cleanup then precede inner bounds, storage, readback, and recursive cleanup.
+- `examples/concurrency_await_dynamic_array_nested_owned_record_awaited_assignment_indices_inner_out_of_bounds_main.or`
+  proves the paired inner failure. Both handles are consumed in left-to-right order before the inner bounds abort, and
+  scalar addressing plus storage remain in the unexecuted inner in-bounds block.
 
 ## Follow-up work
 
