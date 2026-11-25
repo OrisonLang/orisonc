@@ -441,6 +441,9 @@ drop/cleanup decisions.
 - `examples/concurrency_await_dynamic_array_nested_owned_record_awaited_outer_assignment_index_out_of_bounds_main.or`
   proves the paired failure path. Synchronization and handle cleanup precede the outer bounds abort; record projection,
   inner descriptor bounds, and scalar storage remain in the unexecuted in-bounds continuation.
+- `examples/concurrency_await_dynamic_array_nested_owned_record_awaited_assignment_indices_main.or` composes direct
+  awaited `UInt64` values as both assignment indices. Outer synchronization and cleanup precede outer bounds and
+  projection; inner synchronization and cleanup then precede inner bounds, storage, readback, and recursive cleanup.
 
 ## Follow-up work
 

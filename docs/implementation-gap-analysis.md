@@ -220,5 +220,5 @@ This note is an implementation snapshot. It does not define language syntax or s
 
 ## Suggested Next Step
 
-- Compose direct awaited `UInt64` values as both outer and inner indices in one nested assignment. Verify left-to-right
-  synchronization, one cleanup per consumed handle, both descriptor bounds checks, scalar storage, and readback.
+- Add the paired inner out-of-bounds case for two awaited assignment indices. Let the outer task return `0` and the
+  inner task return `1`; verify both handles are consumed once and inner bounds failure precedes scalar storage.

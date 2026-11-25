@@ -3387,6 +3387,9 @@ representation.
   owned-element cleanup complete successfully.
 - The out-of-bounds awaited outer assignment-index counterpart returns `1`, destroys the consumed task handle, then
   reaches the outer bounds abort before record projection, inner descriptor bounds, or scalar storage.
+- Direct awaited `UInt64` values now compose as both indices of one nested DynamicArray assignment. Left-to-right
+  synchronization and one cleanup per consumed handle precede their corresponding descriptor checks; scalar storage,
+  readback, and recursive cleanup complete during linked execution.
 - Generic aggregate-path fallback no longer bypasses the owned-element read boundary after specialized DynamicArray
   index lowering rejects a value copy. Existing receiver and local negative fixtures retain their diagnostic.
 - Direct runtime-index aggregate computed loops now emit bounded descriptor-storage projections for owners such as

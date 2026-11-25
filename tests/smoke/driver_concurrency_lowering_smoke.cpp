@@ -3572,6 +3572,65 @@ auto main() -> int {
         await_dynamic_array_nested_owned_record_awaited_outer_assignment_index_out_of_bounds.stderr_text.empty()
     );
 
+    auto await_dynamic_array_nested_owned_record_awaited_assignment_indices_path =
+        std::filesystem::path(ORISON_SOURCE_DIR) / "examples" /
+        "concurrency_await_dynamic_array_nested_owned_record_awaited_assignment_indices_main.or";
+    auto await_dynamic_array_nested_owned_record_awaited_assignment_indices_ir =
+        run_emit_llvm(
+            app,
+            await_dynamic_array_nested_owned_record_awaited_assignment_indices_path
+        );
+    assert_success_with_stdout_contains(
+        await_dynamic_array_nested_owned_record_awaited_assignment_indices_ir,
+        {
+            "%pending_outer.task.result = alloca i64",
+            "%pending_inner.task.result = alloca i64",
+            "call void @__orison_task_await(ptr %pending_outer)\n"
+            "  %tmp5 = load i64, ptr %pending_outer.task.result\n"
+            "  call void @__orison_concurrency_handle_destroy(ptr %pending_outer)\n"
+            "  %payloads.dynamic_array_index6.descriptor = "
+            "load { ptr, i64, i64 }, ptr %payloads.addr",
+            "%payloads.dynamic_array_index6.in_bounds = icmp ult i64 %tmp5, "
+            "%payloads.dynamic_array_index6.length",
+            "dynamic_array.aggregate_index.in_bounds.4:\n"
+            "  %payloads.dynamic_array_index6.element.addr = getelementptr %record.Payload, "
+            "ptr %payloads.dynamic_array_index6.data, i64 %tmp5\n"
+            "  %tmp7 = getelementptr %record.Payload, "
+            "ptr %payloads.dynamic_array_index6.element.addr, i32 0, i32 0\n"
+            "  call void @__orison_task_await(ptr %pending_inner)\n"
+            "  %tmp8 = load i64, ptr %pending_inner.task.result\n"
+            "  call void @__orison_concurrency_handle_destroy(ptr %pending_inner)\n"
+            "  %payloads.element.values.dynamic_array_index9.descriptor = "
+            "load { ptr, i64, i64 }, ptr %tmp7",
+            "%payloads.element.values.dynamic_array_index9.in_bounds = icmp ult i64 %tmp8, "
+            "%payloads.element.values.dynamic_array_index9.length",
+            "%payloads.element.values.dynamic_array_index9.element.addr = getelementptr i32, "
+            "ptr %payloads.element.values.dynamic_array_index9.data, i64 %tmp8\n"
+            "  store i32 53, ptr %payloads.element.values.dynamic_array_index9.element.addr",
+            "%aggregate_path_dynamic_array_index12.element.addr = getelementptr i32, "
+            "ptr %aggregate_path_dynamic_array_index12.data, i64 0\n"
+            "  %tmp13 = load i32, ptr %aggregate_path_dynamic_array_index12.element.addr\n"
+            "  %tmp14 = sub i32 %tmp13, 53",
+            "call void @__orison_owned_cleanup.Payload."
+            "examples.concurrency_await_dynamic_array_nested_owned_record_awaited_assignment_indices"
+            "(ptr %payloads.dynamic_array_cleanup15.drop.element.addr)",
+            "define private void @__orison_task_thunk.main.16.1(ptr %environment, ptr %result_storage) {\n"
+            "entry:\n"
+            "  store i64 0, ptr %result_storage",
+            "define private void @__orison_task_thunk.main.18.2(ptr %environment, ptr %result_storage) {\n"
+            "entry:\n"
+            "  store i64 0, ptr %result_storage",
+        }
+    );
+    auto await_dynamic_array_nested_owned_record_awaited_assignment_indices =
+        run_program(
+            app,
+            await_dynamic_array_nested_owned_record_awaited_assignment_indices_path
+        );
+    assert(await_dynamic_array_nested_owned_record_awaited_assignment_indices.exit_code == 0);
+    assert(await_dynamic_array_nested_owned_record_awaited_assignment_indices.stdout_text.empty());
+    assert(await_dynamic_array_nested_owned_record_awaited_assignment_indices.stderr_text.empty());
+
     auto immutable_record_field_push_path = std::filesystem::path(ORISON_SOURCE_DIR) /
         "tests" / "fixtures" / "dynamic_array_record_field_push_immutable_rejected.or";
     auto immutable_record_field_push = run_emit_llvm(app, immutable_record_field_push_path);
