@@ -220,6 +220,6 @@ This note is an implementation snapshot. It does not define language syntax or s
 
 ## Suggested Next Step
 
-- Compose direct awaited `UInt64` values as both indices of a nested DynamicArray scalar read. Verify left-to-right
-  synchronization and cleanup through aggregate-path read lowering, both descriptor bounds checks, scalar loading,
-  and recursive cleanup.
+- Add the paired inner out-of-bounds case for two awaited scalar-read indices. Let the outer task return `0` and the
+  inner task return `1`; verify both handles are consumed in source order and inner bounds failure precedes scalar
+  addressing and loading.

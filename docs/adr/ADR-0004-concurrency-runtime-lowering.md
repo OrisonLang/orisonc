@@ -450,6 +450,9 @@ drop/cleanup decisions.
 - `examples/concurrency_await_dynamic_array_nested_owned_record_awaited_assignment_indices_outer_out_of_bounds_main.or`
   proves the paired outer failure. The outer handle is consumed before the first bounds abort; record projection, inner
   synchronization and handle cleanup, inner bounds, and scalar storage remain in the unexecuted continuation.
+- `examples/concurrency_await_dynamic_array_nested_owned_record_awaited_read_indices_main.or` composes direct awaited
+  `UInt64` values as both indices of a nested scalar read. Left-to-right synchronization and cleanup precede each
+  descriptor check; scalar loading and recursive owned-element cleanup complete successfully.
 
 ## Follow-up work
 

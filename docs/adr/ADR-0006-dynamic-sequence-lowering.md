@@ -3395,6 +3395,9 @@ representation.
 - The paired outer bounds-failure case consumes the failing outer index, then aborts before record projection. Inner
   synchronization, inner handle cleanup, inner descriptor inspection, and scalar storage remain in the outer
   in-bounds continuation.
+- Direct awaited `UInt64` values now compose through both indices of aggregate-path nested DynamicArray scalar reads.
+  Each handle is consumed before its corresponding descriptor check; scalar loading and recursive cleanup complete
+  during linked execution.
 - Generic aggregate-path fallback no longer bypasses the owned-element read boundary after specialized DynamicArray
   index lowering rejects a value copy. Existing receiver and local negative fixtures retain their diagnostic.
 - Direct runtime-index aggregate computed loops now emit bounded descriptor-storage projections for owners such as
