@@ -4307,6 +4307,9 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-11-25: The two-awaited-index inner bounds-failure counterpart now has compile-link-run coverage. Outer index `0`
   and inner index `1` are synchronized and cleaned in source order; inner bounds abort before scalar addressing or
   storage. No syntax or ABI changed.
+- 2026-11-25: The two-awaited-index outer bounds-failure counterpart now has compile-link-run coverage. Outer index `1`
+  is synchronized and cleaned before the first bounds abort; record projection, inner synchronization and cleanup,
+  inner bounds, and scalar storage remain in the unexecuted continuation. No syntax or ABI changed.
 - 2026-11-18: Concrete generic record payloads containing nested fixed arrays of named records now have checked-in task
   and thread proof. `Result<Batch>` specializes two `T` payload fields to `{ %record.Batch, %record.Batch }`, where
   `%record.Batch` is `{ [2 x [2 x %record.Pair]] }`; it uses `{ i32, [64 x i8] }` with 68-byte result storage,

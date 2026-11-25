@@ -220,6 +220,6 @@ This note is an implementation snapshot. It does not define language syntax or s
 
 ## Suggested Next Step
 
-- Add the paired outer out-of-bounds case for two awaited assignment indices. Let the outer task return `1` and the
-  inner task return `0`; verify outer cleanup precedes the first bounds abort and inner synchronization plus storage
-  remain in the unexecuted continuation.
+- Compose direct awaited `UInt64` values as both indices of a nested DynamicArray scalar read. Verify left-to-right
+  synchronization and cleanup through aggregate-path read lowering, both descriptor bounds checks, scalar loading,
+  and recursive cleanup.
