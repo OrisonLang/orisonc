@@ -220,5 +220,5 @@ This note is an implementation snapshot. It does not define language syntax or s
 
 ## Suggested Next Step
 
-- Compose a direct awaited `UInt64` as the outer assignment index with a valid inner index. Verify synchronization and
-  consumed-handle cleanup precede the outer bounds check, record projection, inner bounds check, and scalar storage.
+- Add the out-of-bounds awaited outer assignment-index counterpart returning `1`. Verify synchronization and consumed-
+  handle cleanup precede the outer bounds abort and that record projection, inner bounds, and storage remain unexecuted.
