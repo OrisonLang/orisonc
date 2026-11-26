@@ -3400,6 +3400,9 @@ representation.
   during linked execution.
 - The paired inner read bounds-failure case consumes the valid outer index and failing inner index in source order,
   then aborts before inner data projection, scalar element addressing, or loading.
+- The paired outer read bounds-failure case consumes the failing outer index, then aborts before record projection.
+  Inner synchronization and cleanup, inner descriptor access, scalar addressing, and loading remain in the outer
+  in-bounds continuation. The two-awaited scalar-read bounds matrix now covers success and both failure levels.
 - Generic aggregate-path fallback no longer bypasses the owned-element read boundary after specialized DynamicArray
   index lowering rejects a value copy. Existing receiver and local negative fixtures retain their diagnostic.
 - Direct runtime-index aggregate computed loops now emit bounded descriptor-storage projections for owners such as

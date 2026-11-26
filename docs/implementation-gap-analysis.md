@@ -220,6 +220,6 @@ This note is an implementation snapshot. It does not define language syntax or s
 
 ## Suggested Next Step
 
-- Add the paired outer out-of-bounds case for two awaited scalar-read indices. Let the outer task return `1` and the
-  inner task return `0`; verify outer cleanup precedes the first bounds abort and record projection, inner
-  synchronization, scalar addressing, and loading remain in the unexecuted continuation.
+- Refresh the concise grammar-and-tour implementation gap audit now that the two-awaited nested DynamicArray read and
+  assignment matrices are complete. Select the highest-value bounded lowering gap outside interface-value semantics
+  for the next implementation iteration.

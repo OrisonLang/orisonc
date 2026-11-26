@@ -456,6 +456,9 @@ drop/cleanup decisions.
 - `examples/concurrency_await_dynamic_array_nested_owned_record_awaited_read_indices_inner_out_of_bounds_main.or`
   proves the paired inner read failure. Both handles are consumed in source order before the inner bounds abort, and
   inner data projection, scalar addressing, and loading remain in the unexecuted in-bounds block.
+- `examples/concurrency_await_dynamic_array_nested_owned_record_awaited_read_indices_outer_out_of_bounds_main.or`
+  proves the paired outer read failure. The outer handle is consumed before the first bounds abort; record projection,
+  inner synchronization and cleanup, inner descriptor access, and scalar loading remain in the unexecuted continuation.
 
 ## Follow-up work
 
