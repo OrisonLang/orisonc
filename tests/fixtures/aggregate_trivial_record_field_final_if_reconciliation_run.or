@@ -1,0 +1,22 @@
+package fixtures.aggregatetrivialrecordfieldfinalifreconciliationrun
+
+record Payload
+    public value: UInt32
+
+record Box
+    public payload: Payload
+
+function consume_payload(payload: Payload) -> UInt32
+    payload.value
+
+function choose(flag: Bool) -> UInt32
+    let box: Box = Box(Payload(7 as UInt32))
+    if flag
+        consume_payload(box.payload)
+    else
+        0 as UInt32
+
+function main() -> UInt32
+    let consumed_path: UInt32 = choose(true)
+    let finalized_path: UInt32 = choose(false)
+    consumed_path - 7 as UInt32 + finalized_path

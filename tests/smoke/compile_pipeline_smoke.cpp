@@ -18368,6 +18368,39 @@ auto main() -> int {
         smoke_temp_root / "dynamic_array_record_field_final_if_consumed_owner_cleanup_run"
     );
 
+    auto aggregate_trivial_record_field_final_if_reconciliation_path =
+        std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
+        "aggregate_trivial_record_field_final_if_reconciliation_run.or";
+    auto aggregate_trivial_record_field_final_if_reconciliation = pipeline.emit_llvm(
+        aggregate_trivial_record_field_final_if_reconciliation_path
+    );
+    assert(!aggregate_trivial_record_field_final_if_reconciliation.has_errors());
+    assert_ir_contains(
+        aggregate_trivial_record_field_final_if_reconciliation.ir_text,
+        "call i32 @choose(i1 1)"
+    );
+    assert_ir_contains(
+        aggregate_trivial_record_field_final_if_reconciliation.ir_text,
+        "call i32 @choose(i1 0)"
+    );
+    assert_ir_contains(
+        aggregate_trivial_record_field_final_if_reconciliation.ir_text,
+        "call i32 @consume_payload(%record.Payload"
+    );
+    assert_ir_excludes(
+        aggregate_trivial_record_field_final_if_reconciliation.ir_text,
+        "dynamic_array_cleanup"
+    );
+    assert_ir_excludes(
+        aggregate_trivial_record_field_final_if_reconciliation.ir_text,
+        "if branch ownership mismatch"
+    );
+    assert_emit_object_link_run_success(
+        pipeline,
+        aggregate_trivial_record_field_final_if_reconciliation_path,
+        smoke_temp_root / "aggregate_trivial_record_field_final_if_reconciliation_run"
+    );
+
     auto dynamic_array_owned_parameter_branch_cleanup_reuse_path =
         std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
         "dynamic_array_owned_parameter_branch_cleanup_reuse_rejected.or";

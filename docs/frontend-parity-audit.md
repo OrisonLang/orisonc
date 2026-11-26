@@ -1,5 +1,10 @@
 # Frontend Parity Audit
 
+- 2026-11-25: Final `if` ownership joins now reconcile a one-level record field when its resolved source type is
+  recursively trivial to finalize. The retaining arm requires no emitted cleanup, both arm states merge as consumed,
+  and post-merge reuse remains rejected. Final switches, nested member paths, DynamicArrays, choices, and unknown
+  source types retain their existing safety diagnostics. Compile-link-run coverage executes both outcomes without
+  syntax or ABI changes.
 - 2026-11-19: Concurrency plans and bindings now preserve each semantic result source type. Lowering source-type
   queries recover that type through `await`, so comparison, direct-call argument, and ternary-arm compositions infer
   unannotated local types. Focused planner, emitter, and verifier-backed lowering coverage passes without syntax or

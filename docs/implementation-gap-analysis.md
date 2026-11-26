@@ -16,9 +16,10 @@ Date: 2026-11-25
 - Record-owned `DynamicArray<T>` fields also reconcile across a final `if`: the retaining arm cleans and zeroes the
   projected descriptor, the consuming arm transfers it, and outer-record cleanup is suppressed after the merge. Both
   runtime outcomes now have compile-link-run coverage.
-- The remaining bounded branch-local ownership gap is non-DynamicArray aggregate-descendant reconciliation. The
-  compiler detects a plain record field consumed in one arm and retained in another, but rejects the join even when
-  finalization of the retaining field requires no emitted cleanup.
+- A final `if` now reconciles a one-level plain record field consumed in one arm when its resolved type is recursively
+  trivial to finalize. No cleanup IR is needed; both arm states merge as consumed and post-merge reuse remains invalid.
+- Nested trivially cleanable member paths remain blocked, as do switches and any descendant with an unproven cleanup
+  obligation.
 - Broad remaining projects are production interface values, general C binding discovery, cross-target linking, richer
   source-span diagnostics, and complete async cancellation/executor semantics. These are not suitable for the next
   bounded iteration.
@@ -239,6 +240,5 @@ This note is an implementation snapshot. It does not define language syntax or s
 
 ## Suggested Next Step
 
-- Implement one final-`if` no-op aggregate-descendant reconciliation case: consume a plain record field in one arm,
-  treat finalization of the retaining trivially cleanable field as complete, merge both arms as consumed, and retain
-  the ownership-mismatch diagnostic for descendants that require unsupported cleanup.
+- Extend no-op final-`if` reconciliation to one nested trivially cleanable record path, preserving rejection for
+  DynamicArrays, choices, unknown types, and paths with cleanup obligations.

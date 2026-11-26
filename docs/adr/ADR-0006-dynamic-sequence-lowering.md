@@ -4054,3 +4054,7 @@ representation.
   retaining arm cleans and zeroes the projected descriptor, the consuming arm transfers it, and merged ownership
   suppresses duplicate outer-record cleanup. Compile-link-run coverage executes both outcomes. The remaining bounded
   gate is a non-DynamicArray aggregate descendant whose retaining-arm finalization requires no emitted cleanup.
+- 2026-11-25 Final-`if` ownership reconciliation now accepts one-level record fields whose resolved source type is
+  recursively trivial to finalize. The retaining arm emits no cleanup, all arm states mark the field consumed, and
+  post-merge reuse remains rejected. Final switches, nested paths, DynamicArrays, choices, unknown types, and cleanup-
+  bearing descendants retain the ownership-mismatch boundary.

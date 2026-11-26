@@ -587,6 +587,85 @@ auto emit_scoped_local_dynamic_array_cleanups(
     return true;
 }
 
+auto is_trivially_finalizable_source_type(
+    std::string_view source_type_name,
+    LoweringContext const& context,
+    std::unordered_set<std::string>& visiting
+) -> bool {
+    if (is_scalar_or_nonowning_source_type(source_type_name)) {
+        return true;
+    }
+    if (dynamic_array_element_source_type_name(source_type_name).has_value()) {
+        return false;
+    }
+    if (auto element_source_type = array_element_source_type_name(source_type_name)) {
+        return is_trivially_finalizable_source_type(*element_source_type, context, visiting);
+    }
+
+    auto source_type = std::string {source_type_name};
+    auto record = context.records.find(source_type);
+    if (record == context.records.end() || !visiting.insert(source_type).second) {
+        return false;
+    }
+    auto result = std::ranges::all_of(
+        record->second.fields,
+        [&](LoweredRecordField const& field) {
+            return is_trivially_finalizable_source_type(field.source_type_name, context, visiting);
+        }
+    );
+    visiting.erase(source_type);
+    return result;
+}
+
+auto is_trivially_finalizable_record_field_transfer(
+    std::string_view owner_name,
+    EmissionContext const& context,
+    FunctionLoweringSession const& session
+) -> bool {
+    auto separator = owner_name.find('.');
+    if (separator == std::string_view::npos || owner_name.find('.', separator + 1) != std::string_view::npos) {
+        return false;
+    }
+
+    auto root_name = std::string {owner_name.substr(0, separator)};
+    auto member_name = std::string {owner_name.substr(separator + 1)};
+    auto root_source_type = session.state.source_type_names.find(root_name);
+    if (root_source_type == session.state.source_type_names.end()) {
+        return false;
+    }
+    auto transfer = owned_record_field_transfer(
+        root_name,
+        root_source_type->second,
+        member_name,
+        context.lowering
+    );
+    if (!transfer.has_value() || transfer->binding_name != owner_name) {
+        return false;
+    }
+
+    auto visiting = std::unordered_set<std::string> {};
+    return is_trivially_finalizable_source_type(
+        transfer->source_type_name,
+        context.lowering,
+        visiting
+    );
+}
+
+auto normalize_trivially_finalizable_record_field_transfers(
+    std::vector<OwnershipTransferState>& branch_states,
+    EmissionContext const& context,
+    FunctionLoweringSession const& session
+) -> void {
+    for (auto const& plan : plan_branch_local_cleanups(branch_states)) {
+        if (!is_trivially_finalizable_record_field_transfer(plan.owner_name, context, session)) {
+            continue;
+        }
+        for (auto& branch_state : branch_states) {
+            mark_owned_binding_consumed(branch_state, plan.owner_name);
+        }
+    }
+}
+
 auto lower_final_if_statement(
     syntax::StatementSyntax const& statement,
     std::string_view expected_llvm_type,
@@ -919,8 +998,15 @@ auto lower_final_if_statement(
         );
         return std::nullopt;
     }
-    auto merged_transfers =
-        merge_ownership_transfer_states(arm_context.ownership_transfers_by_arm);
+    auto merged_transfers = merge_ownership_transfer_states(arm_context.ownership_transfers_by_arm);
+    if (!merged_transfers.has_value()) {
+        normalize_trivially_finalizable_record_field_transfers(
+            arm_context.ownership_transfers_by_arm,
+            context,
+            session
+        );
+        merged_transfers = merge_ownership_transfer_states(arm_context.ownership_transfers_by_arm);
+    }
     if (!merged_transfers.has_value()) {
         auto detail = std::string {"owned transfers must match across all continuing branches"};
         for (auto const& line : format_branch_local_cleanup_plan_report(

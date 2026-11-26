@@ -271,13 +271,20 @@ int main() {
         aggregate_diagnostics,
         aggregate_if_output
     );
-    assert(!aggregate_if_lowered.has_value());
-    auto aggregate_if_failure =
-        orison::lowering::render_control_flow_lowering_failure(aggregate_if_failures.control_flow);
-    assert(aggregate_if_failure.find(
-        "if branch ownership mismatch: owned transfers must match across all continuing branches"
-    ) != std::string::npos);
-    assert(aggregate_if_failure.find("branch-local cleanup plan: owner box.payload") != std::string::npos);
+    assert(!aggregate_diagnostics.has_errors());
+    assert(aggregate_if_lowered.has_value());
+    assert(orison::lowering::is_owned_binding_consumed(
+        aggregate_if_state.ownership_transfers,
+        "box.payload"
+    ));
+    assert(aggregate_if_output.str().find("dynamic_array_cleanup") == std::string::npos);
+    assert_post_merge_reuse_failure(
+        aggregate_if_session,
+        aggregate_if_failures,
+        "box",
+        "%record.Box",
+        "use after move: box.payload"
+    );
 
     aggregate_diagnostics = {};
     auto aggregate_switch_state = seed_box_state();
