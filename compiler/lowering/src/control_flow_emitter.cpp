@@ -1344,6 +1344,14 @@ auto lower_final_switch_statement(
     auto merged_transfers =
         merge_ownership_transfer_states(case_context.ownership_transfers_by_case);
     if (!merged_transfers.has_value()) {
+        normalize_trivially_finalizable_record_member_transfers(
+            case_context.ownership_transfers_by_case,
+            context,
+            session
+        );
+        merged_transfers = merge_ownership_transfer_states(case_context.ownership_transfers_by_case);
+    }
+    if (!merged_transfers.has_value()) {
         auto detail = std::string {"owned transfers must match across all continuing cases"};
         for (auto const& line : format_branch_local_cleanup_plan_report(
                  plan_branch_local_cleanups(case_context.ownership_transfers_by_case)

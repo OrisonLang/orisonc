@@ -4062,3 +4062,7 @@ representation.
   field segments and reuses the recursively trivial terminal-type proof. Compile-link-run coverage executes both
   outcomes for `nested.box.payload`; final switches and deeper, indexed, unknown, choice, DynamicArray, or cleanup-
   bearing paths retain their ownership-mismatch boundary.
+- 2026-11-26 Final-`switch` no-op reconciliation now uses the same bounded record-member normalization as final `if`.
+  One-level and one nested trivial member paths merge as consumed, later reuse remains invalid, and compile-link-run
+  coverage executes both outcomes for each depth. Deeper, indexed, unknown, choice, DynamicArray, and cleanup-bearing
+  paths retain their ownership-mismatch boundary.

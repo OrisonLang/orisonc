@@ -303,13 +303,20 @@ int main() {
         aggregate_diagnostics,
         aggregate_switch_output
     );
-    assert(!aggregate_switch_lowered.has_value());
-    auto aggregate_switch_failure =
-        orison::lowering::render_control_flow_lowering_failure(aggregate_switch_failures.control_flow);
-    assert(aggregate_switch_failure.find(
-        "switch case ownership mismatch: owned transfers must match across all continuing cases"
-    ) != std::string::npos);
-    assert(aggregate_switch_failure.find("branch-local cleanup plan: owner box.payload") != std::string::npos);
+    assert(!aggregate_diagnostics.has_errors());
+    assert(aggregate_switch_lowered.has_value());
+    assert(orison::lowering::is_owned_binding_consumed(
+        aggregate_switch_state.ownership_transfers,
+        "box.payload"
+    ));
+    assert(aggregate_switch_output.str().find("dynamic_array_cleanup") == std::string::npos);
+    assert_post_merge_reuse_failure(
+        aggregate_switch_session,
+        aggregate_switch_failures,
+        "box",
+        "%record.Box",
+        "use after move: box.payload"
+    );
 
     aggregate_diagnostics = {};
     auto aggregate_if_balanced_state = seed_box_state();
@@ -422,13 +429,20 @@ int main() {
         aggregate_diagnostics,
         nested_switch_output
     );
-    assert(!nested_switch_lowered.has_value());
-    auto nested_switch_failure =
-        orison::lowering::render_control_flow_lowering_failure(nested_switch_failures.control_flow);
-    assert(nested_switch_failure.find(
-        "switch case ownership mismatch: owned transfers must match across all continuing cases"
-    ) != std::string::npos);
-    assert(nested_switch_failure.find("branch-local cleanup plan: owner nested.box.payload") != std::string::npos);
+    assert(!aggregate_diagnostics.has_errors());
+    assert(nested_switch_lowered.has_value());
+    assert(orison::lowering::is_owned_binding_consumed(
+        nested_switch_state.ownership_transfers,
+        "nested.box.payload"
+    ));
+    assert(nested_switch_output.str().find("dynamic_array_cleanup") == std::string::npos);
+    assert_post_merge_reuse_failure(
+        nested_switch_session,
+        nested_switch_failures,
+        "nested",
+        "%record.Nested",
+        "use after move: nested.box.payload"
+    );
 
     aggregate_diagnostics = {};
     auto nested_if_balanced_state = seed_nested_state();

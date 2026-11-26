@@ -16,10 +16,10 @@ Date: 2026-11-26
 - Record-owned `DynamicArray<T>` fields also reconcile across a final `if`: the retaining arm cleans and zeroes the
   projected descriptor, the consuming arm transfers it, and outer-record cleanup is suppressed after the merge. Both
   runtime outcomes now have compile-link-run coverage.
-- A final `if` now reconciles one-level and one nested plain record field consumed in one arm when the terminal type is
-  recursively trivial to finalize. No cleanup IR is needed; both arm states merge as consumed and post-merge reuse
-  remains invalid.
-- Final switches, deeper or indexed paths, and descendants with unproven cleanup obligations remain blocked.
+- Final `if` and final `switch` now reconcile one-level and one nested plain record field consumed in one arm or case
+  when the terminal type is recursively trivial to finalize. No cleanup IR is needed; all continuing states merge as
+  consumed and post-merge reuse remains invalid.
+- Deeper or indexed paths and descendants with unproven cleanup obligations remain blocked.
 - Broad remaining projects are production interface values, general C binding discovery, cross-target linking, richer
   source-span diagnostics, and complete async cancellation/executor semantics. These are not suitable for the next
   bounded iteration.
@@ -240,5 +240,5 @@ This note is an implementation snapshot. It does not define language syntax or s
 
 ## Suggested Next Step
 
-- Add final-switch parity for one-level and one nested trivially cleanable record paths, preserving rejection for
-  DynamicArrays, choices, unknown types, indexed paths, and cleanup-bearing descendants.
+- Generalize final-control no-op reconciliation from the current two-field cap to arbitrary-depth named record paths,
+  preserving rejection for DynamicArrays, choices, unknown types, indexed paths, and cleanup-bearing descendants.

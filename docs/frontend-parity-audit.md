@@ -1,5 +1,9 @@
 # Frontend Parity Audit
 
+- 2026-11-26: Final `switch` no-op ownership reconciliation now matches final `if` for one-level and one nested named
+  record path. Both runtime outcomes pass compile-link-run coverage for `box.payload` and `nested.box.payload`; merged
+  paths remain consumed and post-merge reuse remains invalid. Deeper, indexed, unknown, choice, DynamicArray, and
+  cleanup-bearing paths retain their diagnostics. No syntax or ABI changed.
 - 2026-11-26: Final `if` no-op ownership reconciliation now accepts one nested named record path, such as
   `nested.box.payload`, when the terminal source type is recursively trivial to finalize. The path resolver is capped
   at two field segments for this slice. Both runtime outcomes pass compile-link-run coverage; final switches, indexed
