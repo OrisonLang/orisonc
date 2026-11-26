@@ -18298,6 +18298,14 @@ auto main() -> int {
     assert_ir_contains(dynamic_array_local_final_if_consumed_owner_cleanup.ir_text, "br i1 %flag");
     assert_ir_contains(
         dynamic_array_local_final_if_consumed_owner_cleanup.ir_text,
+        "call i32 @choose(i1 1)"
+    );
+    assert_ir_contains(
+        dynamic_array_local_final_if_consumed_owner_cleanup.ir_text,
+        "call i32 @choose(i1 0)"
+    );
+    assert_ir_contains(
+        dynamic_array_local_final_if_consumed_owner_cleanup.ir_text,
         "call i32 @use_items({ ptr, i64, i64 } %tmp"
     );
     assert_ir_contains(

@@ -4046,3 +4046,7 @@ representation.
   rules reuse the local callable analysis. Imported signature types are localized through explicit same-package type
   aliases. Metadata retains the source package, exported name, and local binding separately for later symbol lowering.
   Cross-package call emission and linking remain follow-up work.
+- 2026-11-25 Direct local `DynamicArray<T>` final-`if` ownership reconciliation was confirmed as already implemented.
+  The retaining arm emits automatic cleanup and marks the owner consumed before the arm states merge. Compile-link-run
+  coverage now executes both the consuming and retaining outcomes. The remaining bounded reconciliation gap is an
+  aggregate descendant, such as a record-owned DynamicArray field, consumed in only one arm.

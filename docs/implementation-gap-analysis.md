@@ -10,9 +10,12 @@ Date: 2026-11-25
   specializations, choices, packages, fixed-arity C calls, pointers, and task/thread results and synchronization.
 - The two-awaited-index nested `DynamicArray<T>` read and assignment matrices are complete for success plus inner and
   outer bounds failure. Evaluation order, task cleanup, checked indexing, and recursive ownership cleanup are proven.
-- The highest-value bounded lowering gap outside interface values is branch-local ownership reconciliation. The
-  compiler already detects one owned value consumed in one final-control-flow arm and retained in another, and already
-  records the arm-specific cleanup plan, but it rejects the join instead of emitting cleanup in the retaining arm.
+- Direct local `DynamicArray<T>` branch-local ownership reconciliation is implemented. A final `if` can consume a
+  pre-existing local in one arm, emit automatic cleanup in the retaining arm, and merge both arms as consumed. Both
+  runtime outcomes now have compile-link-run coverage.
+- The remaining bounded branch-local ownership gap is aggregate-descendant reconciliation. The compiler detects a
+  record field consumed in one arm and retained in another, and records its cleanup-arm plan, but still rejects the
+  join rather than cleaning the field in the retaining arm.
 - Broad remaining projects are production interface values, general C binding discovery, cross-target linking, richer
   source-span diagnostics, and complete async cancellation/executor semantics. These are not suitable for the next
   bounded iteration.
@@ -233,7 +236,6 @@ This note is an implementation snapshot. It does not define language syntax or s
 
 ## Suggested Next Step
 
-- Implement one final-`if` branch-local ownership reconciliation case: consume a pre-existing owned
-  `DynamicArray<UInt32>` in one arm, emit automatic cleanup in the retaining arm, merge the ownership state, and add
-  compile-link-run coverage for both outcomes plus a precise unsupported diagnostic for shapes outside this first
-  slice.
+- Implement one final-`if` aggregate-descendant ownership reconciliation case: consume a pre-existing record's
+  `DynamicArray<UInt32>` field in one arm, emit automatic field cleanup in the retaining arm, preserve safe outer-record
+  finalization, and add compile-link-run coverage for both outcomes.
