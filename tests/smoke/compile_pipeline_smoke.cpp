@@ -18324,6 +18324,50 @@ auto main() -> int {
         smoke_temp_root / "dynamic_array_local_final_if_consumed_owner_cleanup_run"
     );
 
+    auto dynamic_array_record_field_final_if_consumed_owner_cleanup_path =
+        std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
+        "dynamic_array_record_field_final_if_consumed_owner_cleanup_run.or";
+    auto dynamic_array_record_field_final_if_consumed_owner_cleanup = pipeline.emit_llvm(
+        dynamic_array_record_field_final_if_consumed_owner_cleanup_path,
+        orison::pipeline::CompilePipelineOptions {
+            .semantic_owned_cleanup_lowering_enabled = true,
+        }
+    );
+    assert(!dynamic_array_record_field_final_if_consumed_owner_cleanup.has_errors());
+    assert_ir_contains(
+        dynamic_array_record_field_final_if_consumed_owner_cleanup.ir_text,
+        "call i32 @choose(i1 1)"
+    );
+    assert_ir_contains(
+        dynamic_array_record_field_final_if_consumed_owner_cleanup.ir_text,
+        "call i32 @choose(i1 0)"
+    );
+    assert_ir_contains(
+        dynamic_array_record_field_final_if_consumed_owner_cleanup.ir_text,
+        "call i32 @consume_values({ ptr, i64, i64 } %tmp"
+    );
+    assert_ir_contains(
+        dynamic_array_record_field_final_if_consumed_owner_cleanup.ir_text,
+        "call void @__orison_dynamic_array_deallocate(ptr %holder.values.dynamic_array_cleanup"
+    );
+    assert_ir_contains(
+        dynamic_array_record_field_final_if_consumed_owner_cleanup.ir_text,
+        "store { ptr, i64, i64 } zeroinitializer, ptr %holder.values.addr"
+    );
+    assert_ir_excludes(
+        dynamic_array_record_field_final_if_consumed_owner_cleanup.ir_text,
+        "call void @__orison_owned_cleanup.Holder"
+    );
+    assert_ir_excludes(
+        dynamic_array_record_field_final_if_consumed_owner_cleanup.ir_text,
+        "if branch ownership mismatch"
+    );
+    assert_emit_object_link_run_success(
+        pipeline,
+        dynamic_array_record_field_final_if_consumed_owner_cleanup_path,
+        smoke_temp_root / "dynamic_array_record_field_final_if_consumed_owner_cleanup_run"
+    );
+
     auto dynamic_array_owned_parameter_branch_cleanup_reuse_path =
         std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
         "dynamic_array_owned_parameter_branch_cleanup_reuse_rejected.or";

@@ -4050,3 +4050,7 @@ representation.
   The retaining arm emits automatic cleanup and marks the owner consumed before the arm states merge. Compile-link-run
   coverage now executes both the consuming and retaining outcomes. The remaining bounded reconciliation gap is an
   aggregate descendant, such as a record-owned DynamicArray field, consumed in only one arm.
+- 2026-11-25 Record-owned `DynamicArray<T>` final-`if` reconciliation was also confirmed as already implemented. The
+  retaining arm cleans and zeroes the projected descriptor, the consuming arm transfers it, and merged ownership
+  suppresses duplicate outer-record cleanup. Compile-link-run coverage executes both outcomes. The remaining bounded
+  gate is a non-DynamicArray aggregate descendant whose retaining-arm finalization requires no emitted cleanup.

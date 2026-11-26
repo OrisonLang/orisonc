@@ -13,9 +13,12 @@ Date: 2026-11-25
 - Direct local `DynamicArray<T>` branch-local ownership reconciliation is implemented. A final `if` can consume a
   pre-existing local in one arm, emit automatic cleanup in the retaining arm, and merge both arms as consumed. Both
   runtime outcomes now have compile-link-run coverage.
-- The remaining bounded branch-local ownership gap is aggregate-descendant reconciliation. The compiler detects a
-  record field consumed in one arm and retained in another, and records its cleanup-arm plan, but still rejects the
-  join rather than cleaning the field in the retaining arm.
+- Record-owned `DynamicArray<T>` fields also reconcile across a final `if`: the retaining arm cleans and zeroes the
+  projected descriptor, the consuming arm transfers it, and outer-record cleanup is suppressed after the merge. Both
+  runtime outcomes now have compile-link-run coverage.
+- The remaining bounded branch-local ownership gap is non-DynamicArray aggregate-descendant reconciliation. The
+  compiler detects a plain record field consumed in one arm and retained in another, but rejects the join even when
+  finalization of the retaining field requires no emitted cleanup.
 - Broad remaining projects are production interface values, general C binding discovery, cross-target linking, richer
   source-span diagnostics, and complete async cancellation/executor semantics. These are not suitable for the next
   bounded iteration.
@@ -236,6 +239,6 @@ This note is an implementation snapshot. It does not define language syntax or s
 
 ## Suggested Next Step
 
-- Implement one final-`if` aggregate-descendant ownership reconciliation case: consume a pre-existing record's
-  `DynamicArray<UInt32>` field in one arm, emit automatic field cleanup in the retaining arm, preserve safe outer-record
-  finalization, and add compile-link-run coverage for both outcomes.
+- Implement one final-`if` no-op aggregate-descendant reconciliation case: consume a plain record field in one arm,
+  treat finalization of the retaining trivially cleanable field as complete, merge both arms as consumed, and retain
+  the ownership-mismatch diagnostic for descendants that require unsupported cleanup.

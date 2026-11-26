@@ -1,0 +1,24 @@
+package fixtures.dynamicarrayrecordfieldfinalifconsumedownercleanuprun
+
+record Holder
+    public values: DynamicArray<UInt32>
+
+function make_values() -> DynamicArray<UInt32>
+    var values: DynamicArray<UInt32> = DynamicArray()
+    values.push(7 as UInt32)
+    values
+
+function consume_values(values: DynamicArray<UInt32>) -> UInt32
+    values[0]
+
+function choose(flag: Bool) -> UInt32
+    var holder: Holder = Holder(make_values())
+    if flag
+        consume_values(holder.values)
+    else
+        0 as UInt32
+
+function main() -> UInt32
+    let consumed_path: UInt32 = choose(true)
+    let cleanup_path: UInt32 = choose(false)
+    consumed_path - 7 as UInt32 + cleanup_path
