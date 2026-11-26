@@ -2,7 +2,20 @@
 
 ## Brief Snapshot
 
-Date: 2026-11-18
+Date: 2026-11-25
+
+- The grammar and tour have broad parser and semantic coverage. The native pipeline emits, links, and runs the
+  validated source matrix, but backend support remains composition-driven rather than complete for every valid shape.
+- Mature lowering includes scalar and aggregate control flow, fixed and dynamic arrays, concrete generic
+  specializations, choices, packages, fixed-arity C calls, pointers, and task/thread results and synchronization.
+- The two-awaited-index nested `DynamicArray<T>` read and assignment matrices are complete for success plus inner and
+  outer bounds failure. Evaluation order, task cleanup, checked indexing, and recursive ownership cleanup are proven.
+- The highest-value bounded lowering gap outside interface values is branch-local ownership reconciliation. The
+  compiler already detects one owned value consumed in one final-control-flow arm and retained in another, and already
+  records the arm-specific cleanup plan, but it rejects the join instead of emitting cleanup in the retaining arm.
+- Broad remaining projects are production interface values, general C binding discovery, cross-target linking, richer
+  source-span diagnostics, and complete async cancellation/executor semantics. These are not suitable for the next
+  bounded iteration.
 
 - `orisonc` has a complete native pipeline for the validated source matrix: parsing, semantic analysis, LLVM IR,
   object emission, linking, and execution.
@@ -220,6 +233,7 @@ This note is an implementation snapshot. It does not define language syntax or s
 
 ## Suggested Next Step
 
-- Refresh the concise grammar-and-tour implementation gap audit now that the two-awaited nested DynamicArray read and
-  assignment matrices are complete. Select the highest-value bounded lowering gap outside interface-value semantics
-  for the next implementation iteration.
+- Implement one final-`if` branch-local ownership reconciliation case: consume a pre-existing owned
+  `DynamicArray<UInt32>` in one arm, emit automatic cleanup in the retaining arm, merge the ownership state, and add
+  compile-link-run coverage for both outcomes plus a precise unsupported diagnostic for shapes outside this first
+  slice.
