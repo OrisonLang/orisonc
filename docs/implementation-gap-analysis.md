@@ -220,6 +220,6 @@ This note is an implementation snapshot. It does not define language syntax or s
 
 ## Suggested Next Step
 
-- Add the paired inner out-of-bounds case for two awaited scalar-read indices. Let the outer task return `0` and the
-  inner task return `1`; verify both handles are consumed in source order and inner bounds failure precedes scalar
-  addressing and loading.
+- Add the paired outer out-of-bounds case for two awaited scalar-read indices. Let the outer task return `1` and the
+  inner task return `0`; verify outer cleanup precedes the first bounds abort and record projection, inner
+  synchronization, scalar addressing, and loading remain in the unexecuted continuation.

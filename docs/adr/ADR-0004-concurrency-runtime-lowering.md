@@ -453,6 +453,9 @@ drop/cleanup decisions.
 - `examples/concurrency_await_dynamic_array_nested_owned_record_awaited_read_indices_main.or` composes direct awaited
   `UInt64` values as both indices of a nested scalar read. Left-to-right synchronization and cleanup precede each
   descriptor check; scalar loading and recursive owned-element cleanup complete successfully.
+- `examples/concurrency_await_dynamic_array_nested_owned_record_awaited_read_indices_inner_out_of_bounds_main.or`
+  proves the paired inner read failure. Both handles are consumed in source order before the inner bounds abort, and
+  inner data projection, scalar addressing, and loading remain in the unexecuted in-bounds block.
 
 ## Follow-up work
 
