@@ -390,13 +390,20 @@ int main() {
         aggregate_diagnostics,
         nested_if_output
     );
-    assert(!nested_if_lowered.has_value());
-    auto nested_if_failure =
-        orison::lowering::render_control_flow_lowering_failure(nested_if_failures.control_flow);
-    assert(nested_if_failure.find(
-        "if branch ownership mismatch: owned transfers must match across all continuing branches"
-    ) != std::string::npos);
-    assert(nested_if_failure.find("branch-local cleanup plan: owner nested.box.payload") != std::string::npos);
+    assert(!aggregate_diagnostics.has_errors());
+    assert(nested_if_lowered.has_value());
+    assert(orison::lowering::is_owned_binding_consumed(
+        nested_if_state.ownership_transfers,
+        "nested.box.payload"
+    ));
+    assert(nested_if_output.str().find("dynamic_array_cleanup") == std::string::npos);
+    assert_post_merge_reuse_failure(
+        nested_if_session,
+        nested_if_failures,
+        "nested",
+        "%record.Nested",
+        "use after move: nested.box.payload"
+    );
 
     aggregate_diagnostics = {};
     auto nested_switch_state = seed_nested_state();

@@ -617,26 +617,50 @@ auto is_trivially_finalizable_source_type(
     return result;
 }
 
-auto is_trivially_finalizable_record_field_transfer(
+auto is_trivially_finalizable_record_member_transfer(
     std::string_view owner_name,
     EmissionContext const& context,
     FunctionLoweringSession const& session
 ) -> bool {
-    auto separator = owner_name.find('.');
-    if (separator == std::string_view::npos || owner_name.find('.', separator + 1) != std::string_view::npos) {
+    auto first_separator = owner_name.find('.');
+    if (first_separator == std::string_view::npos) {
         return false;
     }
 
-    auto root_name = std::string {owner_name.substr(0, separator)};
-    auto member_name = std::string {owner_name.substr(separator + 1)};
+    auto second_separator = owner_name.find('.', first_separator + 1);
+    if (second_separator != std::string_view::npos &&
+        owner_name.find('.', second_separator + 1) != std::string_view::npos) {
+        return false;
+    }
+
+    auto root_name = std::string {owner_name.substr(0, first_separator)};
+    auto field_names = std::vector<std::string> {
+        std::string {owner_name.substr(
+            first_separator + 1,
+            second_separator == std::string_view::npos
+                ? std::string_view::npos
+                : second_separator - first_separator - 1
+        )},
+    };
+    if (second_separator != std::string_view::npos) {
+        field_names.push_back(std::string {owner_name.substr(second_separator + 1)});
+    }
+    auto has_empty_field_name = std::ranges::any_of(
+        field_names,
+        [](std::string const& name) { return name.empty(); }
+    );
+    if (root_name.empty() || has_empty_field_name) {
+        return false;
+    }
+
     auto root_source_type = session.state.source_type_names.find(root_name);
     if (root_source_type == session.state.source_type_names.end()) {
         return false;
     }
-    auto transfer = owned_record_field_transfer(
+    auto transfer = owned_record_member_path_transfer(
         root_name,
         root_source_type->second,
-        member_name,
+        field_names,
         context.lowering
     );
     if (!transfer.has_value() || transfer->binding_name != owner_name) {
@@ -651,13 +675,13 @@ auto is_trivially_finalizable_record_field_transfer(
     );
 }
 
-auto normalize_trivially_finalizable_record_field_transfers(
+auto normalize_trivially_finalizable_record_member_transfers(
     std::vector<OwnershipTransferState>& branch_states,
     EmissionContext const& context,
     FunctionLoweringSession const& session
 ) -> void {
     for (auto const& plan : plan_branch_local_cleanups(branch_states)) {
-        if (!is_trivially_finalizable_record_field_transfer(plan.owner_name, context, session)) {
+        if (!is_trivially_finalizable_record_member_transfer(plan.owner_name, context, session)) {
             continue;
         }
         for (auto& branch_state : branch_states) {
@@ -1000,7 +1024,7 @@ auto lower_final_if_statement(
     }
     auto merged_transfers = merge_ownership_transfer_states(arm_context.ownership_transfers_by_arm);
     if (!merged_transfers.has_value()) {
-        normalize_trivially_finalizable_record_field_transfers(
+        normalize_trivially_finalizable_record_member_transfers(
             arm_context.ownership_transfers_by_arm,
             context,
             session

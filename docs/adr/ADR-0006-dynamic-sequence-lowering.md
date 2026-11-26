@@ -4058,3 +4058,7 @@ representation.
   recursively trivial to finalize. The retaining arm emits no cleanup, all arm states mark the field consumed, and
   post-merge reuse remains rejected. Final switches, nested paths, DynamicArrays, choices, unknown types, and cleanup-
   bearing descendants retain the ownership-mismatch boundary.
+- 2026-11-26 Final-`if` no-op reconciliation now accepts one nested named record path. Resolution is capped at two
+  field segments and reuses the recursively trivial terminal-type proof. Compile-link-run coverage executes both
+  outcomes for `nested.box.payload`; final switches and deeper, indexed, unknown, choice, DynamicArray, or cleanup-
+  bearing paths retain their ownership-mismatch boundary.

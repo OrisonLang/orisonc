@@ -2,7 +2,7 @@
 
 ## Brief Snapshot
 
-Date: 2026-11-25
+Date: 2026-11-26
 
 - The grammar and tour have broad parser and semantic coverage. The native pipeline emits, links, and runs the
   validated source matrix, but backend support remains composition-driven rather than complete for every valid shape.
@@ -16,10 +16,10 @@ Date: 2026-11-25
 - Record-owned `DynamicArray<T>` fields also reconcile across a final `if`: the retaining arm cleans and zeroes the
   projected descriptor, the consuming arm transfers it, and outer-record cleanup is suppressed after the merge. Both
   runtime outcomes now have compile-link-run coverage.
-- A final `if` now reconciles a one-level plain record field consumed in one arm when its resolved type is recursively
-  trivial to finalize. No cleanup IR is needed; both arm states merge as consumed and post-merge reuse remains invalid.
-- Nested trivially cleanable member paths remain blocked, as do switches and any descendant with an unproven cleanup
-  obligation.
+- A final `if` now reconciles one-level and one nested plain record field consumed in one arm when the terminal type is
+  recursively trivial to finalize. No cleanup IR is needed; both arm states merge as consumed and post-merge reuse
+  remains invalid.
+- Final switches, deeper or indexed paths, and descendants with unproven cleanup obligations remain blocked.
 - Broad remaining projects are production interface values, general C binding discovery, cross-target linking, richer
   source-span diagnostics, and complete async cancellation/executor semantics. These are not suitable for the next
   bounded iteration.
@@ -240,5 +240,5 @@ This note is an implementation snapshot. It does not define language syntax or s
 
 ## Suggested Next Step
 
-- Extend no-op final-`if` reconciliation to one nested trivially cleanable record path, preserving rejection for
-  DynamicArrays, choices, unknown types, and paths with cleanup obligations.
+- Add final-switch parity for one-level and one nested trivially cleanable record paths, preserving rejection for
+  DynamicArrays, choices, unknown types, indexed paths, and cleanup-bearing descendants.
