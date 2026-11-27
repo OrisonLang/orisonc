@@ -18600,6 +18600,48 @@ auto main() -> int {
         ) != std::string::npos
     );
 
+    auto aggregate_nested_fixed_array_trivial_record_ownership_path =
+        std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
+        "aggregate_nested_fixed_array_trivial_record_ownership_run.or";
+    auto aggregate_nested_fixed_array_trivial_record_ownership = pipeline.emit_llvm(
+        aggregate_nested_fixed_array_trivial_record_ownership_path
+    );
+    assert(!aggregate_nested_fixed_array_trivial_record_ownership.has_errors());
+    assert_ir_contains(
+        aggregate_nested_fixed_array_trivial_record_ownership.ir_text,
+        "call i32 @choose_if(i1 1)"
+    );
+    assert_ir_contains(
+        aggregate_nested_fixed_array_trivial_record_ownership.ir_text,
+        "call i32 @choose_switch(i1 0)"
+    );
+    assert_ir_contains(
+        aggregate_nested_fixed_array_trivial_record_ownership.ir_text,
+        "call i32 @consume_distinct()"
+    );
+    assert_ir_excludes(
+        aggregate_nested_fixed_array_trivial_record_ownership.ir_text,
+        "dynamic_array_cleanup"
+    );
+    assert_emit_object_link_run_success(
+        pipeline,
+        aggregate_nested_fixed_array_trivial_record_ownership_path,
+        smoke_temp_root / "aggregate_nested_fixed_array_trivial_record_ownership_run"
+    );
+
+    auto aggregate_nested_fixed_array_same_element_reuse_rejected_path =
+        std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
+        "aggregate_nested_fixed_array_same_element_reuse_rejected.or";
+    auto aggregate_nested_fixed_array_same_element_reuse_rejected = pipeline.emit_llvm(
+        aggregate_nested_fixed_array_same_element_reuse_rejected_path
+    );
+    assert(aggregate_nested_fixed_array_same_element_reuse_rejected.has_errors());
+    assert(
+        aggregate_nested_fixed_array_same_element_reuse_rejected.error_text.find(
+            "use after move: holder.buckets.element0.items.element1"
+        ) != std::string::npos
+    );
+
     auto dynamic_array_owned_parameter_branch_cleanup_reuse_path =
         std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
         "dynamic_array_owned_parameter_branch_cleanup_reuse_rejected.or";

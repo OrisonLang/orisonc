@@ -4076,3 +4076,7 @@ representation.
   applying the recursive trivial-type proof. Choice terminals retain their established path. Runtime-index owners
   remain bracketed and retain ownership-mismatch diagnostics. Final-if and final-switch compile-link-run coverage
   executes every constant-index outcome and rejects post-merge reuse.
+- 2026-11-26 Nested and repeated constant fixed-array ownership behavior is now pinned without a lowering change.
+  Mixed paths with two indices reconcile through final `if` and final `switch`, distinct sibling elements remain
+  independently consumable, duplicate consumption reports the full canonical owner path, and merged state rejects
+  later root reuse. Runtime-index and cleanup-bearing boundaries remain unchanged.

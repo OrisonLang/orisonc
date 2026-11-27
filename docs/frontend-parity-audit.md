@@ -4350,3 +4350,7 @@ This file tracks which source-language frontend slices are reflected in the curr
   `%record.Batch` is `{ [2 x [2 x %record.Pair]] }`; it uses `{ i32, [64 x i8] }` with 68-byte result storage,
   reconstructs all sixteen nested record fields, and emits concrete `Result_Batch_` implementation symbols. No syntax
   or ABI changed.
+- 2026-11-26: Nested constant fixed-array ownership paths now have direct and compile-link-run coverage. Two independent
+  indices produce canonical paths such as `holder.buckets.element1.items.element0`; sibling elements remain separately
+  consumable, a repeated move from the same element is rejected, and final-if/final-switch merges preserve post-merge
+  use-after-move diagnostics. No compiler, syntax, or ABI change was required.

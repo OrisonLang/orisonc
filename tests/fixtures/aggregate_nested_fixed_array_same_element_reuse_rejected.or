@@ -1,0 +1,18 @@
+package fixtures.aggregatenestedfixedarraysameelementreuserejected
+
+record Payload
+    public value: UInt32
+
+record Bucket
+    public items: Array<Payload, 2>
+
+record Holder
+    public buckets: Array<Bucket, 2>
+
+function consume_payload(payload: Payload) -> UInt32
+    payload.value
+
+function reuse() -> UInt32
+    let holder: Holder = Holder([Bucket([Payload(3 as UInt32), Payload(5 as UInt32)]), Bucket([Payload(7 as UInt32), Payload(11 as UInt32)])])
+    let first: UInt32 = consume_payload(holder.buckets[0].items[1])
+    first + consume_payload(holder.buckets[0].items[1])

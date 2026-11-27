@@ -241,5 +241,4 @@ This note is an implementation snapshot. It does not define language syntax or s
 
 ## Suggested Next Step
 
-- Exercise nested and multiple constant fixed-array indices through final-control reconciliation, including distinct-
-  element ownership and post-merge reuse boundaries.
+- Refresh the grammar-and-tour gap audit and select the next bounded lowering gap outside interface-value semantics.
