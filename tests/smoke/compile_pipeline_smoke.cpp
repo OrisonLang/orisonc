@@ -18541,6 +18541,65 @@ auto main() -> int {
         smoke_temp_root / "aggregate_deep_trivial_record_field_final_control_reconciliation_run"
     );
 
+    auto aggregate_fixed_array_trivial_record_final_control_reconciliation_path =
+        std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
+        "aggregate_fixed_array_trivial_record_final_control_reconciliation_run.or";
+    auto aggregate_fixed_array_trivial_record_final_control_reconciliation = pipeline.emit_llvm(
+        aggregate_fixed_array_trivial_record_final_control_reconciliation_path
+    );
+    assert(!aggregate_fixed_array_trivial_record_final_control_reconciliation.has_errors());
+    assert_ir_contains(
+        aggregate_fixed_array_trivial_record_final_control_reconciliation.ir_text,
+        "call i32 @choose_if(i1 1)"
+    );
+    assert_ir_contains(
+        aggregate_fixed_array_trivial_record_final_control_reconciliation.ir_text,
+        "call i32 @choose_if(i1 0)"
+    );
+    assert_ir_contains(
+        aggregate_fixed_array_trivial_record_final_control_reconciliation.ir_text,
+        "call i32 @choose_switch(i1 1)"
+    );
+    assert_ir_contains(
+        aggregate_fixed_array_trivial_record_final_control_reconciliation.ir_text,
+        "call i32 @choose_switch(i1 0)"
+    );
+    assert_ir_contains(
+        aggregate_fixed_array_trivial_record_final_control_reconciliation.ir_text,
+        "call i32 @consume_payload(%record.Payload"
+    );
+    assert_ir_excludes(
+        aggregate_fixed_array_trivial_record_final_control_reconciliation.ir_text,
+        "dynamic_array_cleanup"
+    );
+    assert_ir_excludes(
+        aggregate_fixed_array_trivial_record_final_control_reconciliation.ir_text,
+        "ownership mismatch"
+    );
+    assert_emit_object_link_run_success(
+        pipeline,
+        aggregate_fixed_array_trivial_record_final_control_reconciliation_path,
+        smoke_temp_root / "aggregate_fixed_array_trivial_record_final_control_reconciliation_run"
+    );
+
+    auto aggregate_runtime_index_trivial_record_final_if_reconciliation_rejected_path =
+        std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
+        "aggregate_runtime_index_trivial_record_final_if_reconciliation_rejected.or";
+    auto aggregate_runtime_index_trivial_record_final_if_reconciliation_rejected = pipeline.emit_llvm(
+        aggregate_runtime_index_trivial_record_final_if_reconciliation_rejected_path
+    );
+    assert(aggregate_runtime_index_trivial_record_final_if_reconciliation_rejected.has_errors());
+    assert(
+        aggregate_runtime_index_trivial_record_final_if_reconciliation_rejected.error_text.find(
+            "if branch ownership mismatch: owned transfers must match across all continuing branches"
+        ) != std::string::npos
+    );
+    assert(
+        aggregate_runtime_index_trivial_record_final_if_reconciliation_rejected.error_text.find(
+            "branch-local cleanup plan: owner holder.items[index]"
+        ) != std::string::npos
+    );
+
     auto dynamic_array_owned_parameter_branch_cleanup_reuse_path =
         std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
         "dynamic_array_owned_parameter_branch_cleanup_reuse_rejected.or";

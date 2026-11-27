@@ -197,9 +197,18 @@ auto consumed_static_indexed_aggregate_projection_argument_name(
     LoweringEmissionContext const& context,
     FunctionLoweringSession const& session
 ) -> std::optional<std::string> {
+    auto expected_source_type_name = expected_source_type.has_value()
+        ? std::string {*expected_source_type}
+        : std::string {};
+    auto is_choice_source_type = context.lowering.choices.contains(expected_source_type_name) ||
+        std::ranges::any_of(
+            context.lowering.choices,
+            [&](auto const& entry) { return entry.second.source_type_name == expected_source_type_name; }
+        );
     if (!expected_source_type.has_value() ||
         !is_owned_transfer_source_type(*expected_source_type, context.lowering) ||
-        !dynamic_array_element_source_type_name(*expected_source_type).has_value()) {
+        (!dynamic_array_element_source_type_name(*expected_source_type).has_value() &&
+         (!context.lowering.records.contains(expected_source_type_name) || is_choice_source_type))) {
         return std::nullopt;
     }
 

@@ -1,5 +1,11 @@
 # Frontend Parity Audit
 
+- 2026-11-26: Final-control no-op ownership reconciliation now accepts in-range constant fixed-array indices along
+  aggregate paths. Owned call arguments such as `holder.items[0]` are recorded canonically as
+  `holder.items.element0`, resolved through record and fixed-array metadata, and reconciled only when the terminal type
+  is recursively trivial to finalize. Final `if` and final `switch` pass all-outcome compile-link-run coverage and
+  reject post-merge reuse. Runtime-index owners remain bracketed and retain ownership-mismatch diagnostics. No syntax
+  or ABI changed.
 - 2026-11-26: Final-control no-op ownership reconciliation now accepts arbitrary-depth named record paths. Path
   parsing collects every field segment, record metadata resolves the complete path, and the terminal type must remain
   recursively trivial to finalize. Direct and compile-link-run coverage exercise `deep.nested.box.payload` through

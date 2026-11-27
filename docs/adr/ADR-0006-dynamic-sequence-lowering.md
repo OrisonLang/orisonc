@@ -4070,3 +4070,9 @@ representation.
   collects all non-empty field segments, existing record metadata resolves the complete path, and the recursively
   trivial terminal-type proof remains mandatory. Direct and compile-link-run coverage exercises
   `deep.nested.box.payload` through final `if` and final `switch`; indexed and cleanup-bearing boundaries are unchanged.
+- 2026-11-26 Final-control no-op reconciliation now accepts in-range constant fixed-array owner segments. Call
+  lowering records literal indexed nominal-record arguments, alongside the existing DynamicArray terminal support,
+  using canonical `.elementN` names. Reconciliation validates each index against `Array<T, N>` metadata before
+  applying the recursive trivial-type proof. Choice terminals retain their established path. Runtime-index owners
+  remain bracketed and retain ownership-mismatch diagnostics. Final-if and final-switch compile-link-run coverage
+  executes every constant-index outcome and rejects post-merge reuse.

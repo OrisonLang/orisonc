@@ -151,6 +151,8 @@ int main() {
                   "    box: Box\n"
                   "record Deep\n"
                   "    nested: Nested\n"
+                  "record Holder\n"
+                  "    items: Array<Payload, 2>\n"
                   "function consume_payload(payload: Payload) -> UInt32\n"
                   "    payload.value\n"
                   "function choose_if(flag: Bool, box: Box) -> UInt32\n"
@@ -197,6 +199,15 @@ int main() {
                   "function choose_deep_switch(flag: Bool, deep: Deep) -> UInt32\n"
                   "    switch flag\n"
                   "        true => consume_payload(deep.nested.box.payload)\n"
+                  "        false => 0 as UInt32\n"
+                  "function choose_indexed_if(flag: Bool, holder: Holder) -> UInt32\n"
+                  "    if flag\n"
+                  "        consume_payload(holder.items[0])\n"
+                  "    else\n"
+                  "        0 as UInt32\n"
+                  "function choose_indexed_switch(flag: Bool, holder: Holder) -> UInt32\n"
+                  "    switch flag\n"
+                  "        true => consume_payload(holder.items[0])\n"
                   "        false => 0 as UInt32\n";
     }
 
@@ -244,6 +255,9 @@ int main() {
     };
     auto seed_deep_state = [&seed_aggregate_state] {
         return seed_aggregate_state("deep", "Deep", "%record.Deep", "%deep.addr");
+    };
+    auto seed_holder_state = [&seed_aggregate_state] {
+        return seed_aggregate_state("holder", "Holder", "%record.Holder", "%holder.addr");
     };
     auto assert_post_merge_reuse_failure = [&aggregate_context](
         orison::lowering::FunctionLoweringSession& session,
@@ -582,6 +596,70 @@ int main() {
         "deep",
         "%record.Deep",
         "use after move: deep.nested.box.payload"
+    );
+
+    aggregate_diagnostics = {};
+    auto indexed_if_state = seed_holder_state();
+    auto indexed_if_failures = orison::lowering::LoweringFailures {};
+    auto indexed_if_session = orison::lowering::FunctionLoweringSession {
+        .state = indexed_if_state,
+        .failures = indexed_if_failures,
+    };
+    auto indexed_if_output = std::ostringstream {};
+    auto indexed_if_lowered = orison::lowering::lower_final_control_flow_statement(
+        aggregate_parse_result.module.functions[11].body_statements.front(),
+        "i32",
+        orison::lowering::IntegerSignedness::unsigned_integer,
+        aggregate_context,
+        indexed_if_session,
+        aggregate_diagnostics,
+        indexed_if_output
+    );
+    assert(!aggregate_diagnostics.has_errors());
+    assert(indexed_if_lowered.has_value());
+    assert(orison::lowering::is_owned_binding_consumed(
+        indexed_if_state.ownership_transfers,
+        "holder.items.element0"
+    ));
+    assert(indexed_if_output.str().find("dynamic_array_cleanup") == std::string::npos);
+    assert_post_merge_reuse_failure(
+        indexed_if_session,
+        indexed_if_failures,
+        "holder",
+        "%record.Holder",
+        "use after move: holder.items.element0"
+    );
+
+    aggregate_diagnostics = {};
+    auto indexed_switch_state = seed_holder_state();
+    auto indexed_switch_failures = orison::lowering::LoweringFailures {};
+    auto indexed_switch_session = orison::lowering::FunctionLoweringSession {
+        .state = indexed_switch_state,
+        .failures = indexed_switch_failures,
+    };
+    auto indexed_switch_output = std::ostringstream {};
+    auto indexed_switch_lowered = orison::lowering::lower_final_control_flow_statement(
+        aggregate_parse_result.module.functions[12].body_statements.front(),
+        "i32",
+        orison::lowering::IntegerSignedness::unsigned_integer,
+        aggregate_context,
+        indexed_switch_session,
+        aggregate_diagnostics,
+        indexed_switch_output
+    );
+    assert(!aggregate_diagnostics.has_errors());
+    assert(indexed_switch_lowered.has_value());
+    assert(orison::lowering::is_owned_binding_consumed(
+        indexed_switch_state.ownership_transfers,
+        "holder.items.element0"
+    ));
+    assert(indexed_switch_output.str().find("dynamic_array_cleanup") == std::string::npos);
+    assert_post_merge_reuse_failure(
+        indexed_switch_session,
+        indexed_switch_failures,
+        "holder",
+        "%record.Holder",
+        "use after move: holder.items.element0"
     );
 
     auto choice_path = std::filesystem::temp_directory_path() / "orison_control_flow_choice_payload_smoke.or";

@@ -1,0 +1,17 @@
+package fixtures.aggregateruntimeindextrivialrecordfinalifreconciliationrejected
+
+record Payload
+    public value: UInt32
+
+record Holder
+    public items: Array<Payload, 2>
+
+function consume_payload(payload: Payload) -> UInt32
+    payload.value
+
+function choose(flag: Bool, index: UInt64) -> UInt32
+    let holder: Holder = Holder([Payload(7 as UInt32), Payload(9 as UInt32)])
+    if flag
+        consume_payload(holder.items[index])
+    else
+        0 as UInt32

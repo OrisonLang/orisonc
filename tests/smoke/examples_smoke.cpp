@@ -8,6 +8,7 @@
 #include <cstdlib>
 #include <filesystem>
 #include <fstream>
+#include <iostream>
 #include <string>
 #include <string_view>
 #include <unistd.h>
@@ -203,6 +204,9 @@ auto main() -> int {
     };
     for (auto name : backend_examples) {
         auto backend = pipeline.emit_object(examples / name);
+        if (backend.has_errors()) {
+            std::cerr << "example backend failure: " << name << "\n" << backend.error_text;
+        }
         assert(!backend.has_errors());
         assert(!backend.object_bytes.empty());
     }
