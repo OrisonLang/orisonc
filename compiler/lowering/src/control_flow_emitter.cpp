@@ -622,28 +622,21 @@ auto is_trivially_finalizable_record_member_transfer(
     EmissionContext const& context,
     FunctionLoweringSession const& session
 ) -> bool {
-    auto first_separator = owner_name.find('.');
-    if (first_separator == std::string_view::npos) {
+    auto separator = owner_name.find('.');
+    if (separator == std::string_view::npos) {
         return false;
     }
 
-    auto second_separator = owner_name.find('.', first_separator + 1);
-    if (second_separator != std::string_view::npos &&
-        owner_name.find('.', second_separator + 1) != std::string_view::npos) {
-        return false;
-    }
-
-    auto root_name = std::string {owner_name.substr(0, first_separator)};
-    auto field_names = std::vector<std::string> {
-        std::string {owner_name.substr(
-            first_separator + 1,
-            second_separator == std::string_view::npos
-                ? std::string_view::npos
-                : second_separator - first_separator - 1
-        )},
-    };
-    if (second_separator != std::string_view::npos) {
-        field_names.push_back(std::string {owner_name.substr(second_separator + 1)});
+    auto root_name = std::string {owner_name.substr(0, separator)};
+    auto field_names = std::vector<std::string> {};
+    auto field_start = separator + 1;
+    while (field_start <= owner_name.size()) {
+        auto field_end = owner_name.find('.', field_start);
+        field_names.emplace_back(owner_name.substr(field_start, field_end - field_start));
+        if (field_end == std::string_view::npos) {
+            break;
+        }
+        field_start = field_end + 1;
     }
     auto has_empty_field_name = std::ranges::any_of(
         field_names,

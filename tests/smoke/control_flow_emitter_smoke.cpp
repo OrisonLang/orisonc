@@ -149,6 +149,8 @@ int main() {
                   "    payload: Payload\n"
                   "record Nested\n"
                   "    box: Box\n"
+                  "record Deep\n"
+                  "    nested: Nested\n"
                   "function consume_payload(payload: Payload) -> UInt32\n"
                   "    payload.value\n"
                   "function choose_if(flag: Bool, box: Box) -> UInt32\n"
@@ -186,7 +188,16 @@ int main() {
                   "function choose_nested_switch_balanced(flag: Bool, nested: Nested) -> UInt32\n"
                   "    switch flag\n"
                   "        true => consume_payload(nested.box.payload)\n"
-                  "        false => consume_payload(nested.box.payload)\n";
+                  "        false => consume_payload(nested.box.payload)\n"
+                  "function choose_deep_if(flag: Bool, deep: Deep) -> UInt32\n"
+                  "    if flag\n"
+                  "        consume_payload(deep.nested.box.payload)\n"
+                  "    else\n"
+                  "        0 as UInt32\n"
+                  "function choose_deep_switch(flag: Bool, deep: Deep) -> UInt32\n"
+                  "    switch flag\n"
+                  "        true => consume_payload(deep.nested.box.payload)\n"
+                  "        false => 0 as UInt32\n";
     }
 
     auto aggregate_source = orison::source::SourceFile::read(aggregate_mismatch_path);
@@ -230,6 +241,9 @@ int main() {
     };
     auto seed_nested_state = [&seed_aggregate_state] {
         return seed_aggregate_state("nested", "Nested", "%record.Nested", "%nested.addr");
+    };
+    auto seed_deep_state = [&seed_aggregate_state] {
+        return seed_aggregate_state("deep", "Deep", "%record.Deep", "%deep.addr");
     };
     auto assert_post_merge_reuse_failure = [&aggregate_context](
         orison::lowering::FunctionLoweringSession& session,
@@ -504,6 +518,70 @@ int main() {
         "nested",
         "%record.Nested",
         "use after move: nested.box.payload"
+    );
+
+    aggregate_diagnostics = {};
+    auto deep_if_state = seed_deep_state();
+    auto deep_if_failures = orison::lowering::LoweringFailures {};
+    auto deep_if_session = orison::lowering::FunctionLoweringSession {
+        .state = deep_if_state,
+        .failures = deep_if_failures,
+    };
+    auto deep_if_output = std::ostringstream {};
+    auto deep_if_lowered = orison::lowering::lower_final_control_flow_statement(
+        aggregate_parse_result.module.functions[9].body_statements.front(),
+        "i32",
+        orison::lowering::IntegerSignedness::unsigned_integer,
+        aggregate_context,
+        deep_if_session,
+        aggregate_diagnostics,
+        deep_if_output
+    );
+    assert(!aggregate_diagnostics.has_errors());
+    assert(deep_if_lowered.has_value());
+    assert(orison::lowering::is_owned_binding_consumed(
+        deep_if_state.ownership_transfers,
+        "deep.nested.box.payload"
+    ));
+    assert(deep_if_output.str().find("dynamic_array_cleanup") == std::string::npos);
+    assert_post_merge_reuse_failure(
+        deep_if_session,
+        deep_if_failures,
+        "deep",
+        "%record.Deep",
+        "use after move: deep.nested.box.payload"
+    );
+
+    aggregate_diagnostics = {};
+    auto deep_switch_state = seed_deep_state();
+    auto deep_switch_failures = orison::lowering::LoweringFailures {};
+    auto deep_switch_session = orison::lowering::FunctionLoweringSession {
+        .state = deep_switch_state,
+        .failures = deep_switch_failures,
+    };
+    auto deep_switch_output = std::ostringstream {};
+    auto deep_switch_lowered = orison::lowering::lower_final_control_flow_statement(
+        aggregate_parse_result.module.functions[10].body_statements.front(),
+        "i32",
+        orison::lowering::IntegerSignedness::unsigned_integer,
+        aggregate_context,
+        deep_switch_session,
+        aggregate_diagnostics,
+        deep_switch_output
+    );
+    assert(!aggregate_diagnostics.has_errors());
+    assert(deep_switch_lowered.has_value());
+    assert(orison::lowering::is_owned_binding_consumed(
+        deep_switch_state.ownership_transfers,
+        "deep.nested.box.payload"
+    ));
+    assert(deep_switch_output.str().find("dynamic_array_cleanup") == std::string::npos);
+    assert_post_merge_reuse_failure(
+        deep_switch_session,
+        deep_switch_failures,
+        "deep",
+        "%record.Deep",
+        "use after move: deep.nested.box.payload"
     );
 
     auto choice_path = std::filesystem::temp_directory_path() / "orison_control_flow_choice_payload_smoke.or";

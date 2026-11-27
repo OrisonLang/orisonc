@@ -1,5 +1,10 @@
 # Frontend Parity Audit
 
+- 2026-11-26: Final-control no-op ownership reconciliation now accepts arbitrary-depth named record paths. Path
+  parsing collects every field segment, record metadata resolves the complete path, and the terminal type must remain
+  recursively trivial to finalize. Direct and compile-link-run coverage exercise `deep.nested.box.payload` through
+  final `if` and final `switch`, including every runtime outcome and post-merge reuse rejection. Indexed, unknown,
+  choice, DynamicArray, and cleanup-bearing paths retain their diagnostics. No syntax or ABI changed.
 - 2026-11-26: Final `switch` no-op ownership reconciliation now matches final `if` for one-level and one nested named
   record path. Both runtime outcomes pass compile-link-run coverage for `box.payload` and `nested.box.payload`; merged
   paths remain consumed and post-merge reuse remains invalid. Deeper, indexed, unknown, choice, DynamicArray, and

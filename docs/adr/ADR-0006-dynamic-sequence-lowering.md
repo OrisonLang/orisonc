@@ -4066,3 +4066,7 @@ representation.
   One-level and one nested trivial member paths merge as consumed, later reuse remains invalid, and compile-link-run
   coverage executes both outcomes for each depth. Deeper, indexed, unknown, choice, DynamicArray, and cleanup-bearing
   paths retain their ownership-mismatch boundary.
+- 2026-11-26 Final-control no-op reconciliation now accepts arbitrary-depth named record paths. The owner parser
+  collects all non-empty field segments, existing record metadata resolves the complete path, and the recursively
+  trivial terminal-type proof remains mandatory. Direct and compile-link-run coverage exercises
+  `deep.nested.box.payload` through final `if` and final `switch`; indexed and cleanup-bearing boundaries are unchanged.

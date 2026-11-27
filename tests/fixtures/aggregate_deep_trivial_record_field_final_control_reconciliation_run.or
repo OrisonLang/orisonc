@@ -1,0 +1,36 @@
+package fixtures.aggregatedeeptrivialrecordfieldfinalcontrolreconciliationrun
+
+record Payload
+    public value: UInt32
+
+record Box
+    public payload: Payload
+
+record Nested
+    public box: Box
+
+record Deep
+    public nested: Nested
+
+function consume_payload(payload: Payload) -> UInt32
+    payload.value
+
+function choose_if(flag: Bool) -> UInt32
+    let deep: Deep = Deep(Nested(Box(Payload(13 as UInt32))))
+    if flag
+        consume_payload(deep.nested.box.payload)
+    else
+        0 as UInt32
+
+function choose_switch(flag: Bool) -> UInt32
+    let deep: Deep = Deep(Nested(Box(Payload(17 as UInt32))))
+    switch flag
+        true => consume_payload(deep.nested.box.payload)
+        false => 0 as UInt32
+
+function main() -> UInt32
+    let if_consumed: UInt32 = choose_if(true)
+    let if_finalized: UInt32 = choose_if(false)
+    let switch_consumed: UInt32 = choose_switch(true)
+    let switch_finalized: UInt32 = choose_switch(false)
+    if_consumed - 13 as UInt32 + if_finalized + switch_consumed - 17 as UInt32 + switch_finalized
