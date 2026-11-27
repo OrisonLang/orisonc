@@ -1,0 +1,39 @@
+package fixtures.aggregatenestedruntimeindextrivialrecordfinalcontrolreconciliationrun
+
+record Payload
+    public value: UInt32
+
+record Bucket
+    public items: Array<Payload, 2>
+
+record Holder
+    public buckets: Array<Bucket, 2>
+
+function consume_payload(payload: Payload) -> UInt32
+    payload.value
+
+function choose_if(flag: Bool, row: UInt64, column: UInt64) -> UInt32
+    let holder: Holder = Holder([Bucket([Payload(3 as UInt32), Payload(5 as UInt32)]), Bucket([Payload(7 as UInt32), Payload(11 as UInt32)])])
+    if flag
+        consume_payload(holder.buckets[row].items[column])
+    else
+        0 as UInt32
+
+function choose_switch(flag: Bool, row: UInt64, column: UInt64) -> UInt32
+    let holder: Holder = Holder([Bucket([Payload(13 as UInt32), Payload(17 as UInt32)]), Bucket([Payload(19 as UInt32), Payload(23 as UInt32)])])
+    switch flag
+        true => consume_payload(holder.buckets[row].items[column])
+        false => 0 as UInt32
+
+function consume_distinct(row: UInt64, column: UInt64) -> UInt32
+    let holder: Holder = Holder([Bucket([Payload(29 as UInt32), Payload(31 as UInt32)]), Bucket([Payload(37 as UInt32), Payload(41 as UInt32)])])
+    let selected: UInt32 = consume_payload(holder.buckets[row].items[column])
+    selected + consume_payload(holder.buckets[0].items[1])
+
+function main() -> UInt32
+    let if_consumed: UInt32 = choose_if(true, 0 as UInt64, 0 as UInt64)
+    let if_finalized: UInt32 = choose_if(false, 2 as UInt64, 2 as UInt64)
+    let switch_consumed: UInt32 = choose_switch(true, 1 as UInt64, 1 as UInt64)
+    let switch_finalized: UInt32 = choose_switch(false, 2 as UInt64, 2 as UInt64)
+    let distinct: UInt32 = consume_distinct(0 as UInt64, 0 as UInt64)
+    if_consumed - 3 as UInt32 + if_finalized + switch_consumed - 23 as UInt32 + switch_finalized + distinct - 60 as UInt32

@@ -4358,3 +4358,7 @@ This file tracks which source-language frontend slices are reflected in the curr
   recursively trivial to finalize. The selected arm retains its checked access, the retaining arm emits no access or
   cleanup, and merged ownership rejects same-index and root reuse while preserving distinct siblings. Compile-link-run
   coverage includes unselected out-of-range indices for final `if` and final `switch`. No syntax or ABI changed.
+- 2026-11-27: Nested runtime-selected fixed-array ownership paths now have direct and compile-link-run coverage with two
+  independent indices. Final `if` and final `switch` preserve checked selected-arm access, skip both out-of-range
+  indices in retaining arms, keep distinct siblings available, and reject exact deep-path plus post-merge root reuse.
+  The recursively trivial fixed-array reconciliation slice is complete. No compiler, syntax, or ABI change was needed.

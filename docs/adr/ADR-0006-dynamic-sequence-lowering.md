@@ -4084,3 +4084,7 @@ representation.
   types. This is limited to recursively trivial terminal values: the consuming arm performs the existing checked
   access, while retaining arms only normalize ownership and emit no memory operation. Same-index and root reuse remain
   invalid, distinct siblings remain independent, and cleanup-bearing runtime-index descendants remain blocked.
+- 2026-11-27 Existing bracket-path reconciliation also handles multiple nested runtime indices. Direct and production
+  coverage now pins `holder.buckets[row].items[column]` through final `if` and final `switch`, including retaining arms
+  with two out-of-range values, independent sibling consumption, exact-path reuse rejection, and post-merge root reuse
+  rejection. No lowering change was required; cleanup-bearing runtime-index descendants remain outside this proof.
