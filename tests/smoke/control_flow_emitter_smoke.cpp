@@ -221,7 +221,12 @@ int main() {
                   "function choose_nested_indexed_switch(flag: Bool, holder: GridHolder) -> UInt32\n"
                   "    switch flag\n"
                   "        true => consume_payload(holder.buckets[0].items[1])\n"
-                  "        false => 0 as UInt32\n";
+                  "        false => 0 as UInt32\n"
+                  "function choose_runtime_indexed_if(flag: Bool, index: UInt64, holder: Holder) -> UInt32\n"
+                  "    if flag\n"
+                  "        consume_payload(holder.items[index])\n"
+                  "    else\n"
+                  "        0 as UInt32\n";
     }
 
     auto aggregate_source = orison::source::SourceFile::read(aggregate_mismatch_path);
@@ -740,6 +745,43 @@ int main() {
         "holder",
         "%record.GridHolder",
         "use after move: holder.buckets.element0.items.element1"
+    );
+
+    aggregate_diagnostics = {};
+    auto runtime_indexed_if_state = seed_holder_state();
+    runtime_indexed_if_state.immutable_bindings.emplace("index", orison::lowering::LoweredExpression {
+        .type = "i64",
+        .value = "%index",
+        .signedness = orison::lowering::IntegerSignedness::unsigned_integer,
+    });
+    auto runtime_indexed_if_failures = orison::lowering::LoweringFailures {};
+    auto runtime_indexed_if_session = orison::lowering::FunctionLoweringSession {
+        .state = runtime_indexed_if_state,
+        .failures = runtime_indexed_if_failures,
+    };
+    auto runtime_indexed_if_output = std::ostringstream {};
+    auto runtime_indexed_if_lowered = orison::lowering::lower_final_control_flow_statement(
+        aggregate_parse_result.module.functions[15].body_statements.front(),
+        "i32",
+        orison::lowering::IntegerSignedness::unsigned_integer,
+        aggregate_context,
+        runtime_indexed_if_session,
+        aggregate_diagnostics,
+        runtime_indexed_if_output
+    );
+    assert(!aggregate_diagnostics.has_errors());
+    assert(runtime_indexed_if_lowered.has_value());
+    assert(orison::lowering::is_owned_binding_consumed(
+        runtime_indexed_if_state.ownership_transfers,
+        "holder.items[index]"
+    ));
+    assert(runtime_indexed_if_output.str().find("dynamic_array_cleanup") == std::string::npos);
+    assert_post_merge_reuse_failure(
+        runtime_indexed_if_session,
+        runtime_indexed_if_failures,
+        "holder",
+        "%record.Holder",
+        "use after move: holder.items[index]"
     );
 
     auto choice_path = std::filesystem::temp_directory_path() / "orison_control_flow_choice_payload_smoke.or";

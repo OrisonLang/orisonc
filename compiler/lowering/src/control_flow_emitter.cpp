@@ -684,25 +684,49 @@ auto is_trivially_finalizable_aggregate_path_transfer(
     }
     auto terminal_source_type = root_source_type->second;
     for (auto const& field_name : field_names) {
-        if (auto record = context.lowering.records.find(terminal_source_type);
-            record != context.lowering.records.end()) {
-            auto const* field = find_record_field(record->second, field_name);
-            if (field == nullptr) {
+        auto segment = std::string_view {field_name};
+        auto bracket = segment.find('[');
+        auto member_name = segment.substr(0, bracket);
+        if (!member_name.empty()) {
+            auto record = context.lowering.records.find(terminal_source_type);
+            if (record == context.lowering.records.end() && bracket != std::string_view::npos) {
                 return false;
             }
-            terminal_source_type = field->source_type_name;
+            if (record != context.lowering.records.end()) {
+                auto const* field = find_record_field(record->second, member_name);
+                if (field == nullptr) {
+                    return false;
+                }
+                terminal_source_type = field->source_type_name;
+                if (bracket == std::string_view::npos) {
+                    continue;
+                }
+                segment.remove_prefix(bracket);
+            }
+        }
+
+        while (segment.starts_with('[')) {
+            auto close = segment.find(']');
+            auto element_source_type = array_element_source_type_name(terminal_source_type);
+            if (close == std::string_view::npos || close == 1 || !element_source_type.has_value()) {
+                return false;
+            }
+            terminal_source_type = std::move(*element_source_type);
+            segment.remove_prefix(close + 1);
+        }
+        if (segment.empty()) {
             continue;
         }
 
         constexpr auto element_prefix = std::string_view {"element"};
         auto element_source_type = array_element_source_type_name(terminal_source_type);
         auto length = fixed_array_length(terminal_source_type);
-        if (!field_name.starts_with(element_prefix) ||
+        if (!segment.starts_with(element_prefix) ||
             !element_source_type.has_value() ||
             !length.has_value()) {
             return false;
         }
-        auto index = decimal_size_value(std::string_view {field_name}.substr(element_prefix.size()));
+        auto index = decimal_size_value(segment.substr(element_prefix.size()));
         if (!index.has_value() || *index >= *length) {
             return false;
         }

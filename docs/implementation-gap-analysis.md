@@ -2,7 +2,7 @@
 
 ## Brief Snapshot
 
-Date: 2026-11-26
+Date: 2026-11-27
 
 - The grammar and tour have broad parser and semantic coverage. The native pipeline emits, links, and runs the
   validated source matrix, but backend support remains composition-driven rather than complete for every valid shape.
@@ -19,8 +19,8 @@ Date: 2026-11-26
 - Final `if` and final `switch` now reconcile arbitrary-depth named record paths consumed in one arm or case when the
   terminal type is recursively trivial to finalize. No cleanup IR is needed; all continuing states merge as consumed
   and post-merge reuse remains invalid.
-- In-range constant fixed-array indices now compose with named record paths under the same proof. Runtime-selected
-  indices and descendants with unproven cleanup obligations remain blocked.
+- Constant and runtime-selected fixed-array indices now compose with named record paths under the same proof when the
+  terminal type is recursively trivial to finalize. Runtime-selected cleanup-bearing descendants remain blocked.
 - Broad remaining projects are production interface values, general C binding discovery, cross-target linking, richer
   source-span diagnostics, and complete async cancellation/executor semantics. These are not suitable for the next
   bounded iteration.
@@ -241,4 +241,5 @@ This note is an implementation snapshot. It does not define language syntax or s
 
 ## Suggested Next Step
 
-- Refresh the grammar-and-tour gap audit and select the next bounded lowering gap outside interface-value semantics.
+- Exercise nested runtime-selected fixed-array paths through final-control reconciliation, including two independent
+  indices, unselected out-of-range values, sibling ownership, and post-merge reuse boundaries.

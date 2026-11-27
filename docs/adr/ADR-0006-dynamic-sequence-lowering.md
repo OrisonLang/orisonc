@@ -4080,3 +4080,7 @@ representation.
   Mixed paths with two indices reconcile through final `if` and final `switch`, distinct sibling elements remain
   independently consumable, duplicate consumption reports the full canonical owner path, and merged state rejects
   later root reuse. Runtime-index and cleanup-bearing boundaries remain unchanged.
+- 2026-11-27 Final-control no-op reconciliation now resolves bracketed runtime-index segments through fixed-array source
+  types. This is limited to recursively trivial terminal values: the consuming arm performs the existing checked
+  access, while retaining arms only normalize ownership and emit no memory operation. Same-index and root reuse remain
+  invalid, distinct siblings remain independent, and cleanup-bearing runtime-index descendants remain blocked.

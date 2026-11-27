@@ -4354,3 +4354,7 @@ This file tracks which source-language frontend slices are reflected in the curr
   indices produce canonical paths such as `holder.buckets.element1.items.element0`; sibling elements remain separately
   consumable, a repeated move from the same element is rejected, and final-if/final-switch merges preserve post-merge
   use-after-move diagnostics. No compiler, syntax, or ABI change was required.
+- 2026-11-27: Final-control no-op reconciliation now accepts runtime-selected fixed-array paths whose terminal type is
+  recursively trivial to finalize. The selected arm retains its checked access, the retaining arm emits no access or
+  cleanup, and merged ownership rejects same-index and root reuse while preserving distinct siblings. Compile-link-run
+  coverage includes unselected out-of-range indices for final `if` and final `switch`. No syntax or ABI changed.

@@ -1,0 +1,36 @@
+package fixtures.aggregateruntimeindextrivialrecordfinalcontrolreconciliationrun
+
+record Payload
+    public value: UInt32
+
+record Holder
+    public items: Array<Payload, 2>
+
+function consume_payload(payload: Payload) -> UInt32
+    payload.value
+
+function choose_if(flag: Bool, index: UInt64) -> UInt32
+    let holder: Holder = Holder([Payload(7 as UInt32), Payload(9 as UInt32)])
+    if flag
+        consume_payload(holder.items[index])
+    else
+        0 as UInt32
+
+function choose_switch(flag: Bool, index: UInt64) -> UInt32
+    let holder: Holder = Holder([Payload(11 as UInt32), Payload(13 as UInt32)])
+    switch flag
+        true => consume_payload(holder.items[index])
+        false => 0 as UInt32
+
+function consume_distinct(index: UInt64) -> UInt32
+    let holder: Holder = Holder([Payload(17 as UInt32), Payload(19 as UInt32)])
+    let selected: UInt32 = consume_payload(holder.items[index])
+    selected + consume_payload(holder.items[1])
+
+function main() -> UInt32
+    let if_consumed: UInt32 = choose_if(true, 0 as UInt64)
+    let if_finalized: UInt32 = choose_if(false, 2 as UInt64)
+    let switch_consumed: UInt32 = choose_switch(true, 1 as UInt64)
+    let switch_finalized: UInt32 = choose_switch(false, 2 as UInt64)
+    let distinct: UInt32 = consume_distinct(0 as UInt64)
+    if_consumed - 7 as UInt32 + if_finalized + switch_consumed - 13 as UInt32 + switch_finalized + distinct - 36 as UInt32
