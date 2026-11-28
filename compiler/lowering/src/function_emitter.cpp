@@ -1977,6 +1977,70 @@ void finish_function_emission(
     preserve_function_emission_metadata(state, result, consumed_descriptor_finalization_plans);
 }
 
+auto lower_direct_final_recur_statement(
+    syntax::StatementSyntax const& statement,
+    syntax::FunctionSyntax const& function,
+    LoweredFunctionSignature const& signature,
+    EmissionContext const& context,
+    FunctionLoweringSession& session,
+    diagnostics::DiagnosticBag& diagnostics,
+    std::ostringstream& output
+) -> bool {
+    if (statement.arguments.size() != function.parameters.size()) {
+        diagnostics.error(statement.line, "recur argument count does not match the enclosing function parameter count");
+        return false;
+    }
+
+    auto arguments = std::vector<LoweredExpression> {};
+    arguments.reserve(statement.arguments.size());
+    for (auto index = std::size_t {0}; index < statement.arguments.size(); ++index) {
+        auto source_type_name = index < signature.parameter_source_type_names.size()
+            ? std::optional<std::string_view> {signature.parameter_source_type_names[index]}
+            : std::optional<std::string_view> {};
+        auto argument = lower_expression(
+            statement.arguments[index],
+            signature.parameter_types[index],
+            signature.parameter_signedness[index],
+            context,
+            session,
+            output,
+            source_type_name
+        );
+        if (!argument.has_value()) {
+            diagnostics.error(
+                statement.line,
+                append_expression_lowering_failure(
+                    "lowering does not yet support this recur argument",
+                    session.failures.expression
+                )
+            );
+            return false;
+        }
+        arguments.push_back(std::move(*argument));
+    }
+
+    auto cleanup_output = std::ostringstream {};
+    if (!emit_function_return_cleanup(context, session, diagnostics, cleanup_output)) {
+        return false;
+    }
+    if (!cleanup_output.str().empty()) {
+        diagnostics.error(statement.line, "recur currently requires no pending automatic cleanup");
+        return false;
+    }
+
+    auto const predecessor = session.state.current_block;
+    emit_llvm_branch(output, "recur.backedge");
+    emit_llvm_block_label(output, "recur.backedge");
+    for (auto index = std::size_t {0}; index < function.parameters.size(); ++index) {
+        output << "  " << llvm_local_value_name(function.parameters[index].name + ".recur.next")
+               << " = phi " << signature.parameter_types[index] << " [ " << arguments[index].value
+               << ", %" << predecessor << " ]\n";
+    }
+    emit_llvm_branch(output, "recur.header");
+    session.state.current_block = "recur.backedge";
+    return true;
+}
+
 void emit_function_body(
     syntax::FunctionSyntax const& function,
     LoweredFunctionSignature const& signature,
@@ -2041,6 +2105,31 @@ void emit_function_body(
         }
     }
 
+    auto const has_direct_final_recur =
+        !function.body_statements.empty() &&
+        function.body_statements.back().kind == syntax::StatementKind::recur_statement;
+    if (has_direct_final_recur && signature.return_type == "void") {
+        diagnostics.error(function.body_statements.back().line, "scalar recur lowering currently requires a non-Unit function");
+        return;
+    }
+    if (has_direct_final_recur) {
+        for (auto index = std::size_t {0}; index < function.parameters.size(); ++index) {
+            auto const source_type_name = index < signature.parameter_source_type_names.size()
+                ? signature.parameter_source_type_names[index]
+                : render_source_type_name(function.parameters[index].type);
+            auto const& llvm_type = signature.parameter_types[index];
+            auto const scalar_llvm_type = llvm_type == "ptr" || llvm_type == "float" || llvm_type == "double" ||
+                (llvm_type.starts_with("i") && llvm_type.size() > 1);
+            if (!scalar_llvm_type || !is_scalar_or_nonowning_source_type(source_type_name)) {
+                diagnostics.error(
+                    function.body_statements.back().line,
+                    "scalar recur lowering does not yet support parameter type '" + source_type_name + "'"
+                );
+                return;
+            }
+        }
+    }
+
     output << "define " << signature.return_type << " @" << signature.symbol_name << "(";
     for (auto index = std::size_t {0}; index < function.parameters.size(); ++index) {
         if (index > 0) {
@@ -2051,8 +2140,22 @@ void emit_function_body(
     }
     output << ") {\n";
     output << "entry:\n";
+    if (has_direct_final_recur) {
+        emit_llvm_branch(output, "recur.header");
+        emit_llvm_block_label(output, "recur.header");
+        for (auto index = std::size_t {0}; index < function.parameters.size(); ++index) {
+            output << "  " << llvm_local_value_name(function.parameters[index].name + ".recur.current")
+                   << " = phi " << signature.parameter_types[index] << " [ "
+                   << llvm_local_value_name(function.parameters[index].name) << ", %entry ], [ "
+                   << llvm_local_value_name(function.parameters[index].name + ".recur.next")
+                   << ", %recur.backedge ]\n";
+        }
+    }
 
     auto state = FunctionLoweringState {};
+    if (has_direct_final_recur) {
+        state.current_block = "recur.header";
+    }
     auto failures = LoweringFailures {};
     auto session = FunctionLoweringSession {
         .state = state,
@@ -2066,7 +2169,9 @@ void emit_function_body(
         state.local_name_counts[function.parameters[index].name] = 1;
         state.immutable_bindings.emplace(function.parameters[index].name, LoweredExpression {
             .type = signature.parameter_types[index],
-            .value = llvm_local_value_name(function.parameters[index].name),
+            .value = has_direct_final_recur
+                ? llvm_local_value_name(function.parameters[index].name + ".recur.current")
+                : llvm_local_value_name(function.parameters[index].name),
             .signedness = signature.parameter_signedness[index],
         });
         auto source_type_name =
@@ -2373,6 +2478,21 @@ void emit_function_body(
         }
 
         if (is_last_statement) {
+            if (statement.kind == syntax::StatementKind::recur_statement) {
+                if (!lower_direct_final_recur_statement(
+                        statement,
+                        function,
+                        signature,
+                        context,
+                        session,
+                        diagnostics,
+                        output
+                    )) {
+                    return;
+                }
+                finish_function_emission(state, result, consumed_descriptor_finalization_plans, output);
+                return;
+            }
             if (statement.kind == syntax::StatementKind::if_statement ||
                 statement.kind == syntax::StatementKind::switch_statement) {
                 attempted_final_control_flow = true;

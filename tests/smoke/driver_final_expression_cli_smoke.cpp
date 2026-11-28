@@ -284,6 +284,37 @@ auto main() -> int {
             "            let value = 2 as UInt32",
         }
     );
+    assert_cli_parse_failure(
+        executable,
+        smoke_temp_root / "orison_cli_recur_non_tail.or",
+        std::vector<std::string_view> {
+            "package demo.cli",
+            "function demo(value: UInt32) -> UInt32",
+            "    recur(value)",
+            "    value",
+        },
+        "recur statement is only valid in tail position"
+    );
+    assert_cli_parse_failure(
+        executable,
+        smoke_temp_root / "orison_cli_recur_arity.or",
+        std::vector<std::string_view> {
+            "package demo.cli",
+            "function demo(value: UInt32) -> UInt32",
+            "    recur()",
+        },
+        "recur argument count does not match the enclosing function parameter count"
+    );
+    assert_cli_parse_failure(
+        executable,
+        smoke_temp_root / "orison_cli_recur_type.or",
+        std::vector<std::string_view> {
+            "package demo.cli",
+            "function demo(value: UInt32) -> UInt32",
+            "    recur(false)",
+        },
+        "recur argument type 'Bool' does not match declared type 'UInt32'"
+    );
 
     std::filesystem::remove_all(smoke_temp_root);
     return 0;

@@ -1794,8 +1794,12 @@ void test_constructor_pattern_switch_success() {
     assert(switch_statement.switch_cases[1].pattern.arguments[1].text == "tail");
     assert(switch_statement.switch_cases[1].statements.size() == 1);
     assert(switch_statement.switch_cases[1].statements[0] != nullptr);
-    assert(switch_statement.switch_cases[1].statements[0]->kind == orison::syntax::StatementKind::expression_statement);
-    assert(switch_statement.switch_cases[1].statements[0]->expression.kind == orison::syntax::ExpressionKind::call);
+    assert(switch_statement.switch_cases[1].statements[0]->kind == orison::syntax::StatementKind::recur_statement);
+    assert(switch_statement.switch_cases[1].statements[0]->arguments.size() == 2);
+    assert(switch_statement.switch_cases[1].statements[0]->arguments[0].kind ==
+           orison::syntax::ExpressionKind::member_access);
+    assert(switch_statement.switch_cases[1].statements[0]->arguments[1].kind ==
+           orison::syntax::ExpressionKind::binary);
 }
 
 void test_switch_statement_success() {

@@ -83,6 +83,7 @@ int main() {
         output << "    value %= 2\n";
         output << "    return\n";
         output << "    return tail fill(source)\n";
+        output << "    recur(source)\n";
     }
 
     auto source_file = orison::source::SourceFile::read(path);
@@ -119,6 +120,7 @@ int main() {
     bool saw_repeat = false;
     bool saw_unsafe = false;
     bool saw_tail = false;
+    bool saw_recur = false;
     bool saw_true = false;
     bool saw_false = false;
     bool saw_string = false;
@@ -208,6 +210,9 @@ int main() {
         }
         if (token.kind == orison::syntax::TokenKind::keyword_tail) {
             saw_tail = true;
+        }
+        if (token.kind == orison::syntax::TokenKind::keyword_recur) {
+            saw_recur = true;
         }
         if (token.kind == orison::syntax::TokenKind::keyword_true) {
             saw_true = true;
@@ -309,6 +314,7 @@ int main() {
     assert(saw_repeat);
     assert(saw_unsafe);
     assert(saw_tail);
+    assert(saw_recur);
     assert(saw_true);
     assert(saw_false);
     assert(saw_string);

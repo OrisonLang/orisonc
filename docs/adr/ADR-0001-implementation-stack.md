@@ -419,6 +419,9 @@ analysis, and lowering components.
   Documented `return tail f(...)` calls retain a syntax-tree marker through lowering. ABI-compatible scalar calls with
   no pending automatic cleanup emit LLVM `musttail call`; unsupported ABI or cleanup shapes fail explicitly rather
   than weakening the source guarantee.
+  Documented scalar `recur(...)` statements use a dedicated syntax node. A final top-level recur lowers to parameter
+  PHIs at a recurrence header and one simultaneous-argument backedge. Cleanup-bearing and nested-control recur shapes
+  remain explicit lowering gaps.
 - Development builds may use the platform's monolithic shared LLVM target when component archives are unavailable;
   release packaging must use a static LLVM distribution to preserve statically linked tool executables.
 - Future ADRs should define the lowering pipeline, incremental compilation architecture, and runtime boundary.

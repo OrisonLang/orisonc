@@ -4366,3 +4366,7 @@ This file tracks which source-language frontend slices are reflected in the curr
   call forms, while ordinary identifiers named `tail` remain valid outside that return context. ABI-compatible scalar
   calls with no pending automatic cleanup emit LLVM `musttail call`; incompatible signatures, constructors, member
   calls, and pending cleanup retain explicit diagnostics. General cleanup-before-tail lowering and `recur(...)` remain.
+- 2026-11-27: `recur(...)` now has an explicit statement AST and semantic tail-position, arity, and argument-type
+  validation. A final top-level recur in a non-Unit scalar function lowers through parameter PHIs and one fixed
+  backedge, evaluates all next arguments from the current iteration, and has compile-link-run coverage. Pending
+  automatic cleanup and non-scalar parameters remain rejected. Final `if` and `switch` recur arms remain unsupported.

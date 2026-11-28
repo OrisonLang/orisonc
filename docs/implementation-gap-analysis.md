@@ -242,5 +242,5 @@ This note is an implementation snapshot. It does not define language syntax or s
 
 ## Suggested Next Step
 
-- Implement scalar `recur(...)` as self-tail re-entry through parameter PHIs and a loop backedge, then add direct and
-  compile-link-run coverage. This completes the second documented tail form without broadening public syntax.
+- Extend scalar `recur(...)` termination into final `if` and `switch` arms, starting with the tour-shaped exhaustive
+  switch. Merge only value-producing exits while routing recur exits to the existing function backedge.

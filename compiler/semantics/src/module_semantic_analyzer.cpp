@@ -6482,12 +6482,14 @@ private:
         auto saved_current_function_returns_pointer = current_function_returns_pointer_;
         auto saved_current_function_returns_address = current_function_returns_address_;
         auto saved_current_function_return_type_name = current_function_return_type_name_;
+        auto saved_current_function_parameters = current_function_parameters_;
         auto saved_current_generic_scope = current_generic_scope_;
         receiver_context_active_ = !receiver_type_name.empty();
         unsafe_context_active_ = function.is_unsafe;
         current_function_returns_pointer_ = is_pointer_type(function.return_type);
         current_function_returns_address_ = is_address_type(function.return_type);
         current_function_return_type_name_ = render_type_name(function.return_type);
+        current_function_parameters_ = &function.parameters;
         current_generic_scope_ = std::move(enclosing_generic_scope);
         current_generic_scope_.insert(function.generic_parameters.begin(), function.generic_parameters.end());
 
@@ -6545,6 +6547,7 @@ private:
         current_function_returns_pointer_ = saved_current_function_returns_pointer;
         current_function_returns_address_ = saved_current_function_returns_address;
         current_function_return_type_name_ = saved_current_function_return_type_name;
+        current_function_parameters_ = saved_current_function_parameters;
         current_generic_scope_ = std::move(saved_current_generic_scope);
     }
 
@@ -6554,6 +6557,10 @@ private:
         }
 
         if (statement.kind == syntax::StatementKind::return_statement) {
+            return true;
+        }
+
+        if (statement.kind == syntax::StatementKind::recur_statement) {
             return true;
         }
 
@@ -6607,6 +6614,11 @@ private:
     }
 
     void analyze_final_statement(syntax::StatementSyntax const& statement, bool in_async_function) {
+        if (statement.kind == syntax::StatementKind::recur_statement) {
+            analyze_recur_statement(statement, in_async_function);
+            return;
+        }
+
         if (statement.kind == syntax::StatementKind::expression_statement) {
             analyze_final_expression_statement(statement, in_async_function);
             return;
@@ -6628,6 +6640,36 @@ private:
         }
 
         analyze_statement(statement, in_async_function);
+    }
+
+    void analyze_recur_statement(
+        syntax::StatementSyntax const& statement,
+        bool in_async_function
+    ) {
+        if (current_function_parameters_ == nullptr) {
+            diagnostics_.error(statement.line, "recur statement requires an enclosing function");
+            return;
+        }
+        if (statement.arguments.size() != current_function_parameters_->size()) {
+            diagnostics_.error(
+                statement.line,
+                "recur argument count does not match the enclosing function parameter count"
+            );
+        }
+
+        auto const count = std::min(statement.arguments.size(), current_function_parameters_->size());
+        for (auto index = std::size_t {0}; index < statement.arguments.size(); ++index) {
+            auto const& argument = statement.arguments[index];
+            analyze_expression(argument, in_async_function);
+            if (index < count) {
+                validate_typed_expression_compatibility(
+                    argument,
+                    render_type_name((*current_function_parameters_)[index].type),
+                    statement.line,
+                    "recur argument"
+                );
+            }
+        }
     }
 
     void analyze_final_expression_statement(syntax::StatementSyntax const& statement, bool in_async_function) {
@@ -6971,6 +7013,14 @@ private:
     }
 
     void analyze_statement(syntax::StatementSyntax const& statement, bool in_async_function) {
+        if (statement.kind == syntax::StatementKind::recur_statement) {
+            diagnostics_.error(statement.line, "recur statement is only valid in tail position");
+            for (auto const& argument : statement.arguments) {
+                analyze_expression(argument, in_async_function);
+            }
+            return;
+        }
+
         if (statement.kind == syntax::StatementKind::let_binding || statement.kind == syntax::StatementKind::var_binding) {
             if (!statement.annotated_type.name.empty()) {
                 auto binding_kind =
@@ -8010,6 +8060,7 @@ private:
     bool current_function_returns_pointer_ = false;
     bool current_function_returns_address_ = false;
     std::string current_function_return_type_name_;
+    std::vector<syntax::ParameterSyntax> const* current_function_parameters_ = nullptr;
     std::unordered_set<std::string> current_generic_scope_;
     std::string expected_pointer_type_name_;
     std::vector<ConcurrencyCaptureContext> capture_contexts_;

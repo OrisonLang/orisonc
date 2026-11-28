@@ -129,6 +129,7 @@ enum class StatementKind {
     var_binding,
     assignment_statement,
     return_statement,
+    recur_statement,
     break_statement,
     continue_statement,
     switch_statement,
@@ -151,6 +152,7 @@ struct StatementSyntax {
     ExpressionSyntax assignment_target;
     std::string assignment_operator = "=";
     ExpressionSyntax expression;
+    std::vector<ExpressionSyntax> arguments;
     std::vector<StatementSyntax> nested_statements;
     std::vector<StatementSyntax> alternate_statements;
     std::vector<SwitchCaseSyntax> switch_cases;

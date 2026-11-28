@@ -1317,6 +1317,19 @@ private:
         return statement;
     }
 
+    auto parse_recur_statement(ParseResult& result) -> StatementSyntax {
+        StatementSyntax statement {.kind = StatementKind::recur_statement, .line = current().line, .valid = true};
+        advance();
+        if (!is(TokenKind::left_paren)) {
+            result.diagnostics.error(statement.line, "recur statement requires '('");
+            statement.valid = false;
+            return statement;
+        }
+        advance();
+        statement.arguments = parse_argument_list(result);
+        return statement;
+    }
+
     auto parse_break_statement() -> StatementSyntax {
         StatementSyntax statement {.kind = StatementKind::break_statement, .line = current().line, .valid = true};
         advance();
@@ -1651,6 +1664,8 @@ private:
             return parse_binding_statement(result, StatementKind::var_binding);
         case TokenKind::keyword_return:
             return parse_return_statement(result);
+        case TokenKind::keyword_recur:
+            return parse_recur_statement(result);
         case TokenKind::keyword_break:
             return parse_break_statement();
         case TokenKind::keyword_continue:

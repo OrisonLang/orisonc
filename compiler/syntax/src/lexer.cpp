@@ -62,6 +62,9 @@ auto keyword_kind(std::string_view text) -> TokenKind {
     if (text == "return") {
         return TokenKind::keyword_return;
     }
+    if (text == "recur") {
+        return TokenKind::keyword_recur;
+    }
     if (text == "switch") {
         return TokenKind::keyword_switch;
     }
