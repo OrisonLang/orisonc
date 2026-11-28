@@ -27,7 +27,7 @@ auto main() -> int {
 
     auto executable = std::filesystem::current_path().parent_path() / "tools" / "orisonc" / "orisonc";
     auto examples = std::filesystem::path(ORISON_SOURCE_DIR) / "examples";
-    constexpr auto run_examples = std::array<std::string_view, 22> {
+    constexpr auto run_examples = std::array<std::string_view, 23> {
         "local_aggregate_let.or",
         "local_inferred_record_let.or",
         "local_inferred_nested_record_let.or",
@@ -50,6 +50,7 @@ auto main() -> int {
         "recur_scalar_if_main.or",
         "recur_scalar_main.or",
         "recur_scalar_multiple_main.or",
+        "recur_scalar_nested_main.or",
     };
 
     for (auto name : run_examples) {

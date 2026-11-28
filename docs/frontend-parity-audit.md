@@ -4384,3 +4384,7 @@ This file tracks which source-language frontend slices are reflected in the curr
   predecessors before returning to the recurrence header. LLVM, object, diagnostic, and linked runtime coverage prove
   two recurrent switch exits, while LLVM coverage proves both final-if arms recurrent. Nested and multi-statement
   recurrent arms remain explicit gaps.
+- 2026-11-27: Scalar recurrence now composes through one nested final-control layer. Nested `if` and `switch` exits
+  contribute directly to the function-level backedge PHIs; compile-link-run coverage executes both nested `if` exits,
+  and deeper nesting retains a stable diagnostic. Multi-statement and cleanup-bearing recurrent arms remain gaps. No
+  syntax or ABI changed.

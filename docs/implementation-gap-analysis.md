@@ -242,6 +242,5 @@ This note is an implementation snapshot. It does not define language syntax or s
 
 ## Suggested Next Step
 
-- Extend the shared scalar recurrence collector through one nested final `if` or `switch`. Nested recurrent exits should
-  contribute their predecessor/value pairs to the same function-level backedge without introducing intermediate value
-  PHIs.
+- Support non-owning statements before the terminating value, return, or `recur(...)` in final recurrent arms. Reuse
+  ordinary statement lowering, preserve one shared recurrence backedge, and continue rejecting pending cleanup.

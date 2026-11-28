@@ -2086,31 +2086,28 @@ auto emit_recur_backedge(
     return true;
 }
 
-auto direct_final_switch_recur_count(syntax::StatementSyntax const& statement) -> std::size_t {
+auto final_statement_recur_count(syntax::StatementSyntax const& statement) -> std::size_t {
+    if (statement.kind == syntax::StatementKind::recur_statement) {
+        return 1;
+    }
+    if (statement.kind == syntax::StatementKind::if_statement) {
+        auto block_recur_count = [](std::vector<syntax::StatementSyntax> const& statements) -> std::size_t {
+            return statements.empty() ? 0 : final_statement_recur_count(statements.back());
+        };
+        return block_recur_count(statement.nested_statements) +
+            block_recur_count(statement.alternate_statements);
+    }
     if (statement.kind != syntax::StatementKind::switch_statement) {
         return 0;
     }
 
-    return static_cast<std::size_t>(std::ranges::count_if(
-        statement.switch_cases,
-        [](syntax::SwitchCaseSyntax const& switch_case) {
-            return !switch_case.statements.empty() && switch_case.statements.back() != nullptr &&
-                switch_case.statements.back()->kind == syntax::StatementKind::recur_statement;
+    auto count = std::size_t {0};
+    for (auto const& switch_case : statement.switch_cases) {
+        if (!switch_case.statements.empty() && switch_case.statements.back() != nullptr) {
+            count += final_statement_recur_count(*switch_case.statements.back());
         }
-    ));
-}
-
-auto direct_final_if_recur_count(syntax::StatementSyntax const& statement) -> std::size_t {
-    if (statement.kind != syntax::StatementKind::if_statement) {
-        return 0;
     }
-
-    auto direct_recur_count = [](std::vector<syntax::StatementSyntax> const& statements) -> std::size_t {
-        return !statements.empty() &&
-            statements.back().kind == syntax::StatementKind::recur_statement ? 1 : 0;
-    };
-    return direct_recur_count(statement.nested_statements) +
-        direct_recur_count(statement.alternate_statements);
+    return count;
 }
 
 auto lower_final_recur_value_statement(
@@ -2180,6 +2177,32 @@ auto lower_final_recur_value_statement(
     return StatementFlow::terminated;
 }
 
+auto lower_final_recur_if_statement(
+    syntax::StatementSyntax const& statement,
+    syntax::FunctionSyntax const& function,
+    LoweredFunctionSignature const& signature,
+    std::optional<std::string_view> return_source_type_name,
+    EmissionContext const& context,
+    FunctionLoweringSession& session,
+    diagnostics::DiagnosticBag& diagnostics,
+    std::ostringstream& output,
+    std::vector<RecurBackedgeIncoming>& backedge_incomings,
+    std::size_t nested_control_depth
+) -> StatementFlow;
+
+auto lower_final_recur_switch_statement(
+    syntax::StatementSyntax const& statement,
+    syntax::FunctionSyntax const& function,
+    LoweredFunctionSignature const& signature,
+    std::optional<std::string_view> return_source_type_name,
+    EmissionContext const& context,
+    FunctionLoweringSession& session,
+    diagnostics::DiagnosticBag& diagnostics,
+    std::ostringstream& output,
+    std::vector<RecurBackedgeIncoming>& backedge_incomings,
+    std::size_t nested_control_depth
+) -> StatementFlow;
+
 auto lower_final_recur_arm(
     std::span<syntax::StatementSyntax const* const> statements,
     std::string_view control_flow_name,
@@ -2190,7 +2213,8 @@ auto lower_final_recur_arm(
     FunctionLoweringSession& session,
     diagnostics::DiagnosticBag& diagnostics,
     std::ostringstream& output,
-    std::vector<RecurBackedgeIncoming>& backedge_incomings
+    std::vector<RecurBackedgeIncoming>& backedge_incomings,
+    std::size_t nested_control_depth
 ) -> StatementFlow {
     if (statements.size() != 1 || statements.front() == nullptr) {
         diagnostics.error(
@@ -2227,6 +2251,42 @@ auto lower_final_recur_arm(
             output
         );
     }
+    if (arm_statement.kind == syntax::StatementKind::if_statement ||
+        arm_statement.kind == syntax::StatementKind::switch_statement) {
+        if (nested_control_depth == 0) {
+            diagnostics.error(
+                arm_statement.line,
+                "scalar recur lowering currently supports one nested final control-flow layer"
+            );
+            return StatementFlow::failed;
+        }
+        if (arm_statement.kind == syntax::StatementKind::if_statement) {
+            return lower_final_recur_if_statement(
+                arm_statement,
+                function,
+                signature,
+                return_source_type_name,
+                context,
+                session,
+                diagnostics,
+                output,
+                backedge_incomings,
+                nested_control_depth - 1
+            );
+        }
+        return lower_final_recur_switch_statement(
+            arm_statement,
+            function,
+            signature,
+            return_source_type_name,
+            context,
+            session,
+            diagnostics,
+            output,
+            backedge_incomings,
+            nested_control_depth - 1
+        );
+    }
     diagnostics.error(
         arm_statement.line,
         "scalar recur lowering currently requires a value, return, or recur in each final " +
@@ -2244,7 +2304,8 @@ auto lower_final_recur_if_statement(
     FunctionLoweringSession& session,
     diagnostics::DiagnosticBag& diagnostics,
     std::ostringstream& output,
-    std::vector<RecurBackedgeIncoming>& backedge_incomings
+    std::vector<RecurBackedgeIncoming>& backedge_incomings,
+    std::size_t nested_control_depth
 ) -> StatementFlow {
     if (statement.alternate_statements.empty()) {
         diagnostics.error(statement.line, "scalar recur lowering requires an else arm in a final if");
@@ -2270,7 +2331,8 @@ auto lower_final_recur_if_statement(
                 session,
                 diagnostics,
                 output,
-                backedge_incomings
+                backedge_incomings,
+                nested_control_depth
             );
         },
         [&]() {
@@ -2285,7 +2347,8 @@ auto lower_final_recur_if_statement(
                 session,
                 diagnostics,
                 output,
-                backedge_incomings
+                backedge_incomings,
+                nested_control_depth
             );
         }
     );
@@ -2300,7 +2363,8 @@ auto lower_final_recur_switch_statement(
     FunctionLoweringSession& session,
     diagnostics::DiagnosticBag& diagnostics,
     std::ostringstream& output,
-    std::vector<RecurBackedgeIncoming>& backedge_incomings
+    std::vector<RecurBackedgeIncoming>& backedge_incomings,
+    std::size_t nested_control_depth
 ) -> StatementFlow {
     auto subject_type = infer_unit_expression_type(statement.expression, context, session.state);
     if (!subject_type.has_value()) {
@@ -2328,7 +2392,8 @@ auto lower_final_recur_switch_statement(
                 session,
                 diagnostics,
                 output,
-                backedge_incomings
+                backedge_incomings,
+                nested_control_depth
             );
         }
     );
@@ -2403,10 +2468,14 @@ void emit_function_body(
         function.body_statements.back().kind == syntax::StatementKind::recur_statement;
     auto const final_switch_recur_count = function.body_statements.empty()
         ? std::size_t {0}
-        : direct_final_switch_recur_count(function.body_statements.back());
+        : function.body_statements.back().kind == syntax::StatementKind::switch_statement
+            ? final_statement_recur_count(function.body_statements.back())
+            : std::size_t {0};
     auto const final_if_recur_count = function.body_statements.empty()
         ? std::size_t {0}
-        : direct_final_if_recur_count(function.body_statements.back());
+        : function.body_statements.back().kind == syntax::StatementKind::if_statement
+            ? final_statement_recur_count(function.body_statements.back())
+            : std::size_t {0};
     auto const has_final_recur =
         has_direct_final_recur || final_switch_recur_count > 0 || final_if_recur_count > 0;
     if (has_final_recur && signature.return_type == "void") {
@@ -2816,7 +2885,8 @@ void emit_function_body(
                     session,
                     diagnostics,
                     output,
-                    recur_backedge_incomings
+                    recur_backedge_incomings,
+                    1
                 );
                 if (flow != StatementFlow::terminated) {
                     return;
@@ -2844,7 +2914,8 @@ void emit_function_body(
                     session,
                     diagnostics,
                     output,
-                    recur_backedge_incomings
+                    recur_backedge_incomings,
+                    1
                 );
                 if (flow != StatementFlow::terminated) {
                     return;

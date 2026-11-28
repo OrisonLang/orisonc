@@ -351,6 +351,52 @@ auto main() -> int {
     assert(multiple_if_recur_output.find("%if.then.0 ]") != std::string::npos);
     assert(multiple_if_recur_output.find("%if.else.0 ]") != std::string::npos);
 
+    auto nested_switch_recur_path = smoke_temp_root / "orison_cli_recur_nested_switch.or";
+    write_lines(
+        nested_switch_recur_path,
+        std::vector<std::string_view> {
+            "package demo.cli",
+            "function demo(value: UInt32, flag: Bool) -> UInt32",
+            "    if flag",
+            "        switch value",
+            "            0 => value",
+            "            default => recur(value - 1 as UInt32, flag)",
+            "    else",
+            "        value",
+        }
+    );
+    auto nested_switch_recur_output = read_command_output(
+        executable.string() + " --emit-llvm " + nested_switch_recur_path.string()
+    );
+    assert(nested_switch_recur_output.find("value.recur.next = phi i32") != std::string::npos);
+    assert(nested_switch_recur_output.find("%switch.default.1 ]") != std::string::npos);
+
+    auto deep_recur_path = smoke_temp_root / "orison_cli_recur_deep_final_control.or";
+    write_lines(
+        deep_recur_path,
+        std::vector<std::string_view> {
+            "package demo.cli",
+            "function demo(value: UInt32, flag: Bool) -> UInt32",
+            "    switch value",
+            "        0 => value",
+            "        default =>",
+            "            if flag",
+            "                switch value",
+            "                    1 => recur(0 as UInt32, flag)",
+            "                    default => value",
+            "            else",
+            "                value",
+        }
+    );
+    auto deep_recur_output = read_failing_command_output(
+        executable.string() + " --emit-llvm " + deep_recur_path.string()
+    );
+    assert(
+        deep_recur_output.find(
+            "scalar recur lowering currently supports one nested final control-flow layer"
+        ) != std::string::npos
+    );
+
     std::filesystem::remove_all(smoke_temp_root);
     return 0;
 }
