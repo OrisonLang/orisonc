@@ -51,7 +51,7 @@ auto main() -> int {
 
     auto examples = std::filesystem::path(ORISON_SOURCE_DIR) / "examples";
     orison::pipeline::CompilePipeline pipeline;
-    constexpr auto backend_examples = std::array<std::string_view, 154> {
+    constexpr auto backend_examples = std::array<std::string_view, 155> {
         "concurrency_array_choice_task_main.or",
         "concurrency_array_choice_thread_main.or",
         "concurrency_array_task_main.or",
@@ -186,6 +186,7 @@ auto main() -> int {
         "local_record_nested_addressing.or",
         "local_record_nested_record_addressing.or",
         "local_record_nested_record_assignment.or",
+        "recur_scalar_deep_nested_main.or",
         "recur_scalar_if_main.or",
         "recur_scalar_main.or",
         "recur_scalar_multistatement_main.or",
@@ -254,6 +255,11 @@ auto main() -> int {
     assert(!multistatement_recur_ir.has_errors());
     assert(multistatement_recur_ir.ir_text.find("value.recur.next = phi i32") != std::string::npos);
     assert(multistatement_recur_ir.ir_text.find("sub i32 %value.recur.current, 1") != std::string::npos);
+
+    auto deep_nested_recur_ir = pipeline.emit_llvm(examples / "recur_scalar_deep_nested_main.or");
+    assert(!deep_nested_recur_ir.has_errors());
+    assert(deep_nested_recur_ir.ir_text.find("value.recur.next = phi i32") != std::string::npos);
+    assert(deep_nested_recur_ir.ir_text.find("%switch.default.2 ]") != std::string::npos);
 
     auto view_descriptor_ir = pipeline.emit_llvm(examples / "view_descriptor_reads.or");
     assert(!view_descriptor_ir.has_errors());

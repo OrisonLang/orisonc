@@ -388,14 +388,11 @@ auto main() -> int {
             "                value",
         }
     );
-    auto deep_recur_output = read_failing_command_output(
+    auto deep_recur_output = read_command_output(
         executable.string() + " --emit-llvm " + deep_recur_path.string()
     );
-    assert(
-        deep_recur_output.find(
-            "scalar recur lowering currently supports one nested final control-flow layer"
-        ) != std::string::npos
-    );
+    assert(deep_recur_output.find("value.recur.next = phi i32") != std::string::npos);
+    assert(deep_recur_output.find("%switch.case.2.0 ]") != std::string::npos);
 
     auto recur_cleanup_path = smoke_temp_root / "orison_cli_recur_multistatement_cleanup.or";
     write_lines(

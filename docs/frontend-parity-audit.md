@@ -4392,3 +4392,7 @@ This file tracks which source-language frontend slices are reflected in the curr
   return, nested control, or `recur(...)`. Compile-link-run coverage executes scalar bindings in both value and recur
   arms, while an owned DynamicArray prefix retains the no-pending-cleanup diagnostic at the recurrent exit. Deeper
   nesting and cleanup-bearing recurrence remain gaps. No syntax or ABI changed.
+- 2026-11-27: Final scalar recurrence now composes through arbitrary `if` and `switch` nesting depth. Recursive arm
+  lowering sends every recurrent predecessor directly to one function-level backedge PHI set. Compile-link-run coverage
+  executes a `switch -> if -> switch` fixture, and LLVM coverage pins all four inner-switch predecessors. Cleanup-bearing
+  recurrence remains blocked. No syntax or ABI changed.

@@ -1,0 +1,17 @@
+package examples.recurscalardeepnestedmain
+
+function reduce_to_zero(value: UInt32, subtract_one: Bool, acc: UInt32) -> UInt32
+    switch value
+        0 => acc
+        default =>
+            if subtract_one
+                switch value
+                    1 => recur(0 as UInt32, false, acc + 1 as UInt32)
+                    default => recur(value - 2 as UInt32, false, acc + 2 as UInt32)
+            else
+                switch value
+                    1 => recur(0 as UInt32, true, acc + 1 as UInt32)
+                    default => recur(value - 2 as UInt32, true, acc + 2 as UInt32)
+
+function main() -> UInt32
+    reduce_to_zero(10 as UInt32, true, 0 as UInt32) - 10 as UInt32

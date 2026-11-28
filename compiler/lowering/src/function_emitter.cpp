@@ -2186,8 +2186,7 @@ auto lower_final_recur_if_statement(
     FunctionLoweringSession& session,
     diagnostics::DiagnosticBag& diagnostics,
     std::ostringstream& output,
-    std::vector<RecurBackedgeIncoming>& backedge_incomings,
-    std::size_t nested_control_depth
+    std::vector<RecurBackedgeIncoming>& backedge_incomings
 ) -> StatementFlow;
 
 auto lower_final_recur_switch_statement(
@@ -2199,8 +2198,7 @@ auto lower_final_recur_switch_statement(
     FunctionLoweringSession& session,
     diagnostics::DiagnosticBag& diagnostics,
     std::ostringstream& output,
-    std::vector<RecurBackedgeIncoming>& backedge_incomings,
-    std::size_t nested_control_depth
+    std::vector<RecurBackedgeIncoming>& backedge_incomings
 ) -> StatementFlow;
 
 auto lower_final_recur_arm(
@@ -2213,8 +2211,7 @@ auto lower_final_recur_arm(
     FunctionLoweringSession& session,
     diagnostics::DiagnosticBag& diagnostics,
     std::ostringstream& output,
-    std::vector<RecurBackedgeIncoming>& backedge_incomings,
-    std::size_t nested_control_depth
+    std::vector<RecurBackedgeIncoming>& backedge_incomings
 ) -> StatementFlow {
     if (statements.empty() || statements.back() == nullptr) {
         diagnostics.error(
@@ -2280,13 +2277,6 @@ auto lower_final_recur_arm(
     }
     if (arm_statement.kind == syntax::StatementKind::if_statement ||
         arm_statement.kind == syntax::StatementKind::switch_statement) {
-        if (nested_control_depth == 0) {
-            diagnostics.error(
-                arm_statement.line,
-                "scalar recur lowering currently supports one nested final control-flow layer"
-            );
-            return StatementFlow::failed;
-        }
         if (arm_statement.kind == syntax::StatementKind::if_statement) {
             return lower_final_recur_if_statement(
                 arm_statement,
@@ -2297,8 +2287,7 @@ auto lower_final_recur_arm(
                 session,
                 diagnostics,
                 output,
-                backedge_incomings,
-                nested_control_depth - 1
+                backedge_incomings
             );
         }
         return lower_final_recur_switch_statement(
@@ -2310,8 +2299,7 @@ auto lower_final_recur_arm(
             session,
             diagnostics,
             output,
-            backedge_incomings,
-            nested_control_depth - 1
+            backedge_incomings
         );
     }
     diagnostics.error(
@@ -2331,8 +2319,7 @@ auto lower_final_recur_if_statement(
     FunctionLoweringSession& session,
     diagnostics::DiagnosticBag& diagnostics,
     std::ostringstream& output,
-    std::vector<RecurBackedgeIncoming>& backedge_incomings,
-    std::size_t nested_control_depth
+    std::vector<RecurBackedgeIncoming>& backedge_incomings
 ) -> StatementFlow {
     if (statement.alternate_statements.empty()) {
         diagnostics.error(statement.line, "scalar recur lowering requires an else arm in a final if");
@@ -2358,8 +2345,7 @@ auto lower_final_recur_if_statement(
                 session,
                 diagnostics,
                 output,
-                backedge_incomings,
-                nested_control_depth
+                backedge_incomings
             );
         },
         [&]() {
@@ -2374,8 +2360,7 @@ auto lower_final_recur_if_statement(
                 session,
                 diagnostics,
                 output,
-                backedge_incomings,
-                nested_control_depth
+                backedge_incomings
             );
         }
     );
@@ -2390,8 +2375,7 @@ auto lower_final_recur_switch_statement(
     FunctionLoweringSession& session,
     diagnostics::DiagnosticBag& diagnostics,
     std::ostringstream& output,
-    std::vector<RecurBackedgeIncoming>& backedge_incomings,
-    std::size_t nested_control_depth
+    std::vector<RecurBackedgeIncoming>& backedge_incomings
 ) -> StatementFlow {
     auto subject_type = infer_unit_expression_type(statement.expression, context, session.state);
     if (!subject_type.has_value()) {
@@ -2419,8 +2403,7 @@ auto lower_final_recur_switch_statement(
                 session,
                 diagnostics,
                 output,
-                backedge_incomings,
-                nested_control_depth
+                backedge_incomings
             );
         }
     );
@@ -2912,8 +2895,7 @@ void emit_function_body(
                     session,
                     diagnostics,
                     output,
-                    recur_backedge_incomings,
-                    1
+                    recur_backedge_incomings
                 );
                 if (flow != StatementFlow::terminated) {
                     return;
@@ -2941,8 +2923,7 @@ void emit_function_body(
                     session,
                     diagnostics,
                     output,
-                    recur_backedge_incomings,
-                    1
+                    recur_backedge_incomings
                 );
                 if (flow != StatementFlow::terminated) {
                     return;

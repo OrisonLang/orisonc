@@ -242,5 +242,5 @@ This note is an implementation snapshot. It does not define language syntax or s
 
 ## Suggested Next Step
 
-- Remove the artificial one-layer final-control recurrence limit. Recursively collect recurrent exits through arbitrary
-  final `if` and `switch` nesting while preserving the shared backedge and no-pending-cleanup rule.
+- Lower automatic cleanup for one recurrence-local owned `DynamicArray<UInt32>` before a direct recurrent backedge.
+  Keep cleanup internal to lowering, prove it executes once per iteration, and continue rejecting owned parameters.

@@ -423,10 +423,10 @@ analysis, and lowering components.
   PHIs at a recurrence header and one simultaneous-argument backedge. A final exhaustive switch may contain direct
   recurrent arms and one terminating statement per arm; ordinary value arms return directly and do not participate in
   a result PHI. A final `if` with `else` follows the same terminating-arm model. Multiple direct recurrent exits record
-  predecessor/value pairs and feed one shared backedge PHI per parameter. One nested final `if` or `switch` layer uses
-  the same collector and backedge without intermediate result PHIs. Final recurrent arms may contain ordinary prefix
-  statements before their terminating value, return, nested control, or `recur(...)`; recurrent exits still require no
-  pending automatic cleanup. Cleanup-bearing recurrence and deeper nested control remain explicit lowering gaps.
+  predecessor/value pairs and feed one shared backedge PHI per parameter. Recursively nested final `if` and `switch`
+  statements use the same collector and backedge without intermediate result PHIs. Final recurrent arms may contain
+  ordinary prefix statements before their terminating value, return, nested control, or `recur(...)`; recurrent exits
+  still require no pending automatic cleanup. Cleanup-bearing recurrence remains an explicit lowering gap.
 - Development builds may use the platform's monolithic shared LLVM target when component archives are unavailable;
   release packaging must use a static LLVM distribution to preserve statically linked tool executables.
 - Future ADRs should define the lowering pipeline, incremental compilation architecture, and runtime boundary.
