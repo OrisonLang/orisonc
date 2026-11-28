@@ -242,5 +242,5 @@ This note is an implementation snapshot. It does not define language syntax or s
 
 ## Suggested Next Step
 
-- Support non-owning statements before the terminating value, return, or `recur(...)` in final recurrent arms. Reuse
-  ordinary statement lowering, preserve one shared recurrence backedge, and continue rejecting pending cleanup.
+- Remove the artificial one-layer final-control recurrence limit. Recursively collect recurrent exits through arbitrary
+  final `if` and `switch` nesting while preserving the shared backedge and no-pending-cleanup rule.

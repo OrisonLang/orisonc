@@ -2216,16 +2216,43 @@ auto lower_final_recur_arm(
     std::vector<RecurBackedgeIncoming>& backedge_incomings,
     std::size_t nested_control_depth
 ) -> StatementFlow {
-    if (statements.size() != 1 || statements.front() == nullptr) {
+    if (statements.empty() || statements.back() == nullptr) {
         diagnostics.error(
             function.line,
-            "scalar recur lowering currently requires one terminating statement per final " +
+            "scalar recur lowering requires a terminating statement in each final " +
                 std::string(control_flow_name) + " arm"
         );
         return StatementFlow::failed;
     }
 
-    auto const& arm_statement = *statements.front();
+    for (auto index = std::size_t {0}; index + 1 < statements.size(); ++index) {
+        auto const* prefix_statement = statements[index];
+        if (prefix_statement == nullptr) {
+            diagnostics.error(function.line, "scalar recur lowering found an invalid prefix statement");
+            return StatementFlow::failed;
+        }
+        auto tail_scope = SiblingStatementTailScope {session.state, statements, index};
+        auto flow = lower_unit_statement(
+            *prefix_statement,
+            false,
+            context,
+            session,
+            diagnostics,
+            output
+        );
+        if (flow == StatementFlow::failed) {
+            return StatementFlow::failed;
+        }
+        if (flow == StatementFlow::terminated) {
+            diagnostics.error(
+                prefix_statement->line,
+                "scalar recur lowering requires prefix statements to fall through"
+            );
+            return StatementFlow::failed;
+        }
+    }
+
+    auto const& arm_statement = *statements.back();
     if (arm_statement.kind == syntax::StatementKind::recur_statement) {
         return lower_direct_final_recur_statement(
             arm_statement,

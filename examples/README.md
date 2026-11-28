@@ -4,6 +4,7 @@
 `recur_scalar_if_main.or` demonstrates scalar `recur(...)` through a final `if` and runs with exit status `0`.
 `recur_scalar_multiple_main.or` demonstrates multiple scalar `recur(...)` exits sharing one backedge.
 `recur_scalar_nested_main.or` demonstrates nested final-control recurrence sharing the function backedge.
+`recur_scalar_multistatement_main.or` demonstrates scalar prefix statements before recurrence and return.
 `dynamic_array_parameter_reads.or` demonstrates scalar `DynamicArray<UInt32>` parameter descriptor `.length()`,
 checked indexing, iteration, and parameter cleanup on the default compiler path.
 `dynamic_array_owned_parameter.or` demonstrates owned-element `DynamicArray<Payload>` parameter transfer,

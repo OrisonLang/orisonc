@@ -4388,3 +4388,7 @@ This file tracks which source-language frontend slices are reflected in the curr
   contribute directly to the function-level backedge PHIs; compile-link-run coverage executes both nested `if` exits,
   and deeper nesting retains a stable diagnostic. Multi-statement and cleanup-bearing recurrent arms remain gaps. No
   syntax or ABI changed.
+- 2026-11-27: Final recurrent control-flow arms now accept ordinary prefix statements before their terminating value,
+  return, nested control, or `recur(...)`. Compile-link-run coverage executes scalar bindings in both value and recur
+  arms, while an owned DynamicArray prefix retains the no-pending-cleanup diagnostic at the recurrent exit. Deeper
+  nesting and cleanup-bearing recurrence remain gaps. No syntax or ABI changed.

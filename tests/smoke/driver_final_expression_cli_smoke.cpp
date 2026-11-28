@@ -397,6 +397,27 @@ auto main() -> int {
         ) != std::string::npos
     );
 
+    auto recur_cleanup_path = smoke_temp_root / "orison_cli_recur_multistatement_cleanup.or";
+    write_lines(
+        recur_cleanup_path,
+        std::vector<std::string_view> {
+            "package demo.cli",
+            "function demo(value: UInt32) -> UInt32",
+            "    switch value",
+            "        0 => value",
+            "        default =>",
+            "            var values: DynamicArray<UInt32> = DynamicArray()",
+            "            recur(value - 1 as UInt32)",
+        }
+    );
+    auto recur_cleanup_output = read_failing_command_output(
+        executable.string() + " --emit-llvm " + recur_cleanup_path.string()
+    );
+    assert(
+        recur_cleanup_output.find("recur currently requires no pending automatic cleanup") !=
+        std::string::npos
+    );
+
     std::filesystem::remove_all(smoke_temp_root);
     return 0;
 }

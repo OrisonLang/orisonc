@@ -1,0 +1,14 @@
+package examples.recurscalarmultistatementmain
+
+function sum_to_zero(value: UInt32, acc: UInt32) -> UInt32
+    switch value
+        0 =>
+            let result = acc + 0 as UInt32
+            result
+        default =>
+            let next_value = value - 1 as UInt32
+            let next_acc = acc + value
+            recur(next_value, next_acc)
+
+function main() -> UInt32
+    sum_to_zero(10 as UInt32, 0 as UInt32) - 55 as UInt32
