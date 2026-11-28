@@ -51,7 +51,7 @@ auto main() -> int {
 
     auto examples = std::filesystem::path(ORISON_SOURCE_DIR) / "examples";
     orison::pipeline::CompilePipeline pipeline;
-    constexpr auto backend_examples = std::array<std::string_view, 151> {
+    constexpr auto backend_examples = std::array<std::string_view, 152> {
         "concurrency_array_choice_task_main.or",
         "concurrency_array_choice_thread_main.or",
         "concurrency_array_task_main.or",
@@ -188,6 +188,7 @@ auto main() -> int {
         "local_record_nested_record_assignment.or",
         "recur_scalar_if_main.or",
         "recur_scalar_main.or",
+        "recur_scalar_multiple_main.or",
         "tour_01_packages_imports.or",
         "tour_02_records_choices.or",
         "tour_03_interfaces_methods.or",
@@ -234,6 +235,12 @@ auto main() -> int {
     assert(recur_if_ir.ir_text.find("br i1 %tmp0, label %if.then.0, label %if.else.0") != std::string::npos);
     assert(recur_if_ir.ir_text.find("ret i32 %acc.recur.current") != std::string::npos);
     assert(recur_if_ir.ir_text.find("br label %recur.backedge") != std::string::npos);
+
+    auto multiple_recur_ir = pipeline.emit_llvm(examples / "recur_scalar_multiple_main.or");
+    assert(!multiple_recur_ir.has_errors());
+    assert(multiple_recur_ir.ir_text.find("value.recur.next = phi i32") != std::string::npos);
+    assert(multiple_recur_ir.ir_text.find("%switch.case.0.1 ]") != std::string::npos);
+    assert(multiple_recur_ir.ir_text.find("%switch.default.0 ]") != std::string::npos);
 
     auto view_descriptor_ir = pipeline.emit_llvm(examples / "view_descriptor_reads.or");
     assert(!view_descriptor_ir.has_errors());

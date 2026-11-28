@@ -242,5 +242,6 @@ This note is an implementation snapshot. It does not define language syntax or s
 
 ## Suggested Next Step
 
-- Generalize the scalar recurrence backedge to accept multiple direct `recur(...)` exits from final `if` or `switch`
-  arms. Emit one shared backedge block whose parameter PHIs contain every recurrent predecessor.
+- Extend the shared scalar recurrence collector through one nested final `if` or `switch`. Nested recurrent exits should
+  contribute their predecessor/value pairs to the same function-level backedge without introducing intermediate value
+  PHIs.

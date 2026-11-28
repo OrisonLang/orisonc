@@ -326,13 +326,11 @@ auto main() -> int {
             "        default => recur(value)",
         }
     );
-    auto multiple_recur_output = read_failing_command_output(
+    auto multiple_recur_output = read_command_output(
         executable.string() + " --emit-llvm " + multiple_recur_path.string()
     );
     assert(
-        multiple_recur_output.find(
-            "scalar recur lowering currently supports one direct recurrent final switch arm"
-        ) != std::string::npos
+        multiple_recur_output.find("value.recur.next = phi i32") != std::string::npos
     );
     auto multiple_if_recur_path = smoke_temp_root / "orison_cli_recur_multiple_if_arms.or";
     write_lines(
@@ -346,14 +344,12 @@ auto main() -> int {
             "        recur(flag, value)",
         }
     );
-    auto multiple_if_recur_output = read_failing_command_output(
+    auto multiple_if_recur_output = read_command_output(
         executable.string() + " --emit-llvm " + multiple_if_recur_path.string()
     );
-    assert(
-        multiple_if_recur_output.find(
-            "scalar recur lowering currently supports one direct recurrent final if arm"
-        ) != std::string::npos
-    );
+    assert(multiple_if_recur_output.find("flag.recur.next = phi i1") != std::string::npos);
+    assert(multiple_if_recur_output.find("%if.then.0 ]") != std::string::npos);
+    assert(multiple_if_recur_output.find("%if.else.0 ]") != std::string::npos);
 
     std::filesystem::remove_all(smoke_temp_root);
     return 0;

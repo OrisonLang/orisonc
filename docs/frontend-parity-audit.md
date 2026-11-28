@@ -4379,3 +4379,8 @@ This file tracks which source-language frontend slices are reflected in the curr
   per arm. The value arm returns directly, the recurrent arm routes simultaneous next-parameter values through the
   existing backedge, and no result PHI is emitted. Object and compile-link-run coverage execute both arms across ten
   iterations. Multiple recurrent exits and nested or multi-statement recurrent arms remain explicit gaps.
+- 2026-11-27: Final scalar `if` and `switch` lowering now accepts multiple direct recurrent exits. Each exit records its
+  predecessor and simultaneous next-parameter values; one shared backedge emits a PHI per parameter with all recurrent
+  predecessors before returning to the recurrence header. LLVM, object, diagnostic, and linked runtime coverage prove
+  two recurrent switch exits, while LLVM coverage proves both final-if arms recurrent. Nested and multi-statement
+  recurrent arms remain explicit gaps.

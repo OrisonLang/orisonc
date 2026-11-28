@@ -216,6 +216,11 @@ auto lower_nonvoid_switch_statement(
     std::ostringstream& output
 ) -> StatementFlow;
 
+struct RecurBackedgeIncoming {
+    std::string predecessor;
+    std::vector<LoweredExpression> arguments;
+};
+
 auto lower_direct_final_recur_statement(
     syntax::StatementSyntax const& statement,
     syntax::FunctionSyntax const& function,
@@ -223,7 +228,8 @@ auto lower_direct_final_recur_statement(
     EmissionContext const& context,
     FunctionLoweringSession& session,
     diagnostics::DiagnosticBag& diagnostics,
-    std::ostringstream& output
+    std::ostringstream& output,
+    std::vector<RecurBackedgeIncoming>& backedge_incomings
 ) -> bool;
 
 auto is_empty_expression(syntax::ExpressionSyntax const& expression) -> bool {
@@ -1994,7 +2000,8 @@ auto lower_direct_final_recur_statement(
     EmissionContext const& context,
     FunctionLoweringSession& session,
     diagnostics::DiagnosticBag& diagnostics,
-    std::ostringstream& output
+    std::ostringstream& output,
+    std::vector<RecurBackedgeIncoming>& backedge_incomings
 ) -> bool {
     if (statement.arguments.size() != function.parameters.size()) {
         diagnostics.error(statement.line, "recur argument count does not match the enclosing function parameter count");
@@ -2038,13 +2045,41 @@ auto lower_direct_final_recur_statement(
         return false;
     }
 
-    auto const predecessor = session.state.current_block;
     emit_llvm_branch(output, "recur.backedge");
+    backedge_incomings.push_back(RecurBackedgeIncoming {
+        .predecessor = session.state.current_block,
+        .arguments = std::move(arguments),
+    });
+    return true;
+}
+
+auto emit_recur_backedge(
+    syntax::FunctionSyntax const& function,
+    LoweredFunctionSignature const& signature,
+    std::vector<RecurBackedgeIncoming> const& backedge_incomings,
+    FunctionLoweringSession& session,
+    diagnostics::DiagnosticBag& diagnostics,
+    std::ostringstream& output
+) -> bool {
+    if (backedge_incomings.empty()) {
+        diagnostics.error(function.line, "recur lowering did not record a backedge predecessor");
+        return false;
+    }
+
     emit_llvm_block_label(output, "recur.backedge");
     for (auto index = std::size_t {0}; index < function.parameters.size(); ++index) {
         output << "  " << llvm_local_value_name(function.parameters[index].name + ".recur.next")
-               << " = phi " << signature.parameter_types[index] << " [ " << arguments[index].value
-               << ", %" << predecessor << " ]\n";
+               << " = phi " << signature.parameter_types[index];
+        for (auto incoming_index = std::size_t {0}; incoming_index < backedge_incomings.size(); ++incoming_index) {
+            auto const& incoming = backedge_incomings[incoming_index];
+            if (incoming.arguments.size() != function.parameters.size()) {
+                diagnostics.error(function.line, "recur lowering recorded an invalid backedge argument count");
+                return false;
+            }
+            output << (incoming_index == 0 ? " " : ", ")
+                   << "[ " << incoming.arguments[index].value << ", %" << incoming.predecessor << " ]";
+        }
+        output << "\n";
     }
     emit_llvm_branch(output, "recur.header");
     session.state.current_block = "recur.backedge";
@@ -2154,7 +2189,8 @@ auto lower_final_recur_arm(
     EmissionContext const& context,
     FunctionLoweringSession& session,
     diagnostics::DiagnosticBag& diagnostics,
-    std::ostringstream& output
+    std::ostringstream& output,
+    std::vector<RecurBackedgeIncoming>& backedge_incomings
 ) -> StatementFlow {
     if (statements.size() != 1 || statements.front() == nullptr) {
         diagnostics.error(
@@ -2174,7 +2210,8 @@ auto lower_final_recur_arm(
             context,
             session,
             diagnostics,
-            output
+            output,
+            backedge_incomings
         ) ? StatementFlow::terminated : StatementFlow::failed;
     }
     if (arm_statement.kind == syntax::StatementKind::return_statement ||
@@ -2206,7 +2243,8 @@ auto lower_final_recur_if_statement(
     EmissionContext const& context,
     FunctionLoweringSession& session,
     diagnostics::DiagnosticBag& diagnostics,
-    std::ostringstream& output
+    std::ostringstream& output,
+    std::vector<RecurBackedgeIncoming>& backedge_incomings
 ) -> StatementFlow {
     if (statement.alternate_statements.empty()) {
         diagnostics.error(statement.line, "scalar recur lowering requires an else arm in a final if");
@@ -2231,7 +2269,8 @@ auto lower_final_recur_if_statement(
                 context,
                 session,
                 diagnostics,
-                output
+                output,
+                backedge_incomings
             );
         },
         [&]() {
@@ -2245,7 +2284,8 @@ auto lower_final_recur_if_statement(
                 context,
                 session,
                 diagnostics,
-                output
+                output,
+                backedge_incomings
             );
         }
     );
@@ -2259,7 +2299,8 @@ auto lower_final_recur_switch_statement(
     EmissionContext const& context,
     FunctionLoweringSession& session,
     diagnostics::DiagnosticBag& diagnostics,
-    std::ostringstream& output
+    std::ostringstream& output,
+    std::vector<RecurBackedgeIncoming>& backedge_incomings
 ) -> StatementFlow {
     auto subject_type = infer_unit_expression_type(statement.expression, context, session.state);
     if (!subject_type.has_value()) {
@@ -2286,7 +2327,8 @@ auto lower_final_recur_switch_statement(
                 context,
                 session,
                 diagnostics,
-                output
+                output,
+                backedge_incomings
             );
         }
     );
@@ -2367,20 +2409,6 @@ void emit_function_body(
         : direct_final_if_recur_count(function.body_statements.back());
     auto const has_final_recur =
         has_direct_final_recur || final_switch_recur_count > 0 || final_if_recur_count > 0;
-    if (final_switch_recur_count > 1) {
-        diagnostics.error(
-            function.body_statements.back().line,
-            "scalar recur lowering currently supports one direct recurrent final switch arm"
-        );
-        return;
-    }
-    if (final_if_recur_count > 1) {
-        diagnostics.error(
-            function.body_statements.back().line,
-            "scalar recur lowering currently supports one direct recurrent final if arm"
-        );
-        return;
-    }
     if (has_final_recur && signature.return_type == "void") {
         diagnostics.error(function.body_statements.back().line, "scalar recur lowering currently requires a non-Unit function");
         return;
@@ -2437,6 +2465,7 @@ void emit_function_body(
         .enclosing_symbol_name = signature.symbol_name,
         .enclosing_signature = &signature,
     };
+    auto recur_backedge_incomings = std::vector<RecurBackedgeIncoming> {};
     for (auto index = std::size_t {0}; index < function.parameters.size(); ++index) {
         state.parameter_names.push_back(function.parameters[index].name);
         state.local_name_counts[function.parameters[index].name] = 1;
@@ -2759,6 +2788,17 @@ void emit_function_body(
                         context,
                         session,
                         diagnostics,
+                        output,
+                        recur_backedge_incomings
+                    )) {
+                    return;
+                }
+                if (!emit_recur_backedge(
+                        function,
+                        signature,
+                        recur_backedge_incomings,
+                        session,
+                        diagnostics,
                         output
                     )) {
                     return;
@@ -2766,7 +2806,7 @@ void emit_function_body(
                 finish_function_emission(state, result, consumed_descriptor_finalization_plans, output);
                 return;
             }
-            if (statement.kind == syntax::StatementKind::switch_statement && final_switch_recur_count == 1) {
+            if (statement.kind == syntax::StatementKind::switch_statement && final_switch_recur_count > 0) {
                 auto flow = lower_final_recur_switch_statement(
                     statement,
                     function,
@@ -2775,15 +2815,26 @@ void emit_function_body(
                     context,
                     session,
                     diagnostics,
-                    output
+                    output,
+                    recur_backedge_incomings
                 );
                 if (flow != StatementFlow::terminated) {
+                    return;
+                }
+                if (!emit_recur_backedge(
+                        function,
+                        signature,
+                        recur_backedge_incomings,
+                        session,
+                        diagnostics,
+                        output
+                    )) {
                     return;
                 }
                 finish_function_emission(state, result, consumed_descriptor_finalization_plans, output);
                 return;
             }
-            if (statement.kind == syntax::StatementKind::if_statement && final_if_recur_count == 1) {
+            if (statement.kind == syntax::StatementKind::if_statement && final_if_recur_count > 0) {
                 auto flow = lower_final_recur_if_statement(
                     statement,
                     function,
@@ -2792,9 +2843,20 @@ void emit_function_body(
                     context,
                     session,
                     diagnostics,
-                    output
+                    output,
+                    recur_backedge_incomings
                 );
                 if (flow != StatementFlow::terminated) {
+                    return;
+                }
+                if (!emit_recur_backedge(
+                        function,
+                        signature,
+                        recur_backedge_incomings,
+                        session,
+                        diagnostics,
+                        output
+                    )) {
                     return;
                 }
                 finish_function_emission(state, result, consumed_descriptor_finalization_plans, output);

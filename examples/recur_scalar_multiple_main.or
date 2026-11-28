@@ -1,0 +1,10 @@
+package examples.recurscalarmultiplemain
+
+function reduce_to_zero(value: UInt32, acc: UInt32) -> UInt32
+    switch value
+        0 => acc
+        1 => recur(0 as UInt32, acc + 1 as UInt32)
+        default => recur(value - 2 as UInt32, acc + 2 as UInt32)
+
+function main() -> UInt32
+    reduce_to_zero(11 as UInt32, 0 as UInt32) - 11 as UInt32
