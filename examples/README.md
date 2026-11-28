@@ -179,7 +179,7 @@ The numbered `tour_*.or` files split `ORISON_TOUR.md` into focused examples:
 | `tour_04_generics_ownership.or` | generics, `where`, `shared`, `exclusive` | backend |
 | `tour_05_bindings_operators.or` | `let`, `var`, assignment, arithmetic/modulo, negation, boolean, ternary, bitwise, shifts | backend |
 | `tour_06_control_flow.or` | `guard`, `else`, `if`, `switch`, `default`, loops, `break`, `continue`, `defer` | backend |
-| `tour_07_recursion.or` | recursion, explicit and implicit `return` | backend |
+| `tour_07_recursion.or` | recursion, explicit and implicit `return`, guaranteed tail calls, final-switch `recur` | backend |
 | `tour_08_collections.or` | arrays, views, dynamic arrays, indexing | backend |
 | `tour_09_ffi_printf.or` | C FFI, explicit `library "m"`, and `printf("Hello world from Orison!\\n")` | backend |
 | `tour_10_unsafe_memory.or` | `const`, `unsafe`, pointers, raw and volatile access | backend |

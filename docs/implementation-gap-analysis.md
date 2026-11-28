@@ -242,5 +242,5 @@ This note is an implementation snapshot. It does not define language syntax or s
 
 ## Suggested Next Step
 
-- Extend scalar `recur(...)` termination into final `if` and `switch` arms, starting with the tour-shaped exhaustive
-  switch. Merge only value-producing exits while routing recur exits to the existing function backedge.
+- Extend scalar `recur(...)` termination into final `if` arms. Return-producing arms should terminate directly while
+  the recurrent arm routes to the existing function backedge, matching the final-switch model without a value PHI.

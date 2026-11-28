@@ -216,6 +216,16 @@ auto lower_nonvoid_switch_statement(
     std::ostringstream& output
 ) -> StatementFlow;
 
+auto lower_direct_final_recur_statement(
+    syntax::StatementSyntax const& statement,
+    syntax::FunctionSyntax const& function,
+    LoweredFunctionSignature const& signature,
+    EmissionContext const& context,
+    FunctionLoweringSession& session,
+    diagnostics::DiagnosticBag& diagnostics,
+    std::ostringstream& output
+) -> bool;
+
 auto is_empty_expression(syntax::ExpressionSyntax const& expression) -> bool {
     return expression.text.empty() && expression.arguments.empty() && expression.nested_statements.empty() &&
            expression.left == nullptr && expression.right == nullptr && expression.alternate == nullptr;
@@ -2041,6 +2051,154 @@ auto lower_direct_final_recur_statement(
     return true;
 }
 
+auto direct_final_switch_recur_count(syntax::StatementSyntax const& statement) -> std::size_t {
+    if (statement.kind != syntax::StatementKind::switch_statement) {
+        return 0;
+    }
+
+    return static_cast<std::size_t>(std::ranges::count_if(
+        statement.switch_cases,
+        [](syntax::SwitchCaseSyntax const& switch_case) {
+            return !switch_case.statements.empty() && switch_case.statements.back() != nullptr &&
+                switch_case.statements.back()->kind == syntax::StatementKind::recur_statement;
+        }
+    ));
+}
+
+auto lower_final_switch_value_statement(
+    syntax::StatementSyntax const& statement,
+    std::string_view return_llvm_type,
+    IntegerSignedness return_signedness,
+    std::optional<std::string_view> return_source_type_name,
+    EmissionContext const& context,
+    FunctionLoweringSession& session,
+    diagnostics::DiagnosticBag& diagnostics,
+    std::ostringstream& output
+) -> StatementFlow {
+    if (statement.kind == syntax::StatementKind::return_statement) {
+        return lower_guard_return_statement(
+            statement,
+            return_llvm_type,
+            return_signedness,
+            return_source_type_name,
+            context,
+            session,
+            diagnostics,
+            output
+        );
+    }
+    if (statement.kind != syntax::StatementKind::expression_statement) {
+        return StatementFlow::failed;
+    }
+
+    auto lowered = lower_expression(
+        statement.expression,
+        return_llvm_type,
+        return_signedness,
+        context,
+        session,
+        output,
+        return_source_type_name
+    );
+    if (!lowered.has_value()) {
+        diagnostics.error(
+            statement.line,
+            append_expression_lowering_failure(
+                "lowering does not yet support this final switch value",
+                session.failures.expression
+            )
+        );
+        return StatementFlow::failed;
+    }
+
+    release_returned_dynamic_array_local_cleanup(
+        statement.expression,
+        return_source_type_name,
+        session.semantics,
+        context.lowering,
+        context.options,
+        session.state
+    );
+    release_returned_choice_dynamic_array_payload_cleanup(
+        statement.expression,
+        return_source_type_name,
+        context.lowering,
+        session.state
+    );
+    if (!emit_function_return_cleanup(context, session, diagnostics, output)) {
+        return StatementFlow::failed;
+    }
+    output << "  ret " << lowered->type << " " << lowered->value << "\n";
+    return StatementFlow::terminated;
+}
+
+auto lower_final_recur_switch_statement(
+    syntax::StatementSyntax const& statement,
+    syntax::FunctionSyntax const& function,
+    LoweredFunctionSignature const& signature,
+    std::optional<std::string_view> return_source_type_name,
+    EmissionContext const& context,
+    FunctionLoweringSession& session,
+    diagnostics::DiagnosticBag& diagnostics,
+    std::ostringstream& output
+) -> StatementFlow {
+    auto subject_type = infer_unit_expression_type(statement.expression, context, session.state);
+    if (!subject_type.has_value()) {
+        diagnostics.error(statement.line, "lowering does not yet support this recurrent final switch subject");
+        return StatementFlow::failed;
+    }
+    return lower_nonvalue_switch_statement(
+        statement,
+        *subject_type,
+        context,
+        session,
+        diagnostics,
+        output,
+        "lowering does not yet support this recurrent final switch subject",
+        "lowering does not yet support this recurrent final switch statement",
+        [&](LoweredSwitchCasePlan const& planned_case) {
+            if (planned_case.syntax->statements.size() != 1 ||
+                planned_case.syntax->statements.front() == nullptr) {
+                diagnostics.error(
+                    planned_case.syntax->pattern.line,
+                    "scalar recur lowering currently requires one terminating statement per final switch arm"
+                );
+                return StatementFlow::failed;
+            }
+            auto const& case_statement = *planned_case.syntax->statements.front();
+            if (case_statement.kind == syntax::StatementKind::recur_statement) {
+                return lower_direct_final_recur_statement(
+                    case_statement,
+                    function,
+                    signature,
+                    context,
+                    session,
+                    diagnostics,
+                    output
+                ) ? StatementFlow::terminated : StatementFlow::failed;
+            }
+            if (case_statement.kind == syntax::StatementKind::return_statement ||
+                case_statement.kind == syntax::StatementKind::expression_statement) {
+                return lower_final_switch_value_statement(
+                    case_statement,
+                    signature.return_type,
+                    signature.return_signedness,
+                    return_source_type_name,
+                    context,
+                    session,
+                    diagnostics,
+                    output
+                );
+            }
+            diagnostics.error(
+                case_statement.line,
+                "scalar recur lowering currently requires a value, return, or recur in each final switch arm"
+            );
+            return StatementFlow::failed;
+        }
+    );
+}
+
 void emit_function_body(
     syntax::FunctionSyntax const& function,
     LoweredFunctionSignature const& signature,
@@ -2108,11 +2266,22 @@ void emit_function_body(
     auto const has_direct_final_recur =
         !function.body_statements.empty() &&
         function.body_statements.back().kind == syntax::StatementKind::recur_statement;
-    if (has_direct_final_recur && signature.return_type == "void") {
+    auto const final_switch_recur_count = function.body_statements.empty()
+        ? std::size_t {0}
+        : direct_final_switch_recur_count(function.body_statements.back());
+    auto const has_final_recur = has_direct_final_recur || final_switch_recur_count > 0;
+    if (final_switch_recur_count > 1) {
+        diagnostics.error(
+            function.body_statements.back().line,
+            "scalar recur lowering currently supports one direct recurrent final switch arm"
+        );
+        return;
+    }
+    if (has_final_recur && signature.return_type == "void") {
         diagnostics.error(function.body_statements.back().line, "scalar recur lowering currently requires a non-Unit function");
         return;
     }
-    if (has_direct_final_recur) {
+    if (has_final_recur) {
         for (auto index = std::size_t {0}; index < function.parameters.size(); ++index) {
             auto const source_type_name = index < signature.parameter_source_type_names.size()
                 ? signature.parameter_source_type_names[index]
@@ -2140,7 +2309,7 @@ void emit_function_body(
     }
     output << ") {\n";
     output << "entry:\n";
-    if (has_direct_final_recur) {
+    if (has_final_recur) {
         emit_llvm_branch(output, "recur.header");
         emit_llvm_block_label(output, "recur.header");
         for (auto index = std::size_t {0}; index < function.parameters.size(); ++index) {
@@ -2153,7 +2322,7 @@ void emit_function_body(
     }
 
     auto state = FunctionLoweringState {};
-    if (has_direct_final_recur) {
+    if (has_final_recur) {
         state.current_block = "recur.header";
     }
     auto failures = LoweringFailures {};
@@ -2169,7 +2338,7 @@ void emit_function_body(
         state.local_name_counts[function.parameters[index].name] = 1;
         state.immutable_bindings.emplace(function.parameters[index].name, LoweredExpression {
             .type = signature.parameter_types[index],
-            .value = has_direct_final_recur
+            .value = has_final_recur
                 ? llvm_local_value_name(function.parameters[index].name + ".recur.current")
                 : llvm_local_value_name(function.parameters[index].name),
             .signedness = signature.parameter_signedness[index],
@@ -2488,6 +2657,23 @@ void emit_function_body(
                         diagnostics,
                         output
                     )) {
+                    return;
+                }
+                finish_function_emission(state, result, consumed_descriptor_finalization_plans, output);
+                return;
+            }
+            if (statement.kind == syntax::StatementKind::switch_statement && final_switch_recur_count == 1) {
+                auto flow = lower_final_recur_switch_statement(
+                    statement,
+                    function,
+                    signature,
+                    return_source_type_name,
+                    context,
+                    session,
+                    diagnostics,
+                    output
+                );
+                if (flow != StatementFlow::terminated) {
                     return;
                 }
                 finish_function_emission(state, result, consumed_descriptor_finalization_plans, output);

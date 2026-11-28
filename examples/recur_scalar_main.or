@@ -1,10 +1,9 @@
 package examples.recurscalarmain
 
 function sum_to(value: UInt32, acc: UInt32) -> UInt32
-    guard value > 0 as UInt32 else
-        return acc
-
-    recur(value - 1 as UInt32, acc + value)
+    switch value
+        0 => acc
+        default => recur(value - 1 as UInt32, acc + value)
 
 function main() -> UInt32
     sum_to(10 as UInt32, 0 as UInt32) - 55 as UInt32

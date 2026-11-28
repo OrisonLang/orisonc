@@ -15,7 +15,6 @@ public function tail_forward(value: Int64) -> Int64
     return tail explicit_return(value)
 
 public function sum_to(value: Int64, acc: Int64) -> Int64
-    guard value > 0 else
-        return acc
-
-    recur(value - 1, acc + value)
+    switch value
+        0 => acc
+        default => recur(value - 1, acc + value)

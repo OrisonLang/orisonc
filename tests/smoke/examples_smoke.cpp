@@ -222,6 +222,8 @@ auto main() -> int {
     );
     assert(tail_call_ir.ir_text.find("value.recur.current = phi i64") != std::string::npos);
     assert(tail_call_ir.ir_text.find("acc.recur.current = phi i64") != std::string::npos);
+    assert(tail_call_ir.ir_text.find("switch i64 %value.recur.current") != std::string::npos);
+    assert(tail_call_ir.ir_text.find("ret i64 %acc.recur.current") != std::string::npos);
     assert(tail_call_ir.ir_text.find("br label %recur.backedge") != std::string::npos);
     assert(tail_call_ir.ir_text.find("br label %recur.header") != std::string::npos);
 

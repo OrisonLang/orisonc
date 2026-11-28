@@ -420,8 +420,10 @@ analysis, and lowering components.
   no pending automatic cleanup emit LLVM `musttail call`; unsupported ABI or cleanup shapes fail explicitly rather
   than weakening the source guarantee.
   Documented scalar `recur(...)` statements use a dedicated syntax node. A final top-level recur lowers to parameter
-  PHIs at a recurrence header and one simultaneous-argument backedge. Cleanup-bearing and nested-control recur shapes
-  remain explicit lowering gaps.
+  PHIs at a recurrence header and one simultaneous-argument backedge. A final exhaustive switch may contain one direct
+  recurrent arm and one terminating statement per arm; ordinary value arms return directly and do not participate in
+  a result PHI. Cleanup-bearing, multiple-arm, multi-statement, and nested-control recur shapes remain explicit
+  lowering gaps.
 - Development builds may use the platform's monolithic shared LLVM target when component archives are unavailable;
   release packaging must use a static LLVM distribution to preserve statically linked tool executables.
 - Future ADRs should define the lowering pipeline, incremental compilation architecture, and runtime boundary.

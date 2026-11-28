@@ -315,6 +315,25 @@ auto main() -> int {
         },
         "recur argument type 'Bool' does not match declared type 'UInt32'"
     );
+    auto multiple_recur_path = smoke_temp_root / "orison_cli_recur_multiple_switch_arms.or";
+    write_lines(
+        multiple_recur_path,
+        std::vector<std::string_view> {
+            "package demo.cli",
+            "function demo(value: UInt32) -> UInt32",
+            "    switch value",
+            "        0 => recur(value)",
+            "        default => recur(value)",
+        }
+    );
+    auto multiple_recur_output = read_failing_command_output(
+        executable.string() + " --emit-llvm " + multiple_recur_path.string()
+    );
+    assert(
+        multiple_recur_output.find(
+            "scalar recur lowering currently supports one direct recurrent final switch arm"
+        ) != std::string::npos
+    );
 
     std::filesystem::remove_all(smoke_temp_root);
     return 0;

@@ -4370,3 +4370,8 @@ This file tracks which source-language frontend slices are reflected in the curr
   validation. A final top-level recur in a non-Unit scalar function lowers through parameter PHIs and one fixed
   backedge, evaluates all next arguments from the current iteration, and has compile-link-run coverage. Pending
   automatic cleanup and non-scalar parameters remain rejected. Final `if` and `switch` recur arms remain unsupported.
+- 2026-11-27: A final exhaustive scalar `switch` now supports one direct recurrent arm and one terminating statement
+  per arm. Value-producing arms return directly, the recurrent arm evaluates all next parameters before routing to the
+  existing backedge, and no invalid switch-result PHI is emitted. Object and compile-link-run coverage use the
+  tour-shaped zero/default recurrence.
+  Multiple recurrent arms, nested recurrent control flow, pending cleanup, and non-scalar parameters remain rejected.
