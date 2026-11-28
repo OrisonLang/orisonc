@@ -4375,3 +4375,7 @@ This file tracks which source-language frontend slices are reflected in the curr
   existing backedge, and no invalid switch-result PHI is emitted. Object and compile-link-run coverage use the
   tour-shaped zero/default recurrence.
   Multiple recurrent arms, nested recurrent control flow, pending cleanup, and non-scalar parameters remain rejected.
+- 2026-11-27: A final scalar `if` with an `else` arm now supports one direct recurrent arm and one terminating statement
+  per arm. The value arm returns directly, the recurrent arm routes simultaneous next-parameter values through the
+  existing backedge, and no result PHI is emitted. Object and compile-link-run coverage execute both arms across ten
+  iterations. Multiple recurrent exits and nested or multi-statement recurrent arms remain explicit gaps.

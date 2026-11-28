@@ -1,6 +1,7 @@
 # Orison Examples
 
 `minimal.or` is the stable backend demo and must compile, link, and run with exit status `0`.
+`recur_scalar_if_main.or` demonstrates scalar `recur(...)` through a final `if` and runs with exit status `0`.
 `dynamic_array_parameter_reads.or` demonstrates scalar `DynamicArray<UInt32>` parameter descriptor `.length()`,
 checked indexing, iteration, and parameter cleanup on the default compiler path.
 `dynamic_array_owned_parameter.or` demonstrates owned-element `DynamicArray<Payload>` parameter transfer,

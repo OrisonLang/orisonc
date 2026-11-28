@@ -242,5 +242,5 @@ This note is an implementation snapshot. It does not define language syntax or s
 
 ## Suggested Next Step
 
-- Extend scalar `recur(...)` termination into final `if` arms. Return-producing arms should terminate directly while
-  the recurrent arm routes to the existing function backedge, matching the final-switch model without a value PHI.
+- Generalize the scalar recurrence backedge to accept multiple direct `recur(...)` exits from final `if` or `switch`
+  arms. Emit one shared backedge block whose parameter PHIs contain every recurrent predecessor.

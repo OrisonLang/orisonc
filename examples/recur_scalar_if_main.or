@@ -1,0 +1,10 @@
+package examples.recurscalarifmain
+
+function sum_to(value: UInt32, acc: UInt32) -> UInt32
+    if value == 0 as UInt32
+        acc
+    else
+        recur(value - 1 as UInt32, acc + value)
+
+function main() -> UInt32
+    sum_to(10 as UInt32, 0 as UInt32) - 55 as UInt32
