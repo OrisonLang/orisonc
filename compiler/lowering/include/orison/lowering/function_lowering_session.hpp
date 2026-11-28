@@ -6,11 +6,14 @@
 
 namespace orison::lowering {
 
+struct LoweredFunctionSignature;
+
 struct FunctionLoweringSession {
     FunctionLoweringState& state;
     LoweringFailures& failures;
     semantics::SemanticAnalysisResult const* semantics = nullptr;
     std::string_view enclosing_symbol_name;
+    LoweredFunctionSignature const* enclosing_signature = nullptr;
 };
 
 }  // namespace orison::lowering

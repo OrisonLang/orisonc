@@ -242,5 +242,5 @@ This note is an implementation snapshot. It does not define language syntax or s
 
 ## Suggested Next Step
 
-- Return to the grammar-and-tour gap audit and select a bounded lowering gap outside trivial fixed-array ownership and
-  interface-value semantics.
+- Implement scalar `recur(...)` as self-tail re-entry through parameter PHIs and a loop backedge, then add direct and
+  compile-link-run coverage. This completes the second documented tail form without broadening public syntax.

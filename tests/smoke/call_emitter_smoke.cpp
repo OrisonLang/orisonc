@@ -44,6 +44,18 @@ int main() {
     assert(result.value == "%tmp0");
     assert(result.signedness == IntegerSignedness::unsigned_integer);
 
+    auto tail_output = std::ostringstream {};
+    auto tail_result = orison::lowering::emit_value_call(
+        "%tmp1",
+        add,
+        add_arguments,
+        tail_output,
+        true
+    );
+    assert(tail_output.str() == "  %tmp1 = musttail call i32 @add(i32 40, i32 2)\n");
+    assert(tail_result.type == "i32");
+    assert(tail_result.value == "%tmp1");
+
     auto observe = LoweredFunctionSignature {
         .return_type = "void",
         .parameter_types = {"i32"},
@@ -86,8 +98,8 @@ int main() {
         },
     };
     auto printf_output = std::ostringstream {};
-    orison::lowering::emit_value_call("%tmp1", printf, printf_arguments, printf_output);
-    assert(printf_output.str() == "  %tmp1 = call i32 (ptr, ...) @printf(ptr @.str.0, i32 7)\n");
+    orison::lowering::emit_value_call("%tmp2", printf, printf_arguments, printf_output);
+    assert(printf_output.str() == "  %tmp2 = call i32 (ptr, ...) @printf(ptr @.str.0, i32 7)\n");
 
     auto scale = LoweredFunctionSignature {
         .return_type = "i32",

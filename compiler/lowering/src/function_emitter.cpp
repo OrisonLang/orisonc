@@ -1493,7 +1493,19 @@ auto lower_guard_return_statement(
         context.lowering,
         session.state
     );
-    if (!emit_function_return_cleanup(context, session, diagnostics, output)) {
+    if (statement.expression.is_tail_call) {
+        auto cleanup_output = std::ostringstream {};
+        if (!emit_function_return_cleanup(context, session, diagnostics, cleanup_output)) {
+            return StatementFlow::failed;
+        }
+        if (!cleanup_output.str().empty()) {
+            diagnostics.error(
+                statement.line,
+                "guaranteed tail call currently requires no pending automatic cleanup"
+            );
+            return StatementFlow::failed;
+        }
+    } else if (!emit_function_return_cleanup(context, session, diagnostics, output)) {
         return StatementFlow::failed;
     }
     output << "  ret " << lowered->type << " " << lowered->value << "\n";
@@ -2047,6 +2059,7 @@ void emit_function_body(
         .failures = failures,
         .semantics = semantic_result,
         .enclosing_symbol_name = signature.symbol_name,
+        .enclosing_signature = &signature,
     };
     for (auto index = std::size_t {0}; index < function.parameters.size(); ++index) {
         state.parameter_names.push_back(function.parameters[index].name);
@@ -2504,7 +2517,19 @@ void emit_function_body(
             session.state
         );
     }
-    if (!emit_function_return_cleanup(context, session, diagnostics, output)) {
+    if (expression != nullptr && expression->is_tail_call) {
+        auto cleanup_output = std::ostringstream {};
+        if (!emit_function_return_cleanup(context, session, diagnostics, cleanup_output)) {
+            return;
+        }
+        if (!cleanup_output.str().empty()) {
+            diagnostics.error(
+                expression->line,
+                "guaranteed tail call currently requires no pending automatic cleanup"
+            );
+            return;
+        }
+    } else if (!emit_function_return_cleanup(context, session, diagnostics, output)) {
         return;
     }
     output << "  ret " << lowered->type << " " << lowered->value << "\n";

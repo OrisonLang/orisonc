@@ -4362,3 +4362,7 @@ This file tracks which source-language frontend slices are reflected in the curr
   independent indices. Final `if` and final `switch` preserve checked selected-arm access, skip both out-of-range
   indices in retaining arms, keep distinct siblings available, and reject exact deep-path plus post-merge root reuse.
   The recursively trivial fixed-array reconciliation slice is complete. No compiler, syntax, or ABI change was needed.
+- 2026-11-27: `return tail f(...)` now has bounded frontend and LLVM lowering support. The parser records only direct
+  call forms, while ordinary identifiers named `tail` remain valid outside that return context. ABI-compatible scalar
+  calls with no pending automatic cleanup emit LLVM `musttail call`; incompatible signatures, constructors, member
+  calls, and pending cleanup retain explicit diagnostics. General cleanup-before-tail lowering and `recur(...)` remain.

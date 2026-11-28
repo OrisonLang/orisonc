@@ -10,6 +10,48 @@
 
 namespace {
 
+void test_tail_return() {
+    auto path = std::filesystem::temp_directory_path() / "orison_module_parser_tail_return.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.calls\n\n";
+        output << "function forward(value: UInt32) -> UInt32\n";
+        output << "    return tail target(value)\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto result = parser.parse(*source_file);
+
+    assert(!result.diagnostics.has_errors());
+    auto const& expression = result.module.functions.front().body_statements.front().expression;
+    assert(expression.kind == orison::syntax::ExpressionKind::call);
+    assert(expression.is_tail_call);
+    assert(expression.left != nullptr);
+    assert(expression.left->text == "target");
+}
+
+void test_tail_return_failure() {
+    auto path = std::filesystem::temp_directory_path() / "orison_module_parser_tail_return_failure.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.calls\n\n";
+        output << "function forward(value: UInt32) -> UInt32\n";
+        output << "    return tail value\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto result = parser.parse(*source_file);
+
+    assert(result.diagnostics.has_errors());
+    assert(result.diagnostics.entries().front().message == "return tail requires a direct function call");
+}
+
 void test_parse_success() {
     auto path = std::filesystem::temp_directory_path() / "orison_module_parser_success.or";
     {
@@ -2309,6 +2351,8 @@ int main() {
     auto smoke_temp_root_text = smoke_temp_root.string();
     assert(::setenv("TMPDIR", smoke_temp_root_text.c_str(), 1) == 0);
 
+    test_tail_return();
+    test_tail_return_failure();
     test_parse_success();
     test_constant_success();
     test_constant_failure();

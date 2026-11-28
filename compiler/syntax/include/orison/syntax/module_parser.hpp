@@ -100,6 +100,7 @@ enum class ExpressionKind {
 struct ExpressionSyntax {
     ExpressionKind kind = ExpressionKind::name;
     std::size_t line = 0;
+    bool is_tail_call = false;
     std::string text;
     std::vector<TypeSyntax> generic_arguments;
     std::vector<ExpressionSyntax> arguments;

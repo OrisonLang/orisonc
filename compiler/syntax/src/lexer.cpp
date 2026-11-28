@@ -316,7 +316,10 @@ auto Lexer::lex(source::SourceFile const& source_file) const -> LexResult {
             }
 
             token.lexeme = input.substr(start, index - start);
-            token.kind = keyword_kind(token.lexeme);
+            token.kind = token.lexeme == "tail" && !result.tokens.empty() &&
+                    result.tokens.back().kind == TokenKind::keyword_return
+                ? TokenKind::keyword_tail
+                : keyword_kind(token.lexeme);
             result.tokens.push_back(token);
             continue;
         }

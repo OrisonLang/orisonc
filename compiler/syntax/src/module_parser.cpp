@@ -1292,10 +1292,28 @@ private:
     auto parse_return_statement(ParseResult& result) -> StatementSyntax {
         StatementSyntax statement {.kind = StatementKind::return_statement, .line = current().line, .valid = true};
         advance();
+        auto const is_tail_call = is(TokenKind::keyword_tail);
+        if (is_tail_call) {
+            advance();
+        }
         if (is(TokenKind::newline) || is(TokenKind::dedent) || is(TokenKind::eof)) {
+            if (is_tail_call) {
+                result.diagnostics.error(statement.line, "return tail requires a direct function call");
+                statement.valid = false;
+            }
             return statement;
         }
         statement.expression = parse_expression(result);
+        if (is_tail_call) {
+            if (statement.expression.kind != ExpressionKind::call ||
+                statement.expression.left == nullptr ||
+                statement.expression.left->kind != ExpressionKind::name) {
+                result.diagnostics.error(statement.line, "return tail requires a direct function call");
+                statement.valid = false;
+            } else {
+                statement.expression.is_tail_call = true;
+            }
+        }
         return statement;
     }
 

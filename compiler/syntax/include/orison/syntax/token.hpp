@@ -28,6 +28,7 @@ enum class TokenKind {
     keyword_let,
     keyword_var,
     keyword_return,
+    keyword_tail,
     keyword_switch,
     keyword_default,
     keyword_guard,

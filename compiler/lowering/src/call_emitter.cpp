@@ -481,10 +481,15 @@ auto emit_value_call(
     std::string temporary_name,
     LoweredFunctionSignature const& function,
     std::vector<LoweredExpression> const& arguments,
-    std::ostringstream& output
+    std::ostringstream& output,
+    bool guaranteed_tail_call
 ) -> LoweredExpression {
     auto const temporary_value = temporary_name;
-    output << "  " << temporary_name << " = call ";
+    output << "  " << temporary_name << " = ";
+    if (guaranteed_tail_call) {
+        output << "musttail ";
+    }
+    output << "call ";
     append_call_signature(output, function);
     output << " @" << function.symbol_name << "(";
     append_call_arguments(output, arguments);

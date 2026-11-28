@@ -211,6 +211,15 @@ auto main() -> int {
         assert(!backend.object_bytes.empty());
     }
 
+    auto tail_call_ir = pipeline.emit_llvm(examples / "tour_07_recursion.or");
+    assert(!tail_call_ir.has_errors());
+    assert(
+        tail_call_ir.ir_text.find(
+            "musttail call i64 @__orison_fn.examples.recursion.explicit_return(i64 %value)"
+        ) !=
+        std::string::npos
+    );
+
     auto view_descriptor_ir = pipeline.emit_llvm(examples / "view_descriptor_reads.or");
     assert(!view_descriptor_ir.has_errors());
     assert(view_descriptor_ir.ir_text.find("define i64 @count({ ptr, i64 } %values)") != std::string::npos);

@@ -44,7 +44,8 @@ auto emit_value_call(
     std::string temporary_name,
     LoweredFunctionSignature const& function,
     std::vector<LoweredExpression> const& arguments,
-    std::ostringstream& output
+    std::ostringstream& output,
+    bool guaranteed_tail_call = false
 ) -> LoweredExpression;
 
 auto emit_void_call(

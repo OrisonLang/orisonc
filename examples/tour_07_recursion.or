@@ -10,3 +10,6 @@ public function explicit_return(value: Int64) -> Int64
         return 0
 
     value
+
+public function tail_forward(value: Int64) -> Int64
+    return tail explicit_return(value)

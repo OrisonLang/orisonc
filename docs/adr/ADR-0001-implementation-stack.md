@@ -416,6 +416,9 @@ analysis, and lowering components.
   renaming through `as` changes only source lookup; the declared external symbol receives the same generated signature.
   End-to-end coverage includes renamed `strlen` and `memcmp` imports with pointer and `UIntSize` values. Fixed-to-C
   varargs adaptation remains a separate target ABI policy and must not be inferred from an arbitrary symbol name.
+  Documented `return tail f(...)` calls retain a syntax-tree marker through lowering. ABI-compatible scalar calls with
+  no pending automatic cleanup emit LLVM `musttail call`; unsupported ABI or cleanup shapes fail explicitly rather
+  than weakening the source guarantee.
 - Development builds may use the platform's monolithic shared LLVM target when component archives are unavailable;
   release packaging must use a static LLVM distribution to preserve statically linked tool executables.
 - Future ADRs should define the lowering pipeline, incremental compilation architecture, and runtime boundary.

@@ -5543,6 +5543,15 @@ auto lowered_expression(
             return std::nullopt;
         }
 
+        if (expression.is_tail_call) {
+            record_expression_lowering_failure(
+                failures,
+                ExpressionLoweringFailureReason::unsupported_expression,
+                "guaranteed tail calls require a direct function target"
+            );
+            return std::nullopt;
+        }
+
         auto temporary_name = next_llvm_temporary_name(state.next_temporary_index);
         auto lowered_call = emit_value_call(std::move(temporary_name), *method_signature, *arguments, output);
         if (direct_receiver.has_value() && !direct_receiver->transferred_owner_name.empty()) {
@@ -5592,6 +5601,17 @@ auto lowered_expression(
 
     if (expression.kind == syntax::ExpressionKind::call && expression.left != nullptr &&
         expression.left->kind == syntax::ExpressionKind::name) {
+        if (expression.is_tail_call &&
+            !context.lowering.functions.contains(expression.left->text) &&
+            !context.lowering.source_functions.contains(expression.left->text)) {
+            record_expression_lowering_failure(
+                failures,
+                ExpressionLoweringFailureReason::unsupported_expression,
+                "guaranteed tail calls require a declared direct function target"
+            );
+            return std::nullopt;
+        }
+
         if (auto record_constructor = lower_record_constructor_expression(
                 expression,
                 expected_llvm_type,
@@ -5727,8 +5747,26 @@ auto lowered_expression(
             return std::nullopt;
         }
 
+        if (expression.is_tail_call &&
+            (session.enclosing_signature == nullptr ||
+             session.enclosing_signature->return_type != function_signature->return_type ||
+             session.enclosing_signature->parameter_types != function_signature->parameter_types)) {
+            record_expression_lowering_failure(
+                failures,
+                ExpressionLoweringFailureReason::unsupported_expression,
+                "guaranteed tail call requires ABI-compatible caller and callee signatures"
+            );
+            return std::nullopt;
+        }
+
         auto temporary_name = next_llvm_temporary_name(state.next_temporary_index);
-        return emit_value_call(std::move(temporary_name), *function_signature, *arguments, output);
+        return emit_value_call(
+            std::move(temporary_name),
+            *function_signature,
+            *arguments,
+            output,
+            expression.is_tail_call
+        );
     }
 
     record_expression_lowering_failure(
